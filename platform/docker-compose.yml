@@ -1,5 +1,6 @@
 services:
 
+
   postgresql:
     build:
       context: ./requirements/postgresql
@@ -12,38 +13,6 @@ services:
       - platform_network
 
 
-  nextjs:
-    build:
-      context: .
-      dockerfile: ./requirements/nextjs/dockerfile
-    container_name: nextjs
-    env_file:
-      - .env
-    volumes:
-      - ./app:/app
-      - nextjs_node_modules:/app/node_modules
-    depends_on:
-      - postgresql
-      - redis
-    ports:
-      - "3000:3000"
-    networks:
-      - platform_network
-
-  nginx:
-    build:
-      context: ./requirements/nginx
-    container_name: nginx
-    ports:
-      - "443:443"
-    #volumes:
-    #- postgresql_data:/var/www/html 
-    depends_on:
-      - nextjs
-    networks:
-      - platform_network
-  
-
 
   redis:
     build:
@@ -55,6 +24,49 @@ services:
     networks:
       - platform_network
 
+  backend:
+    build:
+      context: .
+      dockerfile: ./requirements/backend/dockerfile
+    container_name: backend
+    env_file: 
+      - .env
+    depends_on:
+      - postgresql
+      - redis
+    networks:
+      - platform_network
+  
+  nextjs:
+    build:
+      context: .
+      dockerfile: ./requirements/nextjs/dockerfile
+    container_name: nextjs
+    env_file:
+      - .env
+    volumes:
+      - ./app:/app
+      - nextjs_node_modules:/app/node_modules
+    depends_on:
+      - backend   
+    ports:
+      - "3000:3000"
+    networks:
+      - platform_network
+    
+  nginx:
+    build:
+      context: ./requirements/nginx
+    container_name: nginx
+    ports:
+      - "443:443"
+    #volumes:
+    #- postgresql_data:/var/www/html 
+    depends_on:
+      - nextjs
+      - backend
+    networks:
+      - platform_network 
 
 volumes:
   postgresql_data:

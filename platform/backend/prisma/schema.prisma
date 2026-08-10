@@ -1,0 +1,94 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output = "./generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ArticleStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  PUBLISHED
+}
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model user {
+  id       String   @id @default(cuid())
+  email    String   @unique
+  name     String
+  password String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  articles        Article[]
+  reviews         Review[]
+  comments        Comment[]
+}
+
+model Article {
+  id       String        @id @default(cuid())
+  title    String
+  abstract String?
+  content  String
+  status   ArticleStatus @default(DRAFT)
+
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  reviews  Review[]
+  comments Comment[]
+}
+
+
+model Review {
+  id         String       @id @default(cuid())
+  articleId  String
+  reviewerId String
+
+  article  Article @relation(fields: [articleId], references: [id])
+  reviewer User     @relation(fields: [reviewerId], references: [id])
+
+  comment String?
+  status  ReviewStatus @default(PENDING)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([articleId, reviewerId])
+}
+
+
+model Comment {
+  id        String @id @default(cuid())
+  content   String
+
+  articleId String
+  authorId  String
+
+  article Article @relation(fields: [articleId], references: [id])
+  author  User    @relation(fields: [authorId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
