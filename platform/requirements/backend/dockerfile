@@ -4,10 +4,12 @@ WORKDIR /app
 
 COPY backend/package*.json ./
 
+COPY backend/prisma ./prisma
+
 RUN npm install
 
 COPY backend/ ./
 
 EXPOSE 4000
 
-CMD ["npm", "run", "dev"]
+CMD ["sh", "-c", "npx prisma migrate deploy && npm run dev"]
