@@ -2,6 +2,7 @@ import { Router } from "express";
 import { createUser, getUserByEmail, getUserById } from "../services/user.service";
 import { hashPassword, verifyPassword } from "../services/auth.service";
 import { isValidEmail, isValidPassword, isValidName } from "../utils/validation";
+import { requireAuth } from "../middleware/auth";
 
 const router = Router();
 router.post("/register", async (req, res) => {
@@ -40,10 +41,8 @@ router.post("/logout", (req, res) => {
 	});
 });
 
-router.get("/me", async (req, res) => {
-	if (!req.session.userId)
-		return res.status(401).json({ error: "Not authenticated" });
-	const user = await getUserById(req.session.userId);
+router.get("/me", requireAuth, async (req, res) => {
+	const user = await getUserById(req.session.userId!);
 	if (!user)
 		return res.status(401).json({ error: "Not authenticated" });
 	res.json({ id: user.id, email: user.email, name: user.name });
