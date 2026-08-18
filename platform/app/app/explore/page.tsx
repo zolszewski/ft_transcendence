@@ -1,15 +1,16 @@
 import { redirect } from "next/navigation";
+//import { isAuthenticated } from "@/lib/auth";
 
-
-export default async function ReviewPage() {
+export default async function ExplorePage() {
   //const auth = await isAuthenticated();
   //if (!auth) {
     redirect("/authentication/login");
+  //}
 
   return (
     <main>
-      <h1>Review</h1>
-      <p>Review submitted academic work.</p>
+      <h1>Explore</h1>
+      <p>Discover and explore academic work.</p>
     </main>
   );
 }

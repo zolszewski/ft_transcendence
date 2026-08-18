@@ -33,6 +33,7 @@ const NODES: NodeInput[] = [
   { src: "/items/palestine.jpg", title: "Palestine Perspectives, October 1984" },
   { src: "/items/fresca.JPG", title: "Tamar fresco in Vardzia, Georgia, 12th c." },
   { src: "/items/sankara.png", title: "Thomas Sankara Discourses, corpus by Daouda Coulibaly" },
+  
 ];
  
 // Keep this box clear-ish so nodes don't pile up directly behind the

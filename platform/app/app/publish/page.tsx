@@ -1,10 +1,11 @@
 import { redirect } from "next/navigation";
-import { isAuthenticated } from "@/lib/auth";
+//import { isAuthenticated } from "@/lib/auth";
 
-export default function PublishPage() {
-  if (!isAuthenticated()) {
-    redirect("/");
-  }
+export default async function PublishPage() {
+  /*const auth = await isAuthenticated();
+  if (!auth) {*/
+    redirect("/authentication/login");
+  
 
   return (
     <main>

@@ -16,7 +16,7 @@ export default function Home() {
           <Link href="/review" className="hover:underline">
             Review.
           </Link>
-          <Link href="/collaborate" className="hover:underline">
+          <Link href="/explore" className="hover:underline">
             Explore.
           </Link>
         </p>
