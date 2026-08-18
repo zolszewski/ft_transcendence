@@ -1,0 +1,12 @@
+export function isValidEmail(email: string): boolean {
+	const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+	return typeof email === "string" && emailRegex.test(email);
+}
+
+export function isValidPassword(password: string): boolean {
+	return typeof password === "string" && password.length >= 8;
+}
+
+export function isValidName(name: string): boolean {
+	return typeof name === "string" && name.trim().length >= 2;
+}

@@ -9,6 +9,11 @@ services:
       - postgresql_data:/var/lib/postgresql/data
     env_file:
       - .env
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 2s
+      timeout: 3s
+      retries: 10
     networks:
       - platform_network
 
@@ -32,8 +37,10 @@ services:
     env_file: 
       - .env
     depends_on:
-      - postgresql
-      - redis
+      postgresql:
+        condition: service_healthy
+      redis:
+        condition: service_started
     networks:
       - platform_network
     volumes:

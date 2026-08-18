@@ -1,0 +1,51 @@
+@baseUrl = http://localhost:4000
+
+### Health check
+GET {{baseUrl}}/health
+
+### Créer un compte.
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "name": "test",
+  "password": "motdepasse123"
+}
+
+### Voir qui est connecté (avec le cookie)
+GET {{baseUrl}}/api/auth/me
+
+### Se déconnecter
+POST {{baseUrl}}/api/auth/logout
+
+### Vérifier qu'on n'est plus connecté (401)
+GET {{baseUrl}}/api/auth/me
+
+### Se reconnecter avec le bon mot de passe
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "password": "motdepasse123"
+}
+
+### Essayer avec un mauvais mot de passe (401)
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "password": "mauvaismotdepasse"
+}
+
+### Essayer de recréer un compte avec un email déjà pris (409)
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "name": "Autre",
+  "password": "autremotdepasse"
+}

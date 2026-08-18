@@ -168,6 +168,7 @@ Developer A:
 - Implement approve/reject endpoints.
 - Enforce valid review transitions.
 - Update article status appropriately.
+- Filter public article listing/detail endpoints to only return PUBLISHED articles (delay from Day 7 for easier testing while no article was PUBLISHED yet). #RAPH
 
 Developer B:
 - Build approve/reject controls.
