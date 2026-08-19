@@ -49,3 +49,19 @@ Content-Type: application/json
   "name": "Autre",
   "password": "autremotdepasse"
 }
+
+### ==========================================================
+### ARTICLES : il faut d'abord avoir des articles en base pour
+### que ces tests renvoient autre chose qu'une liste vide.
+### docker compose -f platform/docker-compose.yml exec backend npx tsx src/script_test.ts
+### ==========================================================
+
+### Lister tous les articles
+# @name listArticles
+GET {{baseUrl}}/api/articles
+
+### Voir le détail du premier article de la liste ci-dessus
+GET {{baseUrl}}/api/articles/{{listArticles.response.body.$.0.id}}
+
+### Essayer un id qui n'existe pas (404 attendu)
+GET {{baseUrl}}/api/articles/id-inexistant
