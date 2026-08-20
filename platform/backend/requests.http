@@ -3,6 +3,10 @@
 ### Health check
 GET {{baseUrl}}/health
 
+### ==========================================================
+### DAY 05-06 : authentification (register/login/logout) + session protegee par requireAuth (/me)
+### ==========================================================
+
 ### Créer un compte.
 POST {{baseUrl}}/api/auth/register
 Content-Type: application/json
@@ -51,8 +55,7 @@ Content-Type: application/json
 }
 
 ### ==========================================================
-### ARTICLES : il faut d'abord avoir des articles en base pour
-### que ces tests renvoient autre chose qu'une liste vide.
+### DAY 07 : lecture des articles il faut d'abord avoir des articles en base pour que ces tests renvoient autre chose qu'une liste vide :
 ### docker compose -f platform/docker-compose.yml exec backend npx tsx src/script_test.ts
 ### ==========================================================
 
@@ -65,3 +68,74 @@ GET {{baseUrl}}/api/articles/{{listArticles.response.body.$.0.id}}
 
 ### Essayer un id qui n'existe pas (404 attendu)
 GET {{baseUrl}}/api/articles/id-inexistant
+
+### ==========================================================
+### DAY 08 : creer / modifier / supprimer un article, avec verification de propriete (isOwner). Deux comptes necessaires (proprietaire +
+### intrus) - chaque register/login remplace le cookie stocke par celui du compte qui vient de se connecter.
+### ==========================================================
+
+### Créer un compte "propriétaire"
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "owner@example.com",
+  "name": "Owner",
+  "password": "motdepasse123"
+}
+
+### Créer un article en tant que propriétaire
+# @name createArticle
+POST {{baseUrl}}/api/articles
+Content-Type: application/json
+
+{
+  "title": "Mon article",
+  "content": "Contenu de test"
+}
+
+### Modifier son propre article (200 attendu)
+PUT {{baseUrl}}/api/articles/{{createArticle.response.body.$.id}}
+Content-Type: application/json
+
+{
+  "title": "Mon article modifié",
+  "content": "Nouveau contenu"
+}
+
+### Créer un compte "intrus" (remplace le cookie actuel)
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "intruder@example.com",
+  "name": "Intruder",
+  "password": "motdepasse123"
+}
+
+### Essayer de modifier l'article d'un autre (403 attendu)
+PUT {{baseUrl}}/api/articles/{{createArticle.response.body.$.id}}
+Content-Type: application/json
+
+{
+  "title": "Piratage",
+  "content": "Piratage"
+}
+
+### Essayer de supprimer l'article d'un autre (403 attendu)
+DELETE {{baseUrl}}/api/articles/{{createArticle.response.body.$.id}}
+
+### Se reconnecter en tant que propriétaire
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "owner@example.com",
+  "password": "motdepasse123"
+}
+
+### Supprimer son propre article (204 attendu)
+DELETE {{baseUrl}}/api/articles/{{createArticle.response.body.$.id}}
+
+### Vérifier que l'article a bien disparu (404 attendu)
+GET {{baseUrl}}/api/articles/{{createArticle.response.body.$.id}}
