@@ -139,3 +139,49 @@ DELETE {{baseUrl}}/api/articles/{{createArticle.response.body.$.id}}
 
 ### Vérifier que l'article a bien disparu (404 attendu)
 GET {{baseUrl}}/api/articles/{{createArticle.response.body.$.id}}
+
+### ==========================================================
+### DAY 09 : soumettre un article pour review (DRAFT -> SUBMITTED)
+### ==========================================================
+
+### Créer un compte
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "day9@example.com",
+  "name": "Day9",
+  "password": "motdepasse123"
+}
+
+### Créer un article (DRAFT par défaut)
+# @name createArticleDay9
+POST {{baseUrl}}/api/articles
+Content-Type: application/json
+
+{
+  "title": "Article à soumettre",
+  "content": "Contenu"
+}
+
+### Soumettre en tant que propriétaire (200 attendu, status -> SUBMITTED)
+POST {{baseUrl}}/api/articles/{{createArticleDay9.response.body.$.id}}/submit
+
+### Soumettre une deuxième fois (409 attendu, déjà SUBMITTED)
+POST {{baseUrl}}/api/articles/{{createArticleDay9.response.body.$.id}}/submit
+
+### Créer un compte "intrus" (remplace le cookie actuel)
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "intruder9@example.com",
+  "name": "Intruder9",
+  "password": "motdepasse123"
+}
+
+### Essayer de soumettre l'article d'un autre (403 attendu)
+POST {{baseUrl}}/api/articles/{{createArticleDay9.response.body.$.id}}/submit
+
+### Essayer de soumettre un id inexistant (404 attendu)
+POST {{baseUrl}}/api/articles/id-inexistant/submit

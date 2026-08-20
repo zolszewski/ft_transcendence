@@ -1,4 +1,5 @@
 import { prisma } from "../lib/prisma";
+import { ArticleStatus } from "@prisma/client";
 
 export async function listArticles() {
 	try {
@@ -67,5 +68,19 @@ export async function deleteArticle(id: string) {
 	catch (error) {
 		console.error("Failed to delete article:", error);
 		throw new Error("Could not delete article");
+	}
+}
+
+export async function updateArticleStatus(id: string,status: ArticleStatus) {
+	try {
+		return await prisma.Article.update({
+			where: { id },
+			data: { status },
+			include: { author: { select: { id: true, name: true } } },
+		});
+	}
+	catch (error) {
+		console.error("Failed to update article status:", error);
+		throw new Error("Could not update article status");
 	}
 }

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { listArticles, getArticleById, createArticle, updateArticle, deleteArticle } from "../services/article.service";
+import { listArticles, getArticleById, createArticle, updateArticle, deleteArticle, updateArticleStatus } from "../services/article.service";
 import { isOwner } from "../utils/authorization"
 import { requireAuth } from "../middleware/auth";
 import { isValidContent, isValidTitle } from "../utils/validation";
@@ -47,6 +47,18 @@ router.delete("/:id", requireAuth, async (req, res) => {
 		return res.status(403).json( {error: "Forbidden" });
 	await deleteArticle(req.params.id);
 	res.status(204).send();
+});
+
+router.post("/:id/submit", requireAuth, async (req, res) => {
+	const article = await getArticleById(req.params.id);
+	if (!article)
+		return res.status(404).json({ error: "Article not found" });
+	if (!isOwner(article.authorId, req.session.userId!))
+		return res.status(403).json({ error: "Forbidden" });
+	if (article.status !== "DRAFT")
+		return res.status(409).json ({ error: "Article is not a draft" });
+	const updated = await updateArticleStatus(req.params.id, "SUBMITTED");
+	res.json(updated);
 });
 
 export default router;
