@@ -1,0 +1,39 @@
+import { prisma } from "../lib/prisma";
+
+export async function createReview(articleId: string, reviewerId: string, comment?: string) {
+	try {
+		return await prisma.Review.create({
+			data: { articleId, reviewerId, comment },
+			include: { reviewer: { select: { id: true, name: true } } },
+		});
+	}
+	catch (error) {
+		console.error("Failed to create review:", error);
+		throw new Error("Could not create review");
+	}
+}
+
+export async function getReviewByArticleAndReviewer(articleId: string, reviewerId: string) {
+	try {
+		return await prisma.Review.findUnique({
+			where: { articleId_reviewerId: {articleId, reviewerId } },
+		});
+	}
+	catch (error) {
+		console.error("Failed to fetch review:", error);
+		throw new Error("Could not fetch review");
+	}
+}
+
+export async function listReviewsForArticle(articleId: string) {
+	try {
+		return await prisma.Review.findMany({
+			where: { articleId },
+			include: { reviewer: { select: { id: true, name: true } } },
+		});
+	}
+	catch (error) {
+		console.error("Failed to list reviews:", error);
+		throw new Error("Could not list reviews");
+	}
+}

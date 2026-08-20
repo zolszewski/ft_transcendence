@@ -3,6 +3,7 @@ import { listArticles, getArticleById, createArticle, updateArticle, deleteArtic
 import { isOwner } from "../utils/authorization"
 import { requireAuth } from "../middleware/auth";
 import { isValidContent, isValidTitle } from "../utils/validation";
+import { createReview, getReviewByArticleAndReviewer, listReviewsForArticle } from "../services/review.service";
 
 const router = Router();
 
@@ -59,6 +60,27 @@ router.post("/:id/submit", requireAuth, async (req, res) => {
 		return res.status(409).json ({ error: "Article is not a draft" });
 	const updated = await updateArticleStatus(req.params.id, "SUBMITTED");
 	res.json(updated);
+});
+
+router.post("/:id/reviews", requireAuth, async (req, res) => {
+	const article = await getArticleById(req.params.id);
+	if (!article)
+		return res.status(404).json({ error: "Article not found" });
+	if (isOwner(article.authorId, req.session.userId!))
+		return res.status(403).json({ error: "You cannot review your own article" });
+	if (article.status !== "SUBMITTED")
+		return res.status(409).json({ error: "Article is not open for review" });
+	const existingReview = await getReviewByArticleAndReviewer(req.params.id, req.session.userId!);
+	if (existingReview)
+		return res.status(409).json({ error: "You already reviewed this article" });
+	const { comment } = req.body;
+	const review = await createReview(req.params.id, req.session.userId!, comment);
+	res.status(201).json(review);
+});
+
+router.get("/:id/reviews", async (req, res) => {
+	const reviews = await listReviewsForArticle(req.params.id);
+	res.json(reviews);
 });
 
 export default router;

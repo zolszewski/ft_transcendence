@@ -185,3 +185,68 @@ POST {{baseUrl}}/api/articles/{{createArticleDay9.response.body.$.id}}/submit
 
 ### Essayer de soumettre un id inexistant (404 attendu)
 POST {{baseUrl}}/api/articles/id-inexistant/submit
+
+### ==========================================================
+### DAY 10 : reviews. Un article doit etre SUBMITTED pour etre reviewable, 
+### et on ne peut pas reviewer son propre article ni le meme article deux fois.
+### ==========================================================
+
+### Créer un compte "auteur"
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "author10@example.com",
+  "name": "Author10",
+  "password": "motdepasse123"
+}
+
+### Créer un article
+# @name createArticleDay10
+POST {{baseUrl}}/api/articles
+Content-Type: application/json
+
+{
+  "title": "Article à reviewer",
+  "content": "Contenu"
+}
+
+### Le soumettre pour review
+POST {{baseUrl}}/api/articles/{{createArticleDay10.response.body.$.id}}/submit
+
+### L'auteur essaie de reviewer son propre article (403 attendu)
+POST {{baseUrl}}/api/articles/{{createArticleDay10.response.body.$.id}}/reviews
+Content-Type: application/json
+
+{
+  "comment": "auto-review"
+}
+
+### Créer un compte "reviewer" (remplace le cookie actuel)
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "reviewer10@example.com",
+  "name": "Reviewer10",
+  "password": "motdepasse123"
+}
+
+### Reviewer l'article (201 attendu)
+POST {{baseUrl}}/api/articles/{{createArticleDay10.response.body.$.id}}/reviews
+Content-Type: application/json
+
+{
+  "comment": "Bon article"
+}
+
+### Essayer de le reviewer une deuxième fois (409 attendu)
+POST {{baseUrl}}/api/articles/{{createArticleDay10.response.body.$.id}}/reviews
+Content-Type: application/json
+
+{
+  "comment": "encore"
+}
+
+### Lister les reviews de l'article
+GET {{baseUrl}}/api/articles/{{createArticleDay10.response.body.$.id}}/reviews
