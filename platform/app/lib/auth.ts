@@ -21,7 +21,7 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
   }
 
   try {
-    const response = await fetch(`${BACKEND_URL}/auth/me`, {
+    const response = await fetch(`${BACKEND_URL}/api/auth/me`, {
       headers: {
         Cookie: `${sessionCookie.name}=${sessionCookie.value}`,
       },
