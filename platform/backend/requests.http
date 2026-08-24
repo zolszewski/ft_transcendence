@@ -466,3 +466,29 @@ DELETE {{baseUrl}}/api/comments/{{createCommentDay12.response.body.$.id}}
 
 ### Vérifier que la liste des commentaires est vide
 GET {{baseUrl}}/api/articles/{{createArticleDay12.response.body.$.id}}/comments
+
+### ==========================================================
+### DAY 13 : recherche/tri/pagination sur GET /api/articles.
+### Les résultats dépendent des articles déjà.
+### ==========================================================
+
+### Listing par défaut (page 1, 10 par page, plus récents en premier)
+GET {{baseUrl}}/api/articles
+
+### Recherche (adapte le terme à un titre d'article publié existant)
+GET {{baseUrl}}/api/articles?search=article
+
+### Tri du plus ancien au plus récent
+GET {{baseUrl}}/api/articles?sort=oldest
+
+### Pagination : 2 par page, page 1
+GET {{baseUrl}}/api/articles?limit=2&page=1
+
+### Pagination : 2 par page, page 2 (résultats différents de la page 1 attendus)
+GET {{baseUrl}}/api/articles?limit=2&page=2
+
+### Garde-fous : page négative -> ramenée à 1, pas d'erreur
+GET {{baseUrl}}/api/articles?page=-5
+
+### Garde-fous : limite énorme -> plafonnée à 50, pas d'erreur
+GET {{baseUrl}}/api/articles?limit=99999

@@ -1,21 +1,64 @@
 import { prisma } from "../lib/prisma";
 import { ArticleStatus } from "@prisma/client";
 
-export async function listArticles() {
+type ListArticlesOptions = {
+	search?: string;
+	sort?: "newest" | "oldest";
+	page?: number;
+	limit?: number;
+};
+
+export async function listArticles(options: ListArticlesOptions = {}) {
+	const { search, sort = "newest", page = 1, limit = 10 } = options;
+	const where = {
+		status: "PUBLISHED" as const,
+		...(search
+			? {
+				OR: [
+					{ title: { contains: search, mode: "insensitive" as const } },
+					{ content: { contains: search, mode: "insensitive" as const} },
+				],
+			}
+		: {}),
+	};
 	try {
-		return await prisma.Article.findMany({
-			include: {
-				author: {
-					select: { id: true, name: true },
-				},
-			},
-		});
+		const [articles, total] = await Promise.all([
+			prisma.Article.findMany({
+				where,
+				include: { author: { select: { id: true, name: true } } },
+				orderBy: { createdAt: sort === "oldest" ? "asc" : "desc" },
+				skip: (page - 1) * limit,
+				take: limit,
+			}),
+			prisma.Article.count({ where }),
+		]);
+		return { articles, total, page, totalPages: Math.ceil(total / limit) };
 	}
 	catch (error) {
 		console.error("Failed to list articles:", error);
 		throw new Error("Could not list articles");
 	}
 }
+
+
+
+
+
+// export async function listArticles() {
+// 	try {
+// 		return await prisma.Article.findMany({
+// 			include: {
+// 				author: {
+// 					select: { id: true, name: true },
+// 				},
+// 			},
+// 		});
+// 	}
+// 	catch (error) {
+// 		console.error("Failed to list articles:", error);
+// 		throw new Error("Could not list articles");
+// 	}
+// }
 
 export async function getArticleById(id: string) {
 	try {

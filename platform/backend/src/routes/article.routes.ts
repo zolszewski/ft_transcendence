@@ -8,11 +8,23 @@ import { createComment, listCommentsForArticle } from "../services/comment.servi
 
 const router = Router();
 
+
 router.get("/", async (req, res) => {
-	const articles = await listArticles();
-	const publicArticles = articles.filter((article) => article.status === "PUBLISHED")
-	res.json(publicArticles);
-});
+	const { search, sort, page, limit } = req.query;
+	const result = await listArticles({
+		search: typeof search === "string" ? search : undefined,
+		sort: sort === "oldest" ? "oldest" : "newest",
+		page: Math.max(1, Number(page) || 1),
+		limit: Math.min(50, Math.max(1, Number(limit) || 10)),
+	});
+	res.json(result);
+})
+
+// router.get("/", async (req, res) => {
+// 	const articles = await listArticles();
+// 	const publicArticles = articles.filter((article) => article.status === "PUBLISHED")
+// 	res.json(publicArticles);
+// });
 
 router.get("/:id", async (req, res) => {
 	const article = await getArticleById(req.params.id);
