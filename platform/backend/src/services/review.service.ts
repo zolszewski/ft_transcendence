@@ -1,4 +1,5 @@
 import { prisma } from "../lib/prisma";
+import { ReviewStatus } from "@prisma/client"
 
 export async function createReview(articleId: string, reviewerId: string, comment?: string) {
 	try {
@@ -35,5 +36,31 @@ export async function listReviewsForArticle(articleId: string) {
 	catch (error) {
 		console.error("Failed to list reviews:", error);
 		throw new Error("Could not list reviews");
+	}
+}
+
+export async function getReviewById(id: string) {
+	try {
+		return await prisma.Review.findUnique({
+			where: { id },
+		});
+	}
+	catch (error) {
+		console.error("Failed to fetch review:", error);
+		throw new Error("Could not fetch review");
+	}
+}
+
+export async function updateReviewStatus(id: string, status: ReviewStatus) {
+	try {
+		return await prisma.Review.update({
+			where: { id },
+			data: { status },
+			include: { reviewer: { select: { id: true, name: true } } },
+		});
+	}
+	catch (error) {
+		console.log("Failed to update review status:", error);
+		throw new Error("Could not update review status");
 	}
 }

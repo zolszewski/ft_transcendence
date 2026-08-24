@@ -250,3 +250,110 @@ Content-Type: application/json
 
 ### Lister les reviews de l'article
 GET {{baseUrl}}/api/articles/{{createArticleDay10.response.body.$.id}}/reviews
+
+### ==========================================================
+### DAY 11 : decision de review (approve/reject) + filtre PUBLISHED
+### sur les routes publiques. Un article SUBMITTED est invisible
+### publiquement tant qu'il n'a pas ete approuve par un reviewer.
+### ==========================================================
+
+### Créer un compte "auteur"
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "author11@example.com",
+  "name": "Author11",
+  "password": "motdepasse123"
+}
+
+### Créer un article
+# @name createArticleDay11
+POST {{baseUrl}}/api/articles
+Content-Type: application/json
+
+{
+  "title": "Article à publier",
+  "content": "Contenu"
+}
+
+### Le soumettre pour review
+POST {{baseUrl}}/api/articles/{{createArticleDay11.response.body.$.id}}/submit
+
+### Vérifier qu'il est invisible publiquement tant qu'il n'est pas publié (404 attendu)
+GET {{baseUrl}}/api/articles/{{createArticleDay11.response.body.$.id}}
+
+### Créer un compte "reviewer" (remplace le cookie actuel)
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "reviewer11@example.com",
+  "name": "Reviewer11",
+  "password": "motdepasse123"
+}
+
+### Reviewer l'article
+# @name createReviewDay11
+POST {{baseUrl}}/api/articles/{{createArticleDay11.response.body.$.id}}/reviews
+Content-Type: application/json
+
+{
+  "comment": "À valider"
+}
+
+### Se reconnecter en tant qu'auteur (remplace le cookie du reviewer)
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "author11@example.com",
+  "password": "motdepasse123"
+}
+
+### L'auteur (pas le reviewer) essaie de décider (403 attendu)
+PATCH {{baseUrl}}/api/reviews/{{createReviewDay11.response.body.$.id}}
+Content-Type: application/json
+
+{
+  "decision": "APPROVED"
+}
+
+### Se reconnecter en tant que reviewer (remplace le cookie de l'auteur)
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "reviewer11@example.com",
+  "password": "motdepasse123"
+}
+
+### Essayer une décision invalide (400 attendu)
+PATCH {{baseUrl}}/api/reviews/{{createReviewDay11.response.body.$.id}}
+Content-Type: application/json
+
+{
+  "decision": "MAYBE"
+}
+
+### Approuver la review (200 attendu, article -> PUBLISHED)
+PATCH {{baseUrl}}/api/reviews/{{createReviewDay11.response.body.$.id}}
+Content-Type: application/json
+
+{
+  "decision": "APPROVED"
+}
+
+### Essayer de redécider (409 attendu)
+PATCH {{baseUrl}}/api/reviews/{{createReviewDay11.response.body.$.id}}
+Content-Type: application/json
+
+{
+  "decision": "REJECTED"
+}
+
+### Vérifier que l'article est maintenant visible publiquement (200 attendu)
+GET {{baseUrl}}/api/articles/{{createArticleDay11.response.body.$.id}}
+
+### Vérifier qu'il apparaît dans le listing public
+GET {{baseUrl}}/api/articles

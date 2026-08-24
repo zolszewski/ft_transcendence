@@ -282,6 +282,7 @@ DAY 18 — DASHBOARD
 Developer A:
 - Implement dashboard aggregation endpoints.
 - Return article/review/activity data.
+- Add a way for an author to see their own non-PUBLISHED articles (draft/submitted/rejected). Since Day 11, GET /api/articles/:id only returns PUBLISHED articles for everyone, including the author - authors currently have no way to view their own unpublished work. #RAPH
 
 Developer B:
 - Build student dashboard.
@@ -328,6 +329,7 @@ Developer A:
 - Add useful indexes.
 - Optimize Prisma queries.
 - Verify relational queries.
+- Move the PUBLISHED filter on GET /api/articles from an in-app .filter() (added Day 11) into the Prisma query itself (where: { status: "PUBLISHED" }) - fetches only what's needed instead of everything. #RAPH
 
 Developer B:
 - Review frontend request patterns.

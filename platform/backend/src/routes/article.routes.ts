@@ -9,12 +9,13 @@ const router = Router();
 
 router.get("/", async (req, res) => {
 	const articles = await listArticles();
-	res.json(articles);
+	const publicArticles = articles.filter((article) => article.status === "PUBLISHED")
+	res.json(publicArticles);
 });
 
 router.get("/:id", async (req, res) => {
 	const article = await getArticleById(req.params.id);
-	if (!article)
+	if (!article || article.status !== "PUBLISHED")
 		return res.status(404).json({ error: "Article not found" });
 	res.json(article);
 });
