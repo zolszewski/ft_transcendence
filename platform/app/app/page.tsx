@@ -1,7 +1,11 @@
 import Link from "next/link";
 import ConnectedGallery from "@/components/ConnectedGallery";
+import LogoutButton from "@/components/LogoutButton";
+import { getCurrentUser } from "@/lib/auth";
  
-export default function Home() {
+export default async function Home() {
+  const user = await getCurrentUser();
+
   return (
     <main className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden">
       <ConnectedGallery />
@@ -20,6 +24,11 @@ export default function Home() {
             Explore.
           </Link>
         </p>
+        {user && (
+          <div className="mt-6 flex justify-center">
+            <LogoutButton />
+          </div>
+        )}
       </div>
     </main>
   );

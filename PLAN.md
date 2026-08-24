@@ -96,7 +96,7 @@ Developer B:
 - Add authenticated navigation.
 
 Integration:
-- Protected frontend and backend routes work correctly.
+- Protected frontend and backend routes work correctly. #merge sur main 
 
 
 DAY 07 — ARTICLE READ API

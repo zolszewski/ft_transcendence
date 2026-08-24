@@ -71,7 +71,7 @@ services:
       context: ./requirements/nginx
     container_name: nginx
     ports:
-      - "443:443"
+      - "8443:443"
     #volumes:
     #- postgresql_data:/var/www/html 
     depends_on:

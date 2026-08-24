@@ -17,7 +17,7 @@ export default function LoginPage() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    console.log("HANDLESUBMIT FIRING - VERSION 2");
+    
     setError("");
     setLoading(true);
 
@@ -39,6 +39,7 @@ export default function LoginPage() {
 
         return;
       }
+
       
       const redirectTo = searchParams.get("redirect") || "/";
       router.push(redirectTo);
