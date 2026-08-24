@@ -3,6 +3,10 @@
 ### Health check
 GET {{baseUrl}}/health
 
+### ==========================================================
+### DAY 05-06 : authentification (register/login/logout) + session protegee par requireAuth (/me)
+### ==========================================================
+
 ### Créer un compte.
 POST {{baseUrl}}/api/auth/register
 Content-Type: application/json
@@ -49,3 +53,307 @@ Content-Type: application/json
   "name": "Autre",
   "password": "autremotdepasse"
 }
+
+### ==========================================================
+### DAY 07 : lecture des articles il faut d'abord avoir des articles en base pour que ces tests renvoient autre chose qu'une liste vide :
+### docker compose -f platform/docker-compose.yml exec backend npx tsx src/script_test.ts
+### ==========================================================
+
+### Lister tous les articles
+# @name listArticles
+GET {{baseUrl}}/api/articles
+
+### Voir le détail du premier article de la liste ci-dessus
+GET {{baseUrl}}/api/articles/{{listArticles.response.body.$.0.id}}
+
+### Essayer un id qui n'existe pas (404 attendu)
+GET {{baseUrl}}/api/articles/id-inexistant
+
+### ==========================================================
+### DAY 08 : creer / modifier / supprimer un article, avec verification de propriete (isOwner). Deux comptes necessaires (proprietaire +
+### intrus) - chaque register/login remplace le cookie stocke par celui du compte qui vient de se connecter.
+### ==========================================================
+
+### Créer un compte "propriétaire"
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "owner@example.com",
+  "name": "Owner",
+  "password": "motdepasse123"
+}
+
+### Créer un article en tant que propriétaire
+# @name createArticle
+POST {{baseUrl}}/api/articles
+Content-Type: application/json
+
+{
+  "title": "Mon article",
+  "content": "Contenu de test"
+}
+
+### Modifier son propre article (200 attendu)
+PUT {{baseUrl}}/api/articles/{{createArticle.response.body.$.id}}
+Content-Type: application/json
+
+{
+  "title": "Mon article modifié",
+  "content": "Nouveau contenu"
+}
+
+### Créer un compte "intrus" (remplace le cookie actuel)
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "intruder@example.com",
+  "name": "Intruder",
+  "password": "motdepasse123"
+}
+
+### Essayer de modifier l'article d'un autre (403 attendu)
+PUT {{baseUrl}}/api/articles/{{createArticle.response.body.$.id}}
+Content-Type: application/json
+
+{
+  "title": "Piratage",
+  "content": "Piratage"
+}
+
+### Essayer de supprimer l'article d'un autre (403 attendu)
+DELETE {{baseUrl}}/api/articles/{{createArticle.response.body.$.id}}
+
+### Se reconnecter en tant que propriétaire
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "owner@example.com",
+  "password": "motdepasse123"
+}
+
+### Supprimer son propre article (204 attendu)
+DELETE {{baseUrl}}/api/articles/{{createArticle.response.body.$.id}}
+
+### Vérifier que l'article a bien disparu (404 attendu)
+GET {{baseUrl}}/api/articles/{{createArticle.response.body.$.id}}
+
+### ==========================================================
+### DAY 09 : soumettre un article pour review (DRAFT -> SUBMITTED)
+### ==========================================================
+
+### Créer un compte
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "day9@example.com",
+  "name": "Day9",
+  "password": "motdepasse123"
+}
+
+### Créer un article (DRAFT par défaut)
+# @name createArticleDay9
+POST {{baseUrl}}/api/articles
+Content-Type: application/json
+
+{
+  "title": "Article à soumettre",
+  "content": "Contenu"
+}
+
+### Soumettre en tant que propriétaire (200 attendu, status -> SUBMITTED)
+POST {{baseUrl}}/api/articles/{{createArticleDay9.response.body.$.id}}/submit
+
+### Soumettre une deuxième fois (409 attendu, déjà SUBMITTED)
+POST {{baseUrl}}/api/articles/{{createArticleDay9.response.body.$.id}}/submit
+
+### Créer un compte "intrus" (remplace le cookie actuel)
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "intruder9@example.com",
+  "name": "Intruder9",
+  "password": "motdepasse123"
+}
+
+### Essayer de soumettre l'article d'un autre (403 attendu)
+POST {{baseUrl}}/api/articles/{{createArticleDay9.response.body.$.id}}/submit
+
+### Essayer de soumettre un id inexistant (404 attendu)
+POST {{baseUrl}}/api/articles/id-inexistant/submit
+
+### ==========================================================
+### DAY 10 : reviews. Un article doit etre SUBMITTED pour etre reviewable, 
+### et on ne peut pas reviewer son propre article ni le meme article deux fois.
+### ==========================================================
+
+### Créer un compte "auteur"
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "author10@example.com",
+  "name": "Author10",
+  "password": "motdepasse123"
+}
+
+### Créer un article
+# @name createArticleDay10
+POST {{baseUrl}}/api/articles
+Content-Type: application/json
+
+{
+  "title": "Article à reviewer",
+  "content": "Contenu"
+}
+
+### Le soumettre pour review
+POST {{baseUrl}}/api/articles/{{createArticleDay10.response.body.$.id}}/submit
+
+### L'auteur essaie de reviewer son propre article (403 attendu)
+POST {{baseUrl}}/api/articles/{{createArticleDay10.response.body.$.id}}/reviews
+Content-Type: application/json
+
+{
+  "comment": "auto-review"
+}
+
+### Créer un compte "reviewer" (remplace le cookie actuel)
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "reviewer10@example.com",
+  "name": "Reviewer10",
+  "password": "motdepasse123"
+}
+
+### Reviewer l'article (201 attendu)
+POST {{baseUrl}}/api/articles/{{createArticleDay10.response.body.$.id}}/reviews
+Content-Type: application/json
+
+{
+  "comment": "Bon article"
+}
+
+### Essayer de le reviewer une deuxième fois (409 attendu)
+POST {{baseUrl}}/api/articles/{{createArticleDay10.response.body.$.id}}/reviews
+Content-Type: application/json
+
+{
+  "comment": "encore"
+}
+
+### Lister les reviews de l'article
+GET {{baseUrl}}/api/articles/{{createArticleDay10.response.body.$.id}}/reviews
+
+### ==========================================================
+### DAY 11 : decision de review (approve/reject) + filtre PUBLISHED
+### sur les routes publiques. Un article SUBMITTED est invisible
+### publiquement tant qu'il n'a pas ete approuve par un reviewer.
+### ==========================================================
+
+### Créer un compte "auteur"
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "author11@example.com",
+  "name": "Author11",
+  "password": "motdepasse123"
+}
+
+### Créer un article
+# @name createArticleDay11
+POST {{baseUrl}}/api/articles
+Content-Type: application/json
+
+{
+  "title": "Article à publier",
+  "content": "Contenu"
+}
+
+### Le soumettre pour review
+POST {{baseUrl}}/api/articles/{{createArticleDay11.response.body.$.id}}/submit
+
+### Vérifier qu'il est invisible publiquement tant qu'il n'est pas publié (404 attendu)
+GET {{baseUrl}}/api/articles/{{createArticleDay11.response.body.$.id}}
+
+### Créer un compte "reviewer" (remplace le cookie actuel)
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "reviewer11@example.com",
+  "name": "Reviewer11",
+  "password": "motdepasse123"
+}
+
+### Reviewer l'article
+# @name createReviewDay11
+POST {{baseUrl}}/api/articles/{{createArticleDay11.response.body.$.id}}/reviews
+Content-Type: application/json
+
+{
+  "comment": "À valider"
+}
+
+### Se reconnecter en tant qu'auteur (remplace le cookie du reviewer)
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "author11@example.com",
+  "password": "motdepasse123"
+}
+
+### L'auteur (pas le reviewer) essaie de décider (403 attendu)
+PATCH {{baseUrl}}/api/reviews/{{createReviewDay11.response.body.$.id}}
+Content-Type: application/json
+
+{
+  "decision": "APPROVED"
+}
+
+### Se reconnecter en tant que reviewer (remplace le cookie de l'auteur)
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "reviewer11@example.com",
+  "password": "motdepasse123"
+}
+
+### Essayer une décision invalide (400 attendu)
+PATCH {{baseUrl}}/api/reviews/{{createReviewDay11.response.body.$.id}}
+Content-Type: application/json
+
+{
+  "decision": "MAYBE"
+}
+
+### Approuver la review (200 attendu, article -> PUBLISHED)
+PATCH {{baseUrl}}/api/reviews/{{createReviewDay11.response.body.$.id}}
+Content-Type: application/json
+
+{
+  "decision": "APPROVED"
+}
+
+### Essayer de redécider (409 attendu)
+PATCH {{baseUrl}}/api/reviews/{{createReviewDay11.response.body.$.id}}
+Content-Type: application/json
+
+{
+  "decision": "REJECTED"
+}
+
+### Vérifier que l'article est maintenant visible publiquement (200 attendu)
+GET {{baseUrl}}/api/articles/{{createArticleDay11.response.body.$.id}}
+
+### Vérifier qu'il apparaît dans le listing public
+GET {{baseUrl}}/api/articles

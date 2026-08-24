@@ -8,5 +8,13 @@ export function isValidPassword(password: string): boolean {
 }
 
 export function isValidName(name: string): boolean {
-	return typeof name === "string" && name.trim().length >= 2;
+	return typeof name === "string" && name.trim().length >= 1;
+}
+
+export function isValidTitle(title: string): boolean {
+	return typeof title === "string" && title.trim().length >= 1;
+}
+
+export function isValidContent(content: string): boolean {
+	return typeof content === "string" && content.trim().length >= 1;
 }
