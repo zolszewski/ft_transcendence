@@ -3,6 +3,7 @@ import { sessionMiddleware } from "./middleware/session";
 import authRoutes from "./routes/auth.routes";
 import articleRoutes from "./routes/article.routes";
 import reviewRoutes from "./routes/review.routes"
+import commentRoutes from "./routes/comment.routes";
 
 const app = express();
 
@@ -11,6 +12,7 @@ app.use(sessionMiddleware);
 app.use("/api/auth", authRoutes);
 app.use("/api/articles", articleRoutes);
 app.use("/api/reviews", reviewRoutes);
+app.use("/api/comments", commentRoutes);
 
 app.get("/health", (_req, res) => {
   res.json({

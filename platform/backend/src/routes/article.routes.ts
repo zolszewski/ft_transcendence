@@ -4,6 +4,7 @@ import { isOwner } from "../utils/authorization"
 import { requireAuth } from "../middleware/auth";
 import { isValidContent, isValidTitle } from "../utils/validation";
 import { createReview, getReviewByArticleAndReviewer, listReviewsForArticle } from "../services/review.service";
+import { createComment, listCommentsForArticle } from "../services/comment.service";
 
 const router = Router();
 
@@ -79,9 +80,25 @@ router.post("/:id/reviews", requireAuth, async (req, res) => {
 	res.status(201).json(review);
 });
 
+router.post("/:id/comments", requireAuth, async (req, res) => {
+	const article = await getArticleById(req.params.id);
+	if (!article || article.status !== "PUBLISHED")
+		return res.status(404).json({ error: "Article not found" });
+	const { content } = req.body;
+	if (!isValidContent(content))
+		return res.status(400).json({ error: "Invalid input" });
+	const comment = await createComment(req.params.id, req.session.userId!, content);
+	res.status(201).json(comment);
+});
+
 router.get("/:id/reviews", async (req, res) => {
 	const reviews = await listReviewsForArticle(req.params.id);
 	res.json(reviews);
+});
+
+router.get("/:id/comments", async (req, res) => {
+	const comments = await listCommentsForArticle(req.params.id);
+	res.json(comments);
 });
 
 export default router;
