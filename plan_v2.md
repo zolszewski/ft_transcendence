@@ -13,6 +13,11 @@ Context:
   stays (User Management requires seeing friends' online status),
   hence a separate "WebSocket foundation" day, designed so chat can
   plug into it without redefining anything.
+- WebSocket foundation moved right after Redis (was originally later,
+  after several unrelated days) because Kaizatov is starting on chat
+  soon and needs something to plug into - it has no dependency on
+  anything between Day 14 and where it used to sit, so nothing is
+  lost by moving it up.
 
 
 DAY 14 — REDIS (unchanged)
@@ -23,14 +28,24 @@ showing slightly outdated data gracefully in the meantime rather than
 a blank screen.
 
 
-DAY 15 — API QUALITY (unchanged)
+DAY 15 — WEBSOCKET FOUNDATION
+--------------------------------------------------
+Developer A: session-authenticated WebSocket server (reuses the
+existing session cookie), clean connect/disconnect handling, online
+status tracking. Designed so chat can plug directly into it (same WS
+server, same auth), without building chat itself.
+Developer B: "online" indicator in the UI.
+POINTS: Websocket (Major, +2)
+
+
+DAY 16 — API QUALITY (unchanged)
 ----------------------------------
 Developer A: centralized errors, request validation, structured logs,
 standardized responses.
 Developer B: same on the frontend (error messages, loading/empty states).
 
 
-DAY 16 — SECURITY BASELINE (unchanged)
+DAY 17 — SECURITY BASELINE (unchanged)
 -----------------------------------------
 Developer A: CORS (lighter given Nginx already handles same-origin),
 security headers, rate limiting, auth review, protect endpoints.
@@ -40,10 +55,10 @@ code - React does this by default, just double-check nothing bypasses
 it), protected pages (re-verify that login-only pages like
 /explore, /publish, /review truly block logged-out visitors, including
 by typing the URL directly).
-Note: the rate limiting done here also serves the Public API module (Day 17).
+Note: the rate limiting done here also serves the Public API module (Day 18).
 
 
-DAY 17 — API CONTRACT + PUBLIC API (extended)
+DAY 18 — API CONTRACT + PUBLIC API (extended)
 ------------------------------------------------
 Developer A: document all endpoints, request/response formats, initial
 integration tests, + secured API key authentication (addition to the
@@ -54,41 +69,31 @@ interfaces, so front and back agree on the exact shape of the data.
 POINTS: Public API (Major, +2)
 
 
-DAY 18 — FILE UPLOAD (new)
+DAY 19 — FILE UPLOAD (new)
 -----------------------------
 Developer A: generic upload endpoint (multer), type/size validation,
 secure storage, file deletion.
 Developer B: reusable upload component.
 POINTS: File upload (Minor, +1)
-Why here: technical prerequisite for the avatar (Day 19).
+Why here: technical prerequisite for the avatar (Day 20).
 
 
-DAY 19 — PROFILE + AVATAR (new)
+DAY 20 — PROFILE + AVATAR (new)
 -----------------------------------
-Developer A: update-profile endpoint, avatar endpoint (reuses Day 18).
+Developer A: update-profile endpoint, avatar endpoint (reuses Day 19).
 Developer B: profile page, edit form, avatar upload.
 Integration: a user can update their info and avatar.
 (Contributes to the User Management Major, not complete yet at this stage.)
 
 
-DAY 20 — WEBSOCKET FOUNDATION (new)
----------------------------------------
-Developer A: session-authenticated WebSocket server (reuses the
-existing session cookie), clean connect/disconnect handling, online
-status tracking. Designed so chat can plug directly into it (same WS
-server, same auth), without building chat itself.
-Developer B: "online" indicator in the UI.
-POINTS: Websocket (Major, +2)
-
-
 DAY 21 — FRIENDS SYSTEM (new)
 ---------------------------------
 Developer A: add/remove friend, friends list, uses the online status
-from Day 20.
+from Day 15.
 Developer B: friends list UI, add/remove buttons.
 Integration: a user manages their friends list and sees who's online.
-POINTS: closes the User Management Major (+2) — profile (Day19) +
-avatar (Day19) + friends/online status (Day21) + auth (already done)
+POINTS: closes the User Management Major (+2) — profile (Day20) +
+avatar (Day20) + friends/online status (Day21) + auth (already done)
 = complete module.
 
 
@@ -228,10 +233,10 @@ Already acquired (Days 1-13):
 - Search/filter/pagination (Minor, +1)
 
 Targeted by Plan 2.0:
-- Public API (Major, +2) — Day 17
-- File upload (Minor, +1) — Day 18
-- User Management (Major, +2) — Days 19+21
-- Websocket (Major, +2) — Day 20
+- Websocket (Major, +2) — Day 15
+- Public API (Major, +2) — Day 18
+- File upload (Minor, +1) — Day 19
+- User Management (Major, +2) — Days 20+21
 - OAuth (Minor, +1) + 2FA (Minor, +1) — Day 25
 - i18n (Minor, +1) + RTL (Minor, +1) — Day 26
 - Health check/status page (Minor, +1) — Day 28
@@ -252,8 +257,8 @@ These 3 are independent of the rest, no other module depends on them.
 
 DO NOT CUT WITHOUT THINKING TWICE (structural, either lose several
 points at once or break the coherence of other modules):
-- Websocket (Day 20) - blocks User Management (online status) and chat
-- User Management (Days 19+21) - half already built (auth), abandoning
+- Websocket (Day 15) - blocks User Management (online status) and chat
+- User Management (Days 20+21) - half already built (auth), abandoning
   it wastes that work (the subject's "all or nothing" rule)
 - WAF/Vault (Day 32) - big chunk but nothing else depends on it, so
   cuttable as a last resort if truly necessary
