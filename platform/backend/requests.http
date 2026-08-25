@@ -492,3 +492,17 @@ GET {{baseUrl}}/api/articles?page=-5
 
 ### Garde-fous : limite énorme -> plafonnée à 50, pas d'erreur
 GET {{baseUrl}}/api/articles?limit=99999
+
+### ==========================================================
+### DAY 14 : cache Redis sur le listing d'articles. Le contenu de la
+### reponse HTTP est identique que la donnee vienne du cache ou de la
+### base. Pour verifier reellement que ca marche, se connecter a redis-cli :
+### docker compose -f platform/docker-compose.yml exec redis redis-cli KEYS "articles:*"
+### -> une requete GET doit creer une cle "articles:list:v0:...".
+### -> creer/modifier/supprimer un article doit faire passer
+###    "articles:cache:version" de vide/0 a 1, et la requete GET
+###    suivante doit creer une nouvelle cle "articles:list:v1:...".
+### ==========================================================
+
+### Peuple le cache (v0)
+GET {{baseUrl}}/api/articles
