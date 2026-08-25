@@ -329,7 +329,6 @@ Developer A:
 - Add useful indexes.
 - Optimize Prisma queries.
 - Verify relational queries.
-- Move the PUBLISHED filter on GET /api/articles from an in-app .filter() (added Day 11) into the Prisma query itself (where: { status: "PUBLISHED" }) - fetches only what's needed instead of everything. #RAPH
 
 Developer B:
 - Review frontend request patterns.

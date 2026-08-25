@@ -28,6 +28,7 @@ clean:
 
 fclean:
 	$(COMPOSE) down --rmi all -v --remove-orphans
+	docker builder prune -af
 
 re: fclean up
 
