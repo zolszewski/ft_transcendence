@@ -139,3 +139,58 @@ export async function updateArticleStatus(id: string,status: ArticleStatus) {
 		throw new Error("Could not update article status");
 	}
 }
+
+
+//last added function by Z, for the review page 
+
+
+type ListSubmittedArticlesOptions = {
+	reviewerId: string;
+	search?: string;
+	sort?: "newest" | "oldest";
+	page?: number;
+	limit?: number;
+};
+ 
+export async function listSubmittedArticlesForReview(options: ListSubmittedArticlesOptions) {
+	const { reviewerId, search, sort = "newest", page = 1, limit = 10 } = options;
+	const version = await getArticlesCacheVersion();
+	const cacheKey = `articles:submitted:v${version}:reviewer=${reviewerId}:search=${search ?? ""}:sort=${sort}:page=${page}:limit=${limit}`;
+	const cached = await getCached<{ articles: unknown[]; total: number; page: number; totalPages: number }>(cacheKey);
+	if (cached)
+		return cached;
+ 
+	const where = {
+		status: "SUBMITTED" as const,
+		authorId: { not: reviewerId },
+		reviews: { none: { reviewerId } },
+		...(search
+			? {
+					OR: [
+						{ title: { contains: search, mode: "insensitive" as const } },
+						{ content: { contains: search, mode: "insensitive" as const } },
+					],
+				}
+			: {}),
+	};
+ 
+	try {
+		const [articles, total] = await Promise.all([
+			prisma.Article.findMany({
+				where,
+				include: { author: { select: { id: true, name: true } } },
+				orderBy: { createdAt: sort === "oldest" ? "asc" : "desc" },
+				skip: (page - 1) * limit,
+				take: limit,
+			}),
+			prisma.Article.count({ where }),
+		]);
+		const result = { articles, total, page, totalPages: Math.ceil(total / limit) };
+		await setCached(cacheKey, result, 60);
+		return result;
+	} catch (error) {
+		console.error("Failed to list submitted articles:", error);
+		throw new Error("Could not list submitted articles");
+	}
+}
+ 

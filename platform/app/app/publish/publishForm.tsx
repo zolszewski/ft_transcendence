@@ -55,6 +55,20 @@ export default function PublishForm() {
         setError(data?.error ?? "Please retry.");
         return;
       }
+      const article = await response.json();
+      
+      const submitResponse = await apiFetch(`/articles/${article.id}/submit`, {
+        method: "POST",
+      });
+      console.log(`${article.id}`);
+      if (!submitResponse.ok) {
+        const data = await submitResponse.json().catch(() => null);
+        setError(
+          data?.error ??
+            "Article was saved, but submitting for review failed."
+        );
+        return;
+      }
 
       const redirectTo = searchParams.get("redirect") || "/";
       router.push(redirectTo);

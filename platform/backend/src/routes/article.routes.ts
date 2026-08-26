@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { listArticles, getArticleById, createArticle, updateArticle, deleteArticle, updateArticleStatus } from "../services/article.service";
+import { listArticles, getArticleById, createArticle, updateArticle, deleteArticle, updateArticleStatus, listSubmittedArticlesForReview } from "../services/article.service";
 import { isOwner } from "../utils/authorization"
 import { requireAuth } from "../middleware/auth";
 import { isValidContent, isValidTitle } from "../utils/validation";
@@ -25,6 +25,21 @@ router.get("/", async (req, res) => {
 // 	const publicArticles = articles.filter((article) => article.status === "PUBLISHED")
 // 	res.json(publicArticles);
 // });
+
+router.get("/submitted", requireAuth, async (req, res) => {
+	const { search, sort, page, limit } = req.query;
+	const result = await listSubmittedArticlesForReview({
+		status: "SUBMITTED",
+		excludeAuthorId: req.session.userId!,
+		excludeReviewedByUserId: req.session.userId!,
+		search: typeof search === "string" ? search : undefined,
+		sort: sort === "oldest" ? "oldest" : "newest",
+		page: Math.max(1, Number(page) || 1),
+		limit: Math.min(50, Math.max(1, Number(limit) || 10)),
+	});
+	res.json(result);
+});
+
 
 router.get("/:id", async (req, res) => {
 	const article = await getArticleById(req.params.id);
@@ -67,7 +82,7 @@ router.delete("/:id", requireAuth, async (req, res) => {
 router.post("/:id/submit", requireAuth, async (req, res) => {
 	const article = await getArticleById(req.params.id);
 	if (!article)
-		return res.status(404).json({ error: "Article not found" });
+		return res.status(404).json({ error: "Article not found in ID SUBMIT" });
 	if (!isOwner(article.authorId, req.session.userId!))
 		return res.status(403).json({ error: "Forbidden" });
 	if (article.status !== "DRAFT")

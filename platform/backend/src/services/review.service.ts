@@ -1,8 +1,10 @@
 import { prisma } from "../lib/prisma";
 import { ReviewStatus } from "@prisma/client"
+import { bumpArticlesCacheVersion } from "../lib/cache"
 
 export async function createReview(articleId: string, reviewerId: string, comment?: string) {
 	try {
+		await bumpArticlesCacheVersion();
 		return await prisma.Review.create({
 			data: { articleId, reviewerId, comment },
 			include: { reviewer: { select: { id: true, name: true } } },
