@@ -20,23 +20,14 @@ router.post("/register", async (req, res) => {
 
 router.post("/login", async (req, res) => {
 	const { email, password } = req.body;
-	console.log("LOGIN REQUEST:");
-	console.log("email: ", email);
-	console.log("password: ", password);
 	if (!isValidEmail(email) || !isValidPassword(password))
 		return res.status(400).json({ error: "Invalid input" });
 	const user = await getUserByEmail(email);
-	console.log("USERFOUND", user);
-	if (!user) {
-		console.log("USERNOTFOUND");
+	if (!user)
 		return res.status(401).json({ error: "Invalid credentials" });
-	}
 	const passwordMatches = await verifyPassword(password, user.password);
-	console.log("pass match : ", passwordMatches);
-	if (!passwordMatches) {
-		console.log("Passowrd not matching");
+	if (!passwordMatches)
 		return res.status(401).json({ error: "Invalid credentials" });
-	}
 	req.session.userId = user.id;
 	res.json({ id: user.id, email: user.email, name: user.name });
 });

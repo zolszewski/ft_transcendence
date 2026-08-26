@@ -506,3 +506,24 @@ GET {{baseUrl}}/api/articles?limit=99999
 
 ### Peuple le cache (v0)
 GET {{baseUrl}}/api/articles
+
+### ==========================================================
+### DAY 15 : WebSocket. Pas testable via requests.http, donc :
+###
+### 1. Se connecter sur le site
+###
+### 2. F12 -> Console -> allow pasting -> copier/coller ça :
+###
+### const script = document.createElement("script");
+### script.src = "http://localhost:4000/socket.io/socket.io.js";
+### script.onload = () => {
+###   const socket = io("https://localhost:8443");
+###   socket.on("connect", () => console.log("Connecte !", socket.id));
+###   socket.on("user:online", (id) => console.log("En ligne :", id));
+###   socket.on("user:offline", (id) => console.log("Deconnecte :", id));
+### };
+### document.head.appendChild(script);
+###
+### 2. Dans le terminal (en étant toujours connecté) :
+### docker compose -f platform/docker-compose.yml exec redis redis-cli SMEMBERS "online_users"
+### ==========================================================

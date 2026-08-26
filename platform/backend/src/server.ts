@@ -4,6 +4,8 @@ import authRoutes from "./routes/auth.routes";
 import articleRoutes from "./routes/article.routes";
 import reviewRoutes from "./routes/review.routes"
 import commentRoutes from "./routes/comment.routes";
+import http from "http";
+import { initSocketServer } from "./lib/socket";
 
 const app = express();
 
@@ -21,8 +23,11 @@ app.get("/health", (_req, res) => {
   });
 });
 
+const httpServer = http.createServer(app);
+initSocketServer(httpServer);
+
 const PORT = 4000;
 
-app.listen(PORT, "0.0.0.0", () => {
+httpServer.listen(PORT, "0.0.0.0", () => {
   console.log(`Backend running on port ${PORT}`);
 });
