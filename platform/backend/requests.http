@@ -536,3 +536,99 @@ GET {{baseUrl}}/api/articles
 ### Provoque une vraie erreur non gérée (pas de body/Content-Type) :
 ### erreur500 , + un log JSON structuré côté serveur (docker compose logs backend)
 POST {{baseUrl}}/api/articles
+
+### ==========================================================
+### DAY 17 : sécurité de base (helmet, rate limiting, protection
+### de la route GET /:id/reviews).
+###
+### Helmet + rate limiting global ne sont pas testables via une seule
+### requête : vérifier les headers de sécurité sur n'importe quelle
+### réponse ci-dessus (Content-Security-Policy, X-Frame-Options,
+### Strict-Transport-Security...), et pour vraiment déclencher un 429,
+### boucler des requêtes depuis un terminal :
+###   for i in $(seq 1 12); do curl -s -o /dev/null -w "%{http_code}\n" \
+###     -X POST http://localhost:4000/api/auth/login \
+###     -H "Content-Type: application/json" \
+###     -d '{"email":"nobody@test.com","password":"wrongpass"}'; done
+### -> les 10 premiers : 401, à partir du 11e : 429.
+### Le limiter auth ignore les tentatives réussies (skipSuccessfulRequests),
+### donc une même boucle avec un bon mot de passe reste en 200 en continu.
+### ==========================================================
+
+### Créer un compte "auteur"
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "author17@example.com",
+  "name": "Author17",
+  "password": "motdepasse123"
+}
+
+### Créer un article
+# @name createArticleDay17
+POST {{baseUrl}}/api/articles
+Content-Type: application/json
+
+{
+  "title": "Article Day 17",
+  "content": "Contenu pour tester la protection des reviews"
+}
+
+### Le soumettre pour review
+POST {{baseUrl}}/api/articles/{{createArticleDay17.response.body.$.id}}/submit
+
+### Créer un compte "reviewer" (remplace le cookie actuel)
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "reviewer17@example.com",
+  "name": "Reviewer17",
+  "password": "motdepasse123"
+}
+
+### Reviewer l'article
+POST {{baseUrl}}/api/articles/{{createArticleDay17.response.body.$.id}}/reviews
+Content-Type: application/json
+
+{
+  "comment": "À valider"
+}
+
+### Le reviewer consulte les reviews de l'article (200 attendu, il en fait partie)
+GET {{baseUrl}}/api/articles/{{createArticleDay17.response.body.$.id}}/reviews
+
+### Créer un compte "tiers" (remplace le cookie actuel, ni auteur ni reviewer)
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "stranger17@example.com",
+  "name": "Stranger17",
+  "password": "motdepasse123"
+}
+
+### Le tiers tente de consulter les reviews (403 attendu)
+GET {{baseUrl}}/api/articles/{{createArticleDay17.response.body.$.id}}/reviews
+
+### L'auteur se reconnecte (remplace le cookie actuel)
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "author17@example.com",
+  "password": "motdepasse123"
+}
+
+### L'auteur consulte les reviews de son article (200 attendu)
+GET {{baseUrl}}/api/articles/{{createArticleDay17.response.body.$.id}}/reviews
+
+### L'auteur consulte les reviews d'un article inexistant (404 attendu)
+GET {{baseUrl}}/api/articles/nonexistent-id-1234/reviews
+
+### L'auteur se déconnecte
+POST {{baseUrl}}/api/auth/logout
+
+### Visiteur non connecté tente de consulter les reviews (401 attendu)
+GET {{baseUrl}}/api/articles/{{createArticleDay17.response.body.$.id}}/reviews

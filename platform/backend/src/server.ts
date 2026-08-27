@@ -7,9 +7,20 @@ import commentRoutes from "./routes/comment.routes";
 import http from "http";
 import { initSocketServer } from "./lib/socket";
 import { errorHandler } from "./middleware/errorHandler";
+import helmet from "helmet";
+import { rateLimit } from "express-rate-limit";
 
 const app = express();
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 100,
+  standardHeaders: 'draft-8',
+  legacyHeaders: false,
+  ipv6Subnet: 56,
+});
 
+app.use(helmet());
+app.use(apiLimiter);
 app.use(express.json());
 app.use(sessionMiddleware);
 app.use("/api/auth", authRoutes);

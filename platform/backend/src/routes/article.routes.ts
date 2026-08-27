@@ -103,8 +103,14 @@ router.post("/:id/comments", requireAuth, async (req, res) => {
 	res.status(201).json(comment);
 });
 
-router.get("/:id/reviews", async (req, res) => {
+router.get("/:id/reviews", requireAuth, async (req, res) => {
+	const article = await getArticleById(req.params.id);
+	if (!article) 
+		return res.status(404).json({ error: "Article not found" });
 	const reviews = await listReviewsForArticle(req.params.id);
+	const isReviewer = reviews.some((r) => isOwner(r.reviewerId, req.session.userId!));
+	if (!isOwner(article.authorId, req.session.userId!) && !isReviewer)
+		return res.status(403).json({ error : "Forbidden" });
 	res.json(reviews);
 });
 
