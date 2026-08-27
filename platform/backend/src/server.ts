@@ -6,6 +6,7 @@ import reviewRoutes from "./routes/review.routes"
 import commentRoutes from "./routes/comment.routes";
 import http from "http";
 import { initSocketServer } from "./lib/socket";
+import { errorHandler } from "./middleware/errorHandler";
 
 const app = express();
 
@@ -23,6 +24,7 @@ app.get("/health", (_req, res) => {
   });
 });
 
+app.use(errorHandler); // laisser en dernier, ne surtout pas placer de routes après cette commande
 const httpServer = http.createServer(app);
 initSocketServer(httpServer);
 

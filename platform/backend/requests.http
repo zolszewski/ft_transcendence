@@ -527,3 +527,12 @@ GET {{baseUrl}}/api/articles
 ### 2. Dans le terminal (en étant toujours connecté) :
 ### docker compose -f platform/docker-compose.yml exec redis redis-cli SMEMBERS "online_users"
 ### ==========================================================
+
+### ==========================================================
+### DAY 16 : gestion d'erreurs centralisée (filet de sécurité pour
+### les erreurs imprévues)
+### ==========================================================
+
+### Provoque une vraie erreur non gérée (pas de body/Content-Type) :
+### erreur500 , + un log JSON structuré côté serveur (docker compose logs backend)
+POST {{baseUrl}}/api/articles
