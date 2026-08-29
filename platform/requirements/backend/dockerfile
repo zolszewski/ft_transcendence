@@ -8,6 +8,8 @@ COPY backend/prisma ./prisma
 
 RUN npm install
 
+RUN npm install multer -D @types/multer
+
 COPY backend/ ./
 
 EXPOSE 4000

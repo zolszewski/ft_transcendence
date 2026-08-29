@@ -11,6 +11,7 @@ type Article = {
   abstract: string | null;
   createdAt: string;
   author: { id: string; name: string };
+  miniature: string;
 };
  
 type ListResult = {
@@ -111,6 +112,11 @@ export default function ReviewList() {
                   href={`/review/${article.id}`}
                   className="block border p-4 hover:underline"
                 >
+                  <img
+                    src={article.miniature}
+                    alt={`Miniature for ${article.title}`}
+                    className="h-40 w-full object-cover"
+                  />
                   <span className="block font-bold">{article.title}</span>
                   <span className="mt-1 block text-sm text-gray-600">
                     by {article.author.name} ·{" "}

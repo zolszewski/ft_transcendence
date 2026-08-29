@@ -35,9 +35,9 @@ export default function RegisterPage() {
 
       if (!response.ok) {
         const data = await response.json().catch(() => null);
-
+      
         setError(
-          data?.message ?? "Unable to create your account."
+          data?.error ?? "Unable 4444 to create your account."
         );
 
         return;

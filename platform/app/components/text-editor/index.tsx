@@ -9,7 +9,7 @@ export type TextEditorHandle = {
   image: File | null;
 };
  
-const TextEditor = forwardRef<TextEditorHandle>(function TextEditor(_props, ref) {
+  const TextEditor = forwardRef<TextEditorHandle>(function TextEditor(_props, ref) {
   const editorRef = useRef<HTMLDivElement>(null);
   const titleRef = useRef<HTMLTextAreaElement>(null);
   const [image, setImage] = useState<File | null>(null);
@@ -20,10 +20,8 @@ const TextEditor = forwardRef<TextEditorHandle>(function TextEditor(_props, ref)
       setImageUrl("");
       return;
     }
- 
     const url = URL.createObjectURL(image);
     setImageUrl(url);
- 
     return () => URL.revokeObjectURL(url);
   }, [image]);
  
@@ -53,7 +51,9 @@ const TextEditor = forwardRef<TextEditorHandle>(function TextEditor(_props, ref)
         )}
         <input
           type="file"
+          name= "miniature"
           accept="image/*"
+          required
           onChange={handleImageChange}
           className="hidden"
         />

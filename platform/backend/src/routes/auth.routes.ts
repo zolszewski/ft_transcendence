@@ -5,6 +5,7 @@ import { isValidEmail, isValidPassword, isValidName } from "../utils/validation"
 import { requireAuth } from "../middleware/auth";
 
 const router = Router();
+
 router.post("/register", async (req, res) => {
 	const { email, name, password } = req.body;
 	if (!isValidEmail(email) || !isValidPassword(password) || !isValidName(name))

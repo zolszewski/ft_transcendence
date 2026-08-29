@@ -11,8 +11,10 @@ app.use(express.json());
 app.use(sessionMiddleware);
 app.use("/api/auth", authRoutes);
 app.use("/api/articles", articleRoutes);
+app.use("/uploads", express.static("/app/public/uploads"));
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/comments", commentRoutes);
+
 
 app.get("/health", (_req, res) => {
   res.json({

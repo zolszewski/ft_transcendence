@@ -38,6 +38,8 @@ prisma-generate:
 prisma-migrate:
 	$(COMPOSE) exec backend npx prisma migrate deploy
 
+prisma-migrate-dev:
+	$(COMPOSE) exec backend npx prisma migrate dev
 
 
 .PHONY: all up down stop start restart logs ps clean fclean re prisma-generate prisma-migrate

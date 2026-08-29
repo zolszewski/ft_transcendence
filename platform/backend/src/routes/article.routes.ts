@@ -1,4 +1,6 @@
 import { Router } from "express";
+import multer from "multer";
+import path from "path";
 import { listArticles, getArticleById, createArticle, updateArticle, deleteArticle, updateArticleStatus, listSubmittedArticlesForReview } from "../services/article.service";
 import { isOwner } from "../utils/authorization"
 import { requireAuth } from "../middleware/auth";
@@ -8,6 +10,23 @@ import { createComment, listCommentsForArticle } from "../services/comment.servi
 
 const router = Router();
 
+const storage = multer.diskStorage({
+  destination: "/app/public/uploads",
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname); // e.g. ".png"
+    const unique = `${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`;
+    cb(null, unique);
+  },
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const allowed = ["image/png", "image/jpeg", "image/webp"];
+    cb(null, allowed.includes(file.mimetype));
+  },
+});
 
 router.get("/", async (req, res) => {
 	const { search, sort, page, limit } = req.query;
@@ -20,18 +39,11 @@ router.get("/", async (req, res) => {
 	res.json(result);
 })
 
-// router.get("/", async (req, res) => {
-// 	const articles = await listArticles();
-// 	const publicArticles = articles.filter((article) => article.status === "PUBLISHED")
-// 	res.json(publicArticles);
-// });
 
 router.get("/submitted", requireAuth, async (req, res) => {
 	const { search, sort, page, limit } = req.query;
 	const result = await listSubmittedArticlesForReview({
-		status: "SUBMITTED",
-		excludeAuthorId: req.session.userId!,
-		excludeReviewedByUserId: req.session.userId!,
+		reviewerId: req.session.userId!,
 		search: typeof search === "string" ? search : undefined,
 		sort: sort === "oldest" ? "oldest" : "newest",
 		page: Math.max(1, Number(page) || 1),
@@ -48,13 +60,35 @@ router.get("/:id", async (req, res) => {
 	res.json(article);
 });
 
-router.post("/", requireAuth, async (req, res) => {
-	const { title, content, abstract } =req.body;
-	if(!isValidTitle(title) || !isValidContent(content))
-		return res.status(400).json({ error: "Invalid input" });
-	const article = await createArticle(req.session.userId!, title, content, abstract);
-	res.status(201).json(article);
-});
+router.post("/", requireAuth, upload.single("miniature"), async (req, res) => {
+	try {
+            const { title, content, abstract } = req.body;
+            if (!req.file) {
+                return res.status(400).json({
+                    error: "A miniature is required.", });
+            }
+            if (!isValidTitle(title) || !isValidContent(content)) {
+                return res.status(400).json({
+                    error: "Invalid input",
+                });
+            }
+            const miniature = `/uploads/${req.file.filename}`;
+            const article = await createArticle(
+                req.session.userId!,
+                title,
+                content,
+				miniature,
+                abstract ?? "",  
+            );
+            res.status(201).json(article);
+        } catch (error) {
+            console.error("Failed to create article:", error);
+            res.status(500).json({
+                error: "Could not create article",
+            });
+        }
+    });
+
 
 router.put("/:id", requireAuth, async (req, res) => {
 	const article = await getArticleById(req.params.id);
@@ -128,4 +162,10 @@ router.get("/:id/comments", async (req, res) => {
 	res.json(comments);
 });
 
+
+
+
 export default router;
+
+
+// last route by Z for file upload

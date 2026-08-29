@@ -85,11 +85,11 @@ export async function getArticleById(id: string) {
 	}
 }
 
-export async function createArticle(authorId: string, title: string, content: string, abstract?: string) {
+export async function createArticle(authorId: string, title: string, content: string, miniature: string,  abstract: string) {
 	try {
 		await bumpArticlesCacheVersion();
 		return await prisma.Article.create({
-			data: { title, content, abstract, authorId },
+			data: { title, content, abstract, authorId, miniature },
 			include: { author: { select: { id: true, name: true } } },
 		});
 	}
