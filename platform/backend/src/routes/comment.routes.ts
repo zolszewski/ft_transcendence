@@ -1,9 +1,10 @@
 import { Router } from "express";
 import { requireAuth } from "../middleware/auth";
-import { deleteComment, getCommentById } from "../services/comment.service";
+import { createComment, deleteComment, getCommentById } from "../services/comment.service";
 import { isOwner } from "../utils/authorization";
 
 const router = Router();
+
 
 router.delete("/:id", requireAuth, async (req, res) => {
 	const comment = await getCommentById(req.params.id);

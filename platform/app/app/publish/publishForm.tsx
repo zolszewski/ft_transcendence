@@ -8,6 +8,7 @@ import Link from "next/link";
 import LogoutButton from "@/components/LogoutButton";
 import TextEditor from "@/components/text-editor";
 import type { TextEditorHandle } from "@/components/text-editor";
+import { apiClient } from "@/lib/apiClient";
 
 export default function PublishForm() {
   const router = useRouter();
@@ -28,74 +29,36 @@ export default function PublishForm() {
     content: "",
   };
 
-  const miniatureFile =
-    editorRef.current?.image ?? null;
-
+  const miniatureFile = editorRef.current?.image ?? null;
   const { title, content } = editorData;
-
-  if (!miniatureFile) {
-    setError("Please add a miniature to your article.");
-    return;
-  }
 
   if (!title) {
     setError("Add a title before continuing.");
     return;
   }
-
   if (!content) {
     setError("Write some content before continuing.");
     return;
   }
-
   setLoading(true);
 
   try {
-    const formData = new FormData();
-
-    formData.append("title", title);
-    formData.append("content", content);
-    formData.append("abstract", "");
-    formData.append("miniature", miniatureFile);
-
-    const response = await apiFetch("/articles", {
-      method: "POST",
-      body: formData,
-    });
-
-    if (!response.ok) {
-      const data = await response.json().catch(() => null);
-
-      setError(
-        data?.error ?? "Unable to create the article."
-      );
-
+    
+    const createResponse = await apiClient.articles.create(title, content, miniatureFile);
+    if (createResponse.success === false) {
+      setError(createResponse.error);
       return;
     }
-
-    const article = await response.json();
-
-    const submitResponse = await apiFetch(
-      `/articles/${article.id}/submit`,
-      {
-        method: "POST",
-      }
-    );
-
-    if (!submitResponse.ok) {
-      const data = await submitResponse.json().catch(() => null);
-
-      setError(
-        data?.error ??
-          "Article was saved, but submitting for review failed."
-      );
-
+    const article = createResponse.data;
+    
+    const submitResponse = await apiClient.articles.submit(article.id);
+    if (submitResponse.success === false) {
+      setError("Article was saved, but submitting for review failed: " + submitResponse.error);
       return;
     }
 
     const redirectTo =
       searchParams.get("redirect") || "/";
-
     router.push(redirectTo);
     router.refresh();
 

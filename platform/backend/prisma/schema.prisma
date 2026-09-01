@@ -46,7 +46,7 @@ model Article {
   abstract String?
   content  String
   status   ArticleStatus @default(DRAFT)
-  miniature String
+  miniature String?
 
   authorId String
   author   User   @relation(fields: [authorId], references: [id])

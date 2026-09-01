@@ -28,7 +28,7 @@ const upload = multer({
   },
 });
 
-router.get("/", async (req, res) => {
+router.get("/explore", async (req, res) => {
 	const { search, sort, page, limit } = req.query;
 	const result = await listArticles({
 		search: typeof search === "string" ? search : undefined,
@@ -55,24 +55,23 @@ router.get("/submitted", requireAuth, async (req, res) => {
 
 router.get("/:id", async (req, res) => {
 	const article = await getArticleById(req.params.id);
-	if (!article || article.status !== "PUBLISHED")
+	if (!article)
 		return res.status(404).json({ error: "Article not found" });
+	const userId = req.session?.userId;
+	if (article.status === "DRAFT" && !userId)
+		return res.status(403).json({ error: "Forbidden" });
 	res.json(article);
 });
 
 router.post("/", requireAuth, upload.single("miniature"), async (req, res) => {
 	try {
             const { title, content, abstract } = req.body;
-            if (!req.file) {
-                return res.status(400).json({
-                    error: "A miniature is required.", });
-            }
             if (!isValidTitle(title) || !isValidContent(content)) {
                 return res.status(400).json({
                     error: "Invalid input",
                 });
             }
-            const miniature = `/uploads/${req.file.filename}`;
+            const miniature = req.file ? `/uploads/${req.file.filename}` : null;
             const article = await createArticle(
                 req.session.userId!,
                 title,
@@ -116,7 +115,7 @@ router.delete("/:id", requireAuth, async (req, res) => {
 router.post("/:id/submit", requireAuth, async (req, res) => {
 	const article = await getArticleById(req.params.id);
 	if (!article)
-		return res.status(404).json({ error: "Article not found in ID SUBMIT" });
+		return res.status(404).json({ error: "Article not found" });
 	if (!isOwner(article.authorId, req.session.userId!))
 		return res.status(403).json({ error: "Forbidden" });
 	if (article.status !== "DRAFT")

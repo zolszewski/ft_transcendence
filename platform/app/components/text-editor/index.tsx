@@ -1,6 +1,7 @@
 "use client";
  
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
+import DOMPurify from "dompurify";
 import type { ChangeEvent } from "react";
 import Menu from "./menu";
  
@@ -24,6 +25,15 @@ export type TextEditorHandle = {
     setImageUrl(url);
     return () => URL.revokeObjectURL(url);
   }, [image]);
+
+  function getEditorContent() {
+    const RawEditorContent = editorRef.current?.innerHTML;
+    if (!RawEditorContent) return "";
+    return DOMPurify.sanitize(RawEditorContent, { 
+      FORBID_TAGS: ["script", "style"],
+      FORBID_ATTR: ["style", "onerror", "onclick"],
+    });
+  }
  
   function handleImageChange(event: ChangeEvent<HTMLInputElement>) {
     setImage(event.target.files?.[0] ?? null);
@@ -32,7 +42,7 @@ export type TextEditorHandle = {
   useImperativeHandle(ref, () => ({
     getData: () => ({
       title: titleRef.current?.value.trim() ?? "",
-      content: editorRef.current?.innerHTML.trim() ?? "",
+      content: getEditorContent(),
     }),
     image,
   }));
@@ -53,7 +63,6 @@ export type TextEditorHandle = {
           type="file"
           name= "miniature"
           accept="image/*"
-          required
           onChange={handleImageChange}
           className="hidden"
         />

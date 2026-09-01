@@ -4,6 +4,7 @@ services:
   postgresql:
     build:
       context: ./requirements/postgresql
+      dockerfile: dockerfile
     container_name: postgresql
     volumes: 
       - postgresql_data:/var/lib/postgresql/data
@@ -22,6 +23,7 @@ services:
   redis:
     build:
       context: ./requirements/redis
+      dockerfile: dockerfile
     container_name: redis
     volumes:
       - redis_data:/data
@@ -69,6 +71,7 @@ services:
   nginx:
     build:
       context: ./requirements/nginx
+      dockerfile: dockerfile
     container_name: nginx
     ports:
       - "8443:443"
