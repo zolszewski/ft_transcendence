@@ -9,6 +9,7 @@ import { initSocketServer } from "./lib/socket";
 import { errorHandler } from "./middleware/errorHandler";
 import helmet from "helmet";
 import { rateLimit } from "express-rate-limit";
+import { resolveApiKey } from "./middleware/auth";
 
 const app = express();
 const apiLimiter = rateLimit({
@@ -23,6 +24,7 @@ app.use(helmet());
 app.use(apiLimiter);
 app.use(express.json());
 app.use(sessionMiddleware);
+app.use(resolveApiKey);
 app.use("/api/auth", authRoutes);
 app.use("/api/articles", articleRoutes);
 app.use("/api/reviews", reviewRoutes);

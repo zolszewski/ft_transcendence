@@ -3,6 +3,7 @@ import { createUser, getUserByEmail, getUserById } from "../services/user.servic
 import { hashPassword, verifyPassword } from "../services/auth.service";
 import { isValidEmail, isValidPassword, isValidName } from "../utils/validation";
 import { authLimiter, requireAuth } from "../middleware/auth";
+import { createApiKey } from "../services/apiKey.service";
 
 const router = Router();
 router.post("/register", authLimiter, async (req, res) => {
@@ -40,6 +41,11 @@ router.post("/logout", (req, res) => {
 		res.json({ success: true });
 	});
 });
+
+router.post("/api-keys", requireAuth, async (req, res) => {
+	const apiKey = await createApiKey(req.session.userId!);
+	res.status(201).json({ apiKey });
+})
 
 router.get("/me", requireAuth, async (req, res) => {
 	const user = await getUserById(req.session.userId!);

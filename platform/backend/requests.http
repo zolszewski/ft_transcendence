@@ -632,3 +632,57 @@ POST {{baseUrl}}/api/auth/logout
 
 ### Visiteur non connecté tente de consulter les reviews (401 attendu)
 GET {{baseUrl}}/api/articles/{{createArticleDay17.response.body.$.id}}/reviews
+
+### ==========================================================
+### DAY 18 : module Public API - authentification par clé API
+### (en plus du cookie de session), documentation dans API.md.
+### ==========================================================
+
+### Créer un compte
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "apikey18@example.com",
+  "name": "ApiKey18",
+  "password": "motdepasse123"
+}
+
+### Générer une clé API (avec le cookie de session actuel)
+# @name createApiKeyDay18
+POST {{baseUrl}}/api/auth/api-keys
+
+### Se déconnecter (plus aucun cookie valide à partir d'ici)
+POST {{baseUrl}}/api/auth/logout
+
+### Utiliser la clé API pour /me, SANS cookie (200 attendu, bonne identité renvoyée)
+GET {{baseUrl}}/api/auth/me
+Authorization: Bearer {{createApiKeyDay18.response.body.$.apiKey}}
+
+### Créer un article via la clé API, SANS cookie (201 attendu, authorId = le bon compte)
+# @name createArticleDay18
+POST {{baseUrl}}/api/articles
+Content-Type: application/json
+Authorization: Bearer {{createApiKeyDay18.response.body.$.apiKey}}
+
+{
+  "title": "Article créé via clé API",
+  "content": "Contenu de test pour le module Public API"
+}
+
+### Modifier ce même article via la clé API (200 attendu, PUT couvert par la clé aussi)
+PUT {{baseUrl}}/api/articles/{{createArticleDay18.response.body.$.id}}
+Content-Type: application/json
+Authorization: Bearer {{createApiKeyDay18.response.body.$.apiKey}}
+
+{
+  "title": "Article modifié via clé API",
+  "content": "Nouveau contenu"
+}
+
+### Clé invalide (401 attendu, jamais traitée comme un vrai userId)
+GET {{baseUrl}}/api/auth/me
+Authorization: Bearer cleinventeequinexistepas
+
+### Aucune authentification du tout, route protégée (401 attendu, comportement inchangé)
+GET {{baseUrl}}/api/auth/me
