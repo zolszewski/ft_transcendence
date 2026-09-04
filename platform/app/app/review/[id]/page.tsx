@@ -3,9 +3,9 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { apiFetch } from "@/lib/api";
 import LogoutButton from "@/components/LogoutButton";
 import DOMPurify from "dompurify";
+import { apiClient } from "@/lib/apiClient";
 
 type Article = {
   id: string;
@@ -34,12 +34,12 @@ export default function ReviewDetail() {
       setLoading(true);
       setError("");
       try {
-        const response = await apiFetch(`/articles/${params.id}`);
-        if (!response.ok) {
-          setError("Unable to load this article.");
+        const response = await apiClient.articles.getReviewingArticle(params.id);
+        if (!response.success) {
+          setError(response.error || "Unable to load this article." );
           return;
         }
-        setArticle(await response.json());
+        setArticle(await response.data);
       } catch {
         setError("Unable to connect to the server.");
       } finally {
@@ -53,27 +53,16 @@ export default function ReviewDetail() {
     setSubmitting(decision);
 
     try {
-      const reviewRes = await apiFetch(`/articles/${params.id}/reviews`, {
-        method: "POST",
-        body: JSON.stringify({ comment }),
-      });
-      if (!reviewRes.ok) {
-        const data = await reviewRes.json().catch(() => null);
-        setSubmitError(data?.error ?? "Unable to submit review.");
+      const reviewComment = await apiClient.articles.postReview(params.id, comment);
+      if (!reviewComment.success) {
+        setSubmitError(reviewComment.error || "Unable to submit review.");
         return;
       }
-      const review = await reviewRes.json();
-      const decisionRes = await apiFetch(`/reviews/${review.id}`, {
-        method: "PATCH",
-        body: JSON.stringify({ decision }),
-      });
-
-      if (!decisionRes.ok) {
-        const data = await decisionRes.json().catch(() => null);
-        setSubmitError(data?.error ?? "Unable to record decision.");
+      const reviewDecision = await apiClient.articles.postDecision(reviewComment.data.id, decision);
+      if (!reviewDecision.success) {
+        setSubmitError(reviewDecision.error || "Unable to record decision.");
         return;
       }
-
       router.push("/review");
       router.refresh();
     } catch {

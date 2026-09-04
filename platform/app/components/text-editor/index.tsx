@@ -62,7 +62,7 @@ export type TextEditorHandle = {
         <input
           type="file"
           name= "miniature"
-          accept="image/*"
+          accept="image/png,image/jpeg,image/webp"
           onChange={handleImageChange}
           className="hidden"
         />

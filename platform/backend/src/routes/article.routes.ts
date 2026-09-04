@@ -52,13 +52,35 @@ router.get("/submitted", requireAuth, async (req, res) => {
 	res.json(result);
 });
 
+router.post("/draft", requireAuth, upload.single("miniature"), async (req, res) => {
+	try {
+		const { title, content, abstract } = req.body;
+		if (!isValidTitle(title) || !isValidContent(content)) {
+			return res.status(400).json({ error: "Invalid input" });
+		}
+
+		const miniature = req.file ? `/uploads/${req.file.filename}` : null;
+		const article = await createArticle(
+			req.session.userId!,
+			title,
+			content,
+			miniature,
+			abstract ?? "",
+		);
+		res.status(201).json(article);
+	} catch (error) {
+		console.error("Failed to create draft:", error);
+		res.status(500).json({ error: "Could not create draft" });
+	}
+});
+
 
 router.get("/:id", async (req, res) => {
 	const article = await getArticleById(req.params.id);
 	if (!article)
 		return res.status(404).json({ error: "Article not found" });
 	const userId = req.session?.userId;
-	if (article.status === "DRAFT" && !userId)
+	if (article.status !== "PUBLISHED" || !article)
 		return res.status(403).json({ error: "Forbidden" });
 	res.json(article);
 });

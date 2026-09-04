@@ -3,7 +3,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { apiFetch } from "@/lib/api";
 import LogoutButton from "@/components/LogoutButton";
 import DOMPurify from "dompurify";
 import type { Article, Comment } from "@/lib/types";
@@ -24,12 +23,8 @@ export default function ExploreDetail() {
 
   useEffect(() => {
     async function checkAuth() {
-      try {
-        const response = await apiFetch("/auth/me");
-        setIsLoggedIn(response.ok);
-      } catch {
-        setIsLoggedIn(false);
-      }
+      const response = await apiClient.auth.me();
+      setIsLoggedIn(response.success);
     }
 
     checkAuth();

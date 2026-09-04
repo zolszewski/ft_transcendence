@@ -4,7 +4,7 @@ import { useState } from "react";
 import type { FormEvent } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { apiFetch } from "@/lib/api";
+import { apiClient } from "@/lib/apiClient";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -22,25 +22,13 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const response = await apiFetch("/auth/login", {
-        method: "POST",
-        body: JSON.stringify({
-          email,
-          password,
-        }),
-      });
-
-      if (!response.ok) {
-        const data = await response.json().catch(() => null);
-
+      const authResponse = await apiClient.auth.login(email, password);
+      if (!authResponse.success) {
         setError(
-          data?.error ?? "Invalid email or password."
+          authResponse.error ?? "Invalid email or password."
         );
-
         return;
       }
-
-      
       const redirectTo = searchParams.get("redirect") || "/";
       router.push(redirectTo);
       router.refresh();

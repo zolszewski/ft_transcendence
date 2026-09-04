@@ -3,7 +3,6 @@
 import type { FormEvent } from "react";
 import { useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { apiFetch } from "@/lib/api";
 import Link from "next/link";
 import LogoutButton from "@/components/LogoutButton";
 import TextEditor from "@/components/text-editor";
@@ -17,6 +16,42 @@ export default function PublishForm() {
 
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  async function saveDraft() {
+    setError("");
+
+    const editorData = editorRef.current?.getData() ?? {
+      title: "",
+      content: "",
+    };
+    const miniatureFile = editorRef.current?.image ?? null;
+    const { title, content } = editorData;
+
+    if (!title) {
+      setError("Add a title before saving the draft.");
+      return;
+    }
+    if (!content) {
+      setError("Write some content before saving the draft.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await apiClient.articles.createDraft(title, content, miniatureFile);
+      if (response.success === false) {
+        setError(response.error);
+        return;
+      }
+      router.push("/");
+      router.refresh();
+    } catch {
+      setError("Unable to connect to the server.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   async function handleSubmit(
   event: FormEvent<HTMLFormElement>
 ) {
@@ -109,6 +144,14 @@ export default function PublishForm() {
           className="mt-12 w-full border py-3 font-bold hover:underline disabled:opacity-50"
         >
           {loading ? "Submitting..." : "Submit"}
+        </button>
+        <button
+          type="button"
+          onClick={saveDraft}
+          disabled={loading}
+          className="mt-4 w-full border py-3 font-bold hover:underline disabled:opacity-50"
+        >
+          Save as draft
         </button>
       </form>
     </main>

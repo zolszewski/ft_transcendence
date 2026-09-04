@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { apiFetch } from "@/lib/api";
+import { apiClient } from "@/lib/apiClient";
 
 export default function LogoutButton() {
   const router = useRouter();
@@ -12,9 +12,9 @@ export default function LogoutButton() {
     setLoading(true);
 
     try {
-      const response = await apiFetch("/auth/logout", { method: "POST" });
+      const response = await apiClient.auth.logout();
 
-      if (response.ok) {
+      if (response.success  ) {
         router.replace("/");
         router.refresh();
       }

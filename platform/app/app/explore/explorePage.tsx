@@ -3,22 +3,15 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { apiFetch } from "@/lib/api";
 import LogoutButton from "@/components/LogoutButton";
+import { apiClient } from "@/lib/apiClient";
+import type { Article, ListResult } from "@/lib/types";
  
-import type { Article } from "@/lib/types";
- 
-type ListResult = {
-  articles: Article[];
-  total: number;
-  page: number;
-  totalPages: number;
-};
- 
+
 const LIMIT = 10;
 
 export default function ExplorePageContent() {
-  const [articles, setArticles] = useState<Article[]>([]);
+  const [articles, setArticles] = useState<ListResult<Article> | null>(null);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [search, setSearch] = useState("");
@@ -35,16 +28,25 @@ export default function ExplorePageContent() {
         if (currentSearch) params.set("search", currentSearch);
 
         try {
-            const searchResponse = await apiFetch(`/articles/explore?${params.toString()}`);
-            if (!searchResponse.ok) {
+            const getArticles = await apiClient.articles.explore({
+              page: targetPage,
+              limit: LIMIT,
+              ...(currentSearch ? { search: currentSearch } : {}),
+            });
+            if (!getArticles.success) {
                 setError("Unable to load articles.");
                 return;
             }
-            const data: ListResult = await searchResponse.json();
-
-            setArticles((prev) => (replace ? data.articles : [...prev, ...data.articles]));
-            setPage(data.page);
-            setTotalPages(data.totalPages);
+            setArticles((previousArticles) =>
+              replace || !previousArticles
+                ? getArticles.data
+                : {
+                    ...getArticles.data,
+                    data: [...previousArticles.data, ...getArticles.data.data],
+                  },
+            );
+            setPage(getArticles.data.page);
+            setTotalPages(getArticles.data.pages);
         } catch {
             setError("Unable to connect to the server.");
         }
@@ -82,11 +84,11 @@ export default function ExplorePageContent() {
             </div>
             {loading && <p className="text-sm">Loading...</p>}
             {error && <p className="text-sm text-red-500">{error}</p>}
-            {!loading && !error && articles.length === 0 && (
+            {!loading && !error && articles?.data?.length === 0 && (
                 <p className="text-sm">No articles found.</p>
             )}
             <ul>
-                {articles.map((article) => (
+                {articles?.data.map((article) => (
               <li key={article.id}>
                 <Link
                   href={`/explore/${article.id}`}
