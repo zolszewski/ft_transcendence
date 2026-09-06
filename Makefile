@@ -32,6 +32,9 @@ fclean:
 
 re: fclean up
 
+studio:
+	$(COMPOSE) exec backend npm exec prisma studio -- --browser none
+
 prisma-generate:
 	$(COMPOSE) exec backend npx prisma generate
 
@@ -41,5 +44,7 @@ prisma-migrate:
 prisma-migrate-dev:
 	$(COMPOSE) exec backend npx prisma migrate dev
 
+prisma-validate:
+	$(COMPOSE) exec backend npx prisma validate
 
 .PHONY: all up down stop start restart logs ps clean fclean re prisma-generate prisma-migrate
