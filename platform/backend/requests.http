@@ -761,3 +761,37 @@ Content-Type: application/json
 ### Not owner GET le draft de owner
 
 GET {{baseUrl}}/api/articles/{{reproDraftArticle.response.body.$.id}}
+
+### ==========================================================
+### DAY 19 : file upload (multer + validation magic-bytes via
+### file-type + stockage non statique + controle d'acces PUBLIC/PRIVATE
+### via /api/uploads).
+###
+### L'upload multipart n'est pas pratique a scripter proprement en
+### .http (fichier binaire requis), donc test de reference via curl
+### depuis un terminal :
+###
+### curl -c cookies.txt -X POST http://localhost:4000/api/auth/register \
+###   -H "Content-Type: application/json" \
+###   -d '{"email":"upload19@test.com","name":"Upload19","password":"12345678"}'
+###
+### curl -b cookies.txt -X POST http://localhost:4000/api/uploads \
+###   -F "file=@monimage.png;type=image/png"
+### -> 201 { id, filename, originalName, mimeType, size, visibility: "PRIVATE", ownerId, createdAt }
+###
+### ==========================================================
+
+### Consulter un upload PRIVATE en tant que proprietaire (200 attendu)
+GET {{baseUrl}}/api/uploads/REMPLACER_PAR_UN_ID_REEL
+
+### Se deconnecter
+POST {{baseUrl}}/api/auth/logout
+
+### Consulter le meme upload PRIVATE, deconnecte (403 attendu)
+GET {{baseUrl}}/api/uploads/REMPLACER_PAR_UN_ID_REEL
+
+### Upload inexistant (404 attendu)
+GET {{baseUrl}}/api/uploads/id-inexistant
+
+### Supprimer un upload sans etre authentifie (401 attendu)
+DELETE {{baseUrl}}/api/uploads/REMPLACER_PAR_UN_ID_REEL

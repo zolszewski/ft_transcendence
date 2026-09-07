@@ -1,3 +1,6 @@
+
+export const allowedFileMimeTypes = ["image/png", "image/jpeg", "image/webp", "application/pdf"];
+
 export function isValidEmail(email: string): boolean {
 	const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 	return typeof email === "string" && emailRegex.test(email);
