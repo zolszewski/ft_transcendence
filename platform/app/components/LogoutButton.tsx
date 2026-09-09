@@ -4,7 +4,11 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiClient } from "@/lib/apiClient";
 
-export default function LogoutButton() {
+type LogoutButtonProps = {
+  beforeLogout?: () => Promise<boolean>;
+};
+
+export default function LogoutButton({ beforeLogout }: LogoutButtonProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
@@ -12,6 +16,7 @@ export default function LogoutButton() {
     setLoading(true);
 
     try {
+      if (beforeLogout && !(await beforeLogout())) return;
       const response = await apiClient.auth.logout();
 
       if (response.success  ) {

@@ -1,7 +1,7 @@
 "use client";
 
 import type { FormEvent } from "react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import LogoutButton from "@/components/LogoutButton";
@@ -9,15 +9,37 @@ import TextEditor from "@/components/text-editor";
 import type { TextEditorHandle } from "@/components/text-editor";
 import { apiClient } from "@/lib/apiClient";
 
+
 export default function PublishForm() {
+  const draftStorageKey = "publish-form-draft";
   const router = useRouter();
   const searchParams = useSearchParams();
   const editorRef = useRef<TextEditorHandle>(null);
-
+  const [cachedFileHandle, setCachedFileHandle] = useState<FileSystemFileHandle | null>(null);
+  const [savedData, setSavedData] = useState({ title: "", content: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  async function saveDraft() {
+  useEffect(() => {
+    try {
+      const storedData = localStorage.getItem(draftStorageKey);
+      if (storedData) setSavedData(JSON.parse(storedData));
+    } catch {
+      localStorage.removeItem(draftStorageKey);
+    }
+  }, []);
+
+  function cacheData(data: { title: string; content: string }) {
+    setSavedData(data);
+    localStorage.setItem(draftStorageKey, JSON.stringify(data));
+  }
+
+  function clearCachedData() {
+    localStorage.removeItem(draftStorageKey);
+    setCachedFileHandle(null);
+  }
+
+  async function persistDraft(allowEmpty = false) {
     setError("");
 
     const editorData = editorRef.current?.getData() ?? {
@@ -28,12 +50,14 @@ export default function PublishForm() {
     const { title, content } = editorData;
 
     if (!title) {
+      if (allowEmpty) return true;
       setError("Add a title before saving the draft.");
-      return;
+      return false;
     }
     if (!content) {
+      if (allowEmpty) return true;
       setError("Write some content before saving the draft.");
-      return;
+      return false;
     }
 
     setLoading(true);
@@ -41,14 +65,30 @@ export default function PublishForm() {
       const response = await apiClient.articles.createDraft(title, content, miniatureFile);
       if (response.success === false) {
         setError(response.error);
-        return;
+        return false;
       }
-      router.push("/");
-      router.refresh();
+      clearCachedData();
+      return true;
     } catch {
       setError("Unable to connect to the server.");
+      return false;
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function saveDraft() {
+    if (await persistDraft()) {
+      router.push("/");
+      router.refresh();
+    }
+  }
+
+  async function handleHomeClick(event: React.MouseEvent<HTMLAnchorElement>) {
+    event.preventDefault();
+    if (await persistDraft(true)) {
+      router.push("/");
+      router.refresh();
     }
   }
 
@@ -92,6 +132,7 @@ export default function PublishForm() {
       return;
     }
 
+    clearCachedData();
     const redirectTo =
       searchParams.get("redirect") || "/";
     router.push(redirectTo);
@@ -108,12 +149,13 @@ export default function PublishForm() {
       <header className="absolute left-0 right-0 top-0 flex items-center justify-between p-4">
         <Link
           href="/"
+          onClick={handleHomeClick}
           className="border px-4 py-2 hover:underline"
         >
           Home
         </Link>
 
-        <LogoutButton />
+        <LogoutButton beforeLogout={() => persistDraft(true)} />
       </header>
 
       <div className="flex flex-col items-center justify-center pt-40 text-center">
@@ -130,7 +172,11 @@ export default function PublishForm() {
         onSubmit={handleSubmit}
         className="mt-8 w-full max-w-xl px-4"
       >
-        <TextEditor ref={editorRef} />
+        <TextEditor
+          ref={editorRef}
+          initialData={savedData}
+          onChange={cacheData}
+        />
 
         {error && (
           <p className="mt-4 text-sm text-red-600">

@@ -40,7 +40,9 @@ export default function Menu({ editorRef }: MenuProps) {
           type="button"
           onMouseDown={(event) => event.preventDefault()}
           onClick={() => applyFormat("formatBlock", heading)}
-          className="border px-3 py-2 hover:bg-white"
+          className={`border px-3 py-2 hover:bg-white ${
+            heading === "H1" ? "text-lg font-bold" : heading === "H2" ? "font-bold" : "italic"
+          }`}
           aria-label={`Heading ${heading.slice(1)}`}
         >
           {heading}
