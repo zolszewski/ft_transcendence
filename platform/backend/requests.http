@@ -686,3 +686,78 @@ Authorization: Bearer cleinventeequinexistepas
 
 ### Aucune authentification du tout, route protégée (401 attendu, comportement inchangé)
 GET {{baseUrl}}/api/auth/me
+
+### ==========================================================
+### BUG ZOE
+### ==========================================================
+
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "test@mail.com",
+  "name": "test",
+  "password": "12345678"
+}
+
+### Créer un DRAFT
+# @name reproArticle
+POST {{baseUrl}}/api/articles
+Content-Type: application/json
+
+{
+  "title": "article test",
+  "content": "contenu test"
+}
+
+### SUBMITTED
+POST {{baseUrl}}/api/articles/{{reproArticle.response.body.$.id}}/submit
+
+### Déco
+POST {{baseUrl}}/api/auth/logout
+
+### Consulter l'article SUBMITTED, déconnecté
+
+GET {{baseUrl}}/api/articles/{{reproArticle.response.body.$.id}}
+
+### Créer un deuxième compte not owner
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "test2@mail.com",
+  "name": "test2",
+  "password": "12345678"
+}
+
+### Login premier compte owner
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "test@mail.com",
+  "password": "12345678"
+}
+
+### Nouveau DRAFT
+# @name reproDraftArticle
+POST {{baseUrl}}/api/articles
+Content-Type: application/json
+
+{
+  "title": "article test 2",
+  "content": "contenu test 2"
+}
+
+### Connexion deuxième compte not owner
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "test2@mail.com",
+  "password": "12345678"
+}
+
+### Not owner GET le draft de owner
+
+GET {{baseUrl}}/api/articles/{{reproDraftArticle.response.body.$.id}}
