@@ -50,3 +50,16 @@ export async function deleteUpload(id: string, filename: string) {
 		throw new Error("Could not delete upload");
 	}
 }
+
+export async function setUploadVisibility(id: string, visibility: UploadVisibility) {
+	try {
+		return await prisma.Upload.update({
+			where: { id },
+			data: { visibility },
+		});
+	}
+	catch (error) {
+		console.error("Failed to update upload visibility", error);
+		throw new Error("Could not update upload visibility");
+	}
+}

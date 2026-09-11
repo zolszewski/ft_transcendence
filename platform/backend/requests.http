@@ -795,3 +795,72 @@ GET {{baseUrl}}/api/uploads/id-inexistant
 
 ### Supprimer un upload sans etre authentifie (401 attendu)
 DELETE {{baseUrl}}/api/uploads/REMPLACER_PAR_UN_ID_REEL
+
+### ==========================================================
+### DAY 20 : profil + avatar (ferme le module User Management avec
+### Day 21). Reutilise le systeme d'upload du Day 19.
+###
+### Piege a connaitre si un jour un champ/relation Prisma "n'existe
+### pas" alors que le schema est correct et la migration appliquee :
+### "prisma migrate dev" ne regenere pas toujours le client tout seul.
+### Si "Unknown argument" apparait sur un champ qui existe bien dans
+### schema.prisma -> docker compose exec backend npx prisma generate
+### puis redemarrer le backend (tsx watch ne surveille pas node_modules).
+### ==========================================================
+
+### Créer un compte
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "day20@example.com",
+  "name": "Day20",
+  "password": "motdepasse123"
+}
+
+### Consulter son propre profil (avatar par defaut attendu)
+GET {{baseUrl}}/api/users/me
+
+### Modifier son profil (200 attendu)
+PATCH {{baseUrl}}/api/users/me
+Content-Type: application/json
+
+{
+  "name": "Day20 Renamed",
+  "email": "day20-renamed@example.com"
+}
+
+### Créer un compte "intrus" (remplace le cookie actuel)
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "day20-intruder@example.com",
+  "name": "Day20Intruder",
+  "password": "motdepasse123"
+}
+
+### L'intrus essaie de prendre l'email deja pris par l'autre compte (409 attendu)
+PATCH {{baseUrl}}/api/users/me
+Content-Type: application/json
+
+{
+  "name": "Peu importe",
+  "email": "day20-renamed@example.com"
+}
+
+### Consulter le profil PUBLIC d'un autre compte (pas d'email dans la reponse)
+GET {{baseUrl}}/api/users/REMPLACER_PAR_UN_ID_REEL
+
+### Profil inexistant (404 attendu)
+GET {{baseUrl}}/api/users/id-inexistant
+
+### Lier un upload comme avatar (necessite d'avoir uploade un fichier
+### via /api/uploads au prealable, cf Day 19 - remplace l'id ci-dessous) :
+### 200 attendu, avatarUrl mis a jour, et l'upload bascule en PUBLIC.
+PUT {{baseUrl}}/api/users/me/avatar
+Content-Type: application/json
+
+{
+  "uploadId": "REMPLACER_PAR_UN_ID_REEL"
+}

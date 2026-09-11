@@ -31,6 +31,7 @@ model User {
   email    String   @unique
   name     String
   password String
+  avatarId String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -39,7 +40,9 @@ model User {
   reviews         Review[]
   comments        Comment[]
   apiKeys         ApiKey[]
-  uploads         Upload[]
+  uploads         Upload[] @relation("UserUploads")
+  avatar          Upload? @relation("UserAvatar", fields: [avatarId], references: [id]) 
+
 }
 
 model Article {
@@ -116,7 +119,8 @@ model Upload {
   visibility    UploadVisibility @default(PRIVATE)
 
   ownerId       String
-  owner         User @relation(fields: [ownerId], references: [id])
+  owner         User @relation("UserUploads", fields: [ownerId], references: [id])
+  avatarOf      User[] @relation("UserAvatar")
 
   createdAt DateTime @default(now())
 }
