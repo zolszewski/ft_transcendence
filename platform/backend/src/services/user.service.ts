@@ -39,3 +39,21 @@ export async function getUserById(id: string) {
 		throw new Error("Could not fetch user");
 	}
 }
+
+export async function getOtherUsers(currentUserId: string) {
+	try {
+		return await prisma.User.findMany({
+			where: { id: { not: currentUserId } },
+			select: {
+				id: true,
+				email: true,
+				name: true,
+			},
+			orderBy: { name: "asc" },
+		});
+	}
+	catch (error) {
+		console.error("Failed to fetch users:", error);
+		throw new Error("Could not fetch users");
+	}
+}

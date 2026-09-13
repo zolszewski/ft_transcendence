@@ -4,6 +4,7 @@ import authRoutes from "./routes/auth.routes";
 import articleRoutes from "./routes/article.routes";
 import reviewRoutes from "./routes/review.routes"
 import commentRoutes from "./routes/comment.routes";
+import userRoutes from "./routes/user.routes";
 
 const app = express();
 
@@ -14,6 +15,7 @@ app.use("/api/articles", articleRoutes);
 app.use("/uploads", express.static("/app/public/uploads"));
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/comments", commentRoutes);
+app.use("/api/users", userRoutes);
 
 
 app.get("/health", (_req, res) => {
