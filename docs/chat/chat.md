@@ -16,3 +16,7 @@ user.routes.ts  > platform/bacjkend/src/routes
 server.ts >  platform/backend/src
 user.services.ts > platform/backend/src/services
 
+# l'API du chat 
+-récupérer les messages;
+-envoyer un message;
+-valider 
