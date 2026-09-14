@@ -70,5 +70,5 @@ export async function setUserAvatar(id: string, avatarId: string) {
 export function getAvatarUrl(avatarId: string | null): string {
 	if (avatarId)
 		return `/api/uploads/${avatarId}`;
-	return "/default-avatar.png";
+	return "/default-avatar.jpg";
 }

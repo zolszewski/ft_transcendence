@@ -151,7 +151,7 @@ export async function createArticle(authorId: string, title: string, content: st
 export function getMiniatureUrl(miniatureId: string | null): string {
 	if (miniatureId)
 		return `/api/uploads/${miniatureId}`;
-	return "/default-article-thumbnail.png";
+	return "/default-article-thumbnail.jpg";
 }
 
 export async function updateArticle(id: string, data: { title?: string, content?: string, abstract?: string, miniatureId?: string }) {
