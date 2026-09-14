@@ -61,7 +61,7 @@ Content-Type: application/json
 
 ### Lister tous les articles
 # @name listArticles
-GET {{baseUrl}}/api/articles
+GET {{baseUrl}}/api/articles/explore
 
 ### Voir le détail du premier article de la liste ci-dessus
 GET {{baseUrl}}/api/articles/{{listArticles.response.body.$.0.id}}
@@ -254,7 +254,9 @@ GET {{baseUrl}}/api/articles/{{createArticleDay10.response.body.$.id}}/reviews
 ### ==========================================================
 ### DAY 11 : decision de review (approve/reject) + filtre PUBLISHED
 ### sur les routes publiques. Un article SUBMITTED est invisible
-### publiquement tant qu'il n'a pas ete approuve par un reviewer.
+### publiquement tant qu'il n'a pas ete approuve par un reviewer,
+### mais reste visible par son auteur et par un relecteur potentiel
+### (n'importe quel compte connecte, pas l'auteur).
 ### ==========================================================
 
 ### Créer un compte "auteur"
@@ -280,7 +282,13 @@ Content-Type: application/json
 ### Le soumettre pour review
 POST {{baseUrl}}/api/articles/{{createArticleDay11.response.body.$.id}}/submit
 
-### Vérifier qu'il est invisible publiquement tant qu'il n'est pas publié (404 attendu)
+### L'auteur (toujours connecté à ce stade) peut voir son propre SUBMITTED (200 attendu)
+GET {{baseUrl}}/api/articles/{{createArticleDay11.response.body.$.id}}
+
+### Déconnecté, l'article reste invisible (404 attendu)
+POST {{baseUrl}}/api/auth/logout
+
+###
 GET {{baseUrl}}/api/articles/{{createArticleDay11.response.body.$.id}}
 
 ### Créer un compte "reviewer" (remplace le cookie actuel)
@@ -292,6 +300,9 @@ Content-Type: application/json
   "name": "Reviewer11",
   "password": "motdepasse123"
 }
+
+### Un tiers connecté (relecteur potentiel) peut aussi voir le SUBMITTED (200 attendu)
+GET {{baseUrl}}/api/articles/{{createArticleDay11.response.body.$.id}}
 
 ### Reviewer l'article
 # @name createReviewDay11
@@ -356,7 +367,7 @@ Content-Type: application/json
 GET {{baseUrl}}/api/articles/{{createArticleDay11.response.body.$.id}}
 
 ### Vérifier qu'il apparaît dans le listing public
-GET {{baseUrl}}/api/articles
+GET {{baseUrl}}/api/articles/explore
 
 ### ==========================================================
 ### DAY 12 : commentaires. Seuls les articles PUBLISHED sont
@@ -473,25 +484,25 @@ GET {{baseUrl}}/api/articles/{{createArticleDay12.response.body.$.id}}/comments
 ### ==========================================================
 
 ### Listing par défaut (page 1, 10 par page, plus récents en premier)
-GET {{baseUrl}}/api/articles
+GET {{baseUrl}}/api/articles/explore
 
 ### Recherche (adapte le terme à un titre d'article publié existant)
-GET {{baseUrl}}/api/articles?search=article
+GET {{baseUrl}}/api/articles/explore?search=article
 
 ### Tri du plus ancien au plus récent
-GET {{baseUrl}}/api/articles?sort=oldest
+GET {{baseUrl}}/api/articles/explore?sort=oldest
 
 ### Pagination : 2 par page, page 1
-GET {{baseUrl}}/api/articles?limit=2&page=1
+GET {{baseUrl}}/api/articles/explore?limit=2&page=1
 
 ### Pagination : 2 par page, page 2 (résultats différents de la page 1 attendus)
-GET {{baseUrl}}/api/articles?limit=2&page=2
+GET {{baseUrl}}/api/articles/explore?limit=2&page=2
 
 ### Garde-fous : page négative -> ramenée à 1, pas d'erreur
-GET {{baseUrl}}/api/articles?page=-5
+GET {{baseUrl}}/api/articles/explore?page=-5
 
 ### Garde-fous : limite énorme -> plafonnée à 50, pas d'erreur
-GET {{baseUrl}}/api/articles?limit=99999
+GET {{baseUrl}}/api/articles/explore?limit=99999
 
 ### ==========================================================
 ### DAY 14 : cache Redis sur le listing d'articles. Le contenu de la
@@ -505,7 +516,7 @@ GET {{baseUrl}}/api/articles?limit=99999
 ### ==========================================================
 
 ### Peuple le cache (v0)
-GET {{baseUrl}}/api/articles
+GET {{baseUrl}}/api/articles/explore
 
 ### ==========================================================
 ### DAY 15 : WebSocket. Pas testable via requests.http, donc :
@@ -864,3 +875,74 @@ Content-Type: application/json
 {
   "uploadId": "REMPLACER_PAR_UN_ID_REEL"
 }
+
+### ==========================================================
+### RECONCILIATION front : GET /articles/submitted (queue de
+### relecture). Exclut les articles dont on est l'auteur et ceux
+### qu'on a deja reviewes soi-meme.
+### ==========================================================
+
+### Créer un compte "auteur"
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "queue-author@example.com",
+  "name": "QueueAuthor",
+  "password": "motdepasse123"
+}
+
+### Créer un article
+# @name queueArticle
+POST {{baseUrl}}/api/articles
+Content-Type: application/json
+
+{
+  "title": "Article pour la queue",
+  "content": "Contenu de test"
+}
+
+### Le soumettre (-> SUBMITTED)
+POST {{baseUrl}}/api/articles/{{queueArticle.response.body.$.id}}/submit
+
+### Créer un compte "relecteur" (remplace le cookie actuel)
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "queue-reviewer@example.com",
+  "name": "QueueReviewer",
+  "password": "motdepasse123"
+}
+
+### L'article apparaît dans la queue du relecteur
+GET {{baseUrl}}/api/articles/submitted
+
+### Il reviewe l'article
+POST {{baseUrl}}/api/articles/{{queueArticle.response.body.$.id}}/reviews
+Content-Type: application/json
+
+{
+  "comment": "ok"
+}
+
+### L'article disparaît de sa queue (deja reviewe par lui)
+GET {{baseUrl}}/api/articles/submitted
+
+### Reconnexion en tant qu'auteur (remplace le cookie du relecteur)
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "queue-author@example.com",
+  "password": "motdepasse123"
+}
+
+### L'auteur ne voit jamais son propre article dans la queue
+GET {{baseUrl}}/api/articles/submitted
+
+### Aucune authentification (401 attendu)
+POST {{baseUrl}}/api/auth/logout
+
+###
+GET {{baseUrl}}/api/articles/submitted

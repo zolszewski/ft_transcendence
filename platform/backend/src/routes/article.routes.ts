@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { listArticles, getArticleById, createArticle, updateArticle, deleteArticle, updateArticleStatus } from "../services/article.service";
+import { listArticles, getArticleById, createArticle, updateArticle, deleteArticle, updateArticleStatus, listSubmittedArticlesForReview } from "../services/article.service";
 import { isOwner } from "../utils/authorization"
 import { requireAuth } from "../middleware/auth";
 import { isValidContent, isValidTitle } from "../utils/validation";
@@ -9,7 +9,7 @@ import { createComment, listCommentsForArticle } from "../services/comment.servi
 const router = Router();
 
 
-router.get("/", async (req, res) => {
+router.get("/explore", async (req, res) => {
 	const { search, sort, page, limit } = req.query;
 	const result = await listArticles({
 		search: typeof search === "string" ? search : undefined,
@@ -26,11 +26,32 @@ router.get("/", async (req, res) => {
 // 	res.json(publicArticles);
 // });
 
+router.get("/submitted", requireAuth, async (req, res) => {
+	const { search, sort, page, limit } = req.query;
+	const result = await listSubmittedArticlesForReview({
+		reviewerId: req.session.userId!,
+		search: typeof search === "string" ? search : undefined,
+		sort: sort === "oldest" ? "oldest" : "newest",
+		page: Math.max(1, Number(page) || 1),
+		limit: Math.min(50, Math.max(1, Number(limit) || 10)),
+	});
+	res.json(result);
+});
+
 router.get("/:id", async (req, res) => {
 	const article = await getArticleById(req.params.id);
-	if (!article || article.status !== "PUBLISHED")
+	if (!article)
 		return res.status(404).json({ error: "Article not found" });
-	res.json(article);
+	if (article.status === "PUBLISHED")
+		return res.json(article);
+	const userId = req.session?.userId;
+	if (!userId)
+		return res.status(404).json({ error: "Article not found" });
+	if (isOwner(article.authorId, userId))
+		return res.json(article);
+	if (article.status === "SUBMITTED")
+		return res.json(article);
+	return res.status(404).json({ error: "Article not found" });
 });
 
 router.post("/", requireAuth, async (req, res) => {

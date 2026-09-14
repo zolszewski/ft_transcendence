@@ -79,10 +79,17 @@ Auth required. Returns the identity of the authenticated user.
 
 ## Articles
 
-### `GET /articles`
+### `GET /articles/explore`
 Lists published articles, paginated. Public, no authentication required.
 
 Query: `search?` (title/content), `sort?` (`newest` by default, or `oldest`), `page?` (default 1), `limit?` (default 10, max 50)
+
+| Code | Case |
+|---|---|
+| 200 | `{ articles: Article[], total, page, totalPages }` |
+
+### `GET /articles/submitted`
+Auth required. Lists articles awaiting review: status `SUBMITTED`, excluding your own articles and articles you already reviewed. Same query params as `/explore`.
 
 | Code | Case |
 |---|---|
@@ -222,4 +229,4 @@ Service availability check. Outside the `/api` prefix.
 
 ## Public API module
 
-The 5 CRUD endpoints on `/articles` (`GET /articles`, `GET /articles/:id`, `POST /articles`, `PUT /articles/:id`, `DELETE /articles/:id`) cover GET/POST/PUT/DELETE, all usable through an API key (`Authorization: Bearer`), with the rate limiting and documentation described above.
+The 5 CRUD endpoints on `/articles` (`GET /articles/explore`, `GET /articles/:id`, `POST /articles`, `PUT /articles/:id`, `DELETE /articles/:id`) cover GET/POST/PUT/DELETE, all usable through an API key (`Authorization: Bearer`), with the rate limiting and documentation described above.
