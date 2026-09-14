@@ -85,6 +85,31 @@ export async function getArticleById(id: string) {
 	}
 }
 
+export async function listDrafts(authorId: string) {
+	try {
+		return await prisma.Article.findMany({
+			where: { authorId, status: "DRAFT" },
+			include: { author: { select: { id: true, name: true } } },
+			orderBy: { updatedAt: "desc" },
+		});
+	} catch (error) {
+		console.error("Failed to list drafts:", error);
+		throw new Error("Could not list drafts");
+	}
+}
+
+export async function getDraftById(id: string, authorId: string) {
+	try {
+		return await prisma.Article.findFirst({
+			where: { id, authorId, status: "DRAFT" },
+			include: { author: { select: { id: true, name: true } } },
+		});
+	} catch (error) {
+		console.error("Failed to fetch draft:", error);
+		throw new Error("Could not fetch draft");
+	}
+}
+
 export async function createArticle(authorId: string, title: string, content: string, miniature: string | null, abstract: string) {
 	try {
 		await bumpArticlesCacheVersion();

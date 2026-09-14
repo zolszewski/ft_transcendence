@@ -15,27 +15,35 @@ export default function PublishForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const editorRef = useRef<TextEditorHandle>(null);
+  const draftId = searchParams.get("draft");
   const [cachedFileHandle, setCachedFileHandle] = useState<FileSystemFileHandle | null>(null);
   const [savedData, setSavedData] = useState({ title: "", content: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    if (draftId) {
+      apiClient.articles.getDraft(draftId).then((response) => {
+        if (response.success) setSavedData(response.data);
+        else setError(response.error);
+      });
+      return;
+    }
     try {
-      const storedData = localStorage.getItem(draftStorageKey);
+      const storedData = sessionStorage.getItem(draftStorageKey);
       if (storedData) setSavedData(JSON.parse(storedData));
     } catch {
-      localStorage.removeItem(draftStorageKey);
+      sessionStorage.removeItem(draftStorageKey);
     }
-  }, []);
+  }, [draftId]);
 
   function cacheData(data: { title: string; content: string }) {
     setSavedData(data);
-    localStorage.setItem(draftStorageKey, JSON.stringify(data));
+    sessionStorage.setItem(draftStorageKey, JSON.stringify(data));
   }
 
   function clearCachedData() {
-    localStorage.removeItem(draftStorageKey);
+    sessionStorage.removeItem(draftStorageKey);
     setCachedFileHandle(null);
   }
 
@@ -62,7 +70,9 @@ export default function PublishForm() {
 
     setLoading(true);
     try {
-      const response = await apiClient.articles.createDraft(title, content, miniatureFile);
+      const response = draftId
+        ? await apiClient.articles.update(draftId, title, content, miniatureFile)
+        : await apiClient.articles.createDraft(title, content, miniatureFile);
       if (response.success === false) {
         setError(response.error);
         return false;
@@ -119,7 +129,9 @@ export default function PublishForm() {
 
   try {
     
-    const createResponse = await apiClient.articles.create(title, content, miniatureFile);
+    const createResponse = draftId
+      ? await apiClient.articles.update(draftId, title, content, miniatureFile)
+      : await apiClient.articles.create(title, content, miniatureFile);
     if (createResponse.success === false) {
       setError(createResponse.error);
       return;
@@ -147,13 +159,18 @@ export default function PublishForm() {
   return (
     <main className="relative flex min-h-screen flex-col items-center overflow-hidden">
       <header className="absolute left-0 right-0 top-0 flex items-center justify-between p-4">
-        <Link
-          href="/"
-          onClick={handleHomeClick}
-          className="border px-4 py-2 hover:underline"
-        >
-          Home
-        </Link>
+        <div className="flex gap-2">
+          <Link
+            href="/"
+            onClick={handleHomeClick}
+            className="border px-4 py-2 hover:underline"
+          >
+            Home
+          </Link>
+          <Link href="/drafts" className="border px-4 py-2 hover:underline">
+            Drafts
+          </Link>
+        </div>
 
         <LogoutButton beforeLogout={() => persistDraft(true)} />
       </header>
@@ -176,6 +193,10 @@ export default function PublishForm() {
           ref={editorRef}
           initialData={savedData}
           onChange={cacheData}
+          onImageUpload={async (file) => {
+            const response = await apiClient.articles.uploadImage(file);
+            return response.success ? response.data.url : null;
+          }}
         />
 
         {error && (

@@ -120,7 +120,7 @@ export default function ExploreDetail() {
               />
             )}
 
-            <h1 className="mt-6 text-3xl font-bold">{article.title}</h1>
+            <h1 className="mt-6 border p-4 text-3xl font-bold">{article.title}</h1>
             <p className="mt-1 text-sm text-gray-600">by {article.author.name}</p>
 
             {article.abstract && (
@@ -128,9 +128,13 @@ export default function ExploreDetail() {
             )}
 
             <div
-              className="mt-6 text-sm leading-relaxed"
+              className="article-content mt-6 text-sm leading-relaxed"
               dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(article.content) }}
             />
+
+            <p className="mt-8 border-t pt-4 text-sm text-gray-600">
+              By {article.author.name} · Edited on {new Date(article.updatedAt).toLocaleDateString()}
+            </p>
 
             <section className="mt-10 border-t pt-6">
               <h2 className="text-xl font-bold">Comments</h2>

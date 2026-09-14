@@ -129,23 +129,45 @@
   }
 }
 
-.academic-editor h1 {
+.academic-editor h1,
+.article-content h1 {
   margin: 1rem 0 0.75rem;
-  font-size: 1.75rem;
+  font-size: 1.25rem;
   font-weight: 700;
   line-height: 1.2;
 }
 
-.academic-editor h2 {
+.academic-editor h1 {
+  font-size: 1.75rem;
+}
+
+.academic-editor h2,
+.article-content h2 {
   margin: 0.875rem 0 0.5rem;
   font-size: 1.3rem;
   font-weight: 700;
   line-height: 1.25;
 }
 
-.academic-editor h3 {
+.academic-editor h3,
+.article-content h3 {
   margin: 0.75rem 0 0.5rem;
   font-size: 1.10rem;
   font-style: italic;
   line-height: 1.3;
+}
+
+.academic-editor h4,
+.article-content h4 {
+  margin: 0.5rem 0;
+  color: var(--muted-foreground);
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.academic-editor img,
+.article-content img {
+  height: auto;
+  max-width: 100%;
 }

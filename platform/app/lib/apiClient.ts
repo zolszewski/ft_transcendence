@@ -109,6 +109,42 @@ export const apiClient = {
         return { success: false, error: "Unable to connect to the server" } as ApiResponse<Article>;
       }
     },
+    uploadImage: async (image: File) => {
+      const formData = new FormData();
+      formData.append("image", image);
+      try {
+        const response = await fetch("/api/articles/image", {
+          method: "POST",
+          body: formData,
+          credentials: "include",
+        });
+        const data = await response.json();
+        if (!response.ok) return { success: false, error: data.error || "Failed to upload image" } as ApiResponse<{ url: string }>;
+        return { success: true, data } as ApiResponse<{ url: string }>;
+      } catch {
+        return { success: false, error: "Unable to connect to the server" } as ApiResponse<{ url: string }>;
+      }
+    },
+    listDrafts: async () => {
+      try {
+        const response = await fetch("/api/articles/drafts", { credentials: "include" });
+        const data = await response.json();
+        if (!response.ok) return { success: false, error: data.error || "Failed to load drafts" } as ApiResponse<Article[]>;
+        return { success: true, data } as ApiResponse<Article[]>;
+      } catch {
+        return { success: false, error: "Unable to connect to the server" } as ApiResponse<Article[]>;
+      }
+    },
+    getDraft: async (articleId: string) => {
+      try {
+        const response = await fetch(`/api/articles/drafts/${articleId}`, { credentials: "include" });
+        const data = await response.json();
+        if (!response.ok) return { success: false, error: data.error || "Failed to load draft" } as ApiResponse<Article>;
+        return { success: true, data } as ApiResponse<Article>;
+      } catch {
+        return { success: false, error: "Unable to connect to the server" } as ApiResponse<Article>;
+      }
+    },
     submit: async (articleId: string) => {
       try {
         const response = await fetch(`/api/articles/${articleId}/submit`, {

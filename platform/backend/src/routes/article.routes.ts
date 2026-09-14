@@ -1,7 +1,7 @@
 import { Router } from "express";
 import multer from "multer";
 import path from "path";
-import { listArticles, getArticleById, createArticle, updateArticle, deleteArticle, updateArticleStatus, listSubmittedArticlesForReview } from "../services/article.service";
+import { listArticles, getArticleById, getDraftById, listDrafts, createArticle, updateArticle, deleteArticle, updateArticleStatus, listSubmittedArticlesForReview } from "../services/article.service";
 import { isOwner } from "../utils/authorization"
 import { requireAuth } from "../middleware/auth";
 import { isValidContent, isValidTitle } from "../utils/validation";
@@ -50,6 +50,22 @@ router.get("/submitted", requireAuth, async (req, res) => {
 		limit: Math.min(50, Math.max(1, Number(limit) || 10)),
 	});
 	res.json(result);
+});
+
+router.get("/drafts", requireAuth, async (req, res) => {
+	const drafts = await listDrafts(req.session.userId!);
+	res.json(drafts);
+});
+
+router.get("/drafts/:id", requireAuth, async (req, res) => {
+	const draft = await getDraftById(req.params.id, req.session.userId!);
+	if (!draft) return res.status(404).json({ error: "Draft not found" });
+	res.json(draft);
+});
+
+router.post("/image", requireAuth, upload.single("image"), async (req, res) => {
+	if (!req.file) return res.status(400).json({ error: "Image is required" });
+	res.status(201).json({ url: `/uploads/${req.file.filename}` });
 });
 
 router.post("/draft", requireAuth, upload.single("miniature"), async (req, res) => {

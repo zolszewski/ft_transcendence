@@ -14,6 +14,7 @@ type Article = {
   abstract: string | null;
   miniature: string | null;
   status: string;
+  updatedAt: string;
   author: { id: string; name: string };
 };
 
@@ -94,17 +95,20 @@ export default function ReviewDetail() {
               className="h-64 w-full object-cover" 
             />)}
 
-            <h1 className="mt-6 text-3xl font-bold">{article.title}</h1>
-            <p className="mt-1 text-sm text-gray-600">by {article.author.name}</p>
+            <h1 className="mt-6 border p-4 text-3xl font-bold">{article.title}</h1>
 
             {article.abstract && (
               <p className="mt-4 text-sm italic text-gray-700">{article.abstract}</p>
             )}
 
             <div 
-              className="mt-6 text-sm leading-relaxed"
+              className="article-content mt-6 text-sm leading-relaxed"
               dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(article.content) }}
             />
+
+            <p className="mt-8 border-t pt-4 text-sm text-gray-600">
+              By {article.author.name} · Edited on {new Date(article.updatedAt).toLocaleDateString()}
+            </p>
 
             <hr className="mt-10 border-t" />
 
