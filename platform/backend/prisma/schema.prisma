@@ -55,6 +55,9 @@ model Article {
   authorId String
   author   User   @relation(fields: [authorId], references: [id])
 
+  miniatureId String?
+  miniature   Upload? @relation(fields: [miniatureId], references: [id])
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -121,6 +124,7 @@ model Upload {
   ownerId       String
   owner         User @relation("UserUploads", fields: [ownerId], references: [id])
   avatarOf      User[] @relation("UserAvatar")
+  articles      Article[]
 
   createdAt DateTime @default(now())
 }

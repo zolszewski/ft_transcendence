@@ -946,3 +946,60 @@ POST {{baseUrl}}/api/auth/logout
 
 ###
 GET {{baseUrl}}/api/articles/submitted
+
+### ==========================================================
+### RECONCILIATION front : miniature d'article, reutilise le systeme
+### d'Upload du Day 19 (comme l'avatar du Day 20). L'upload multipart
+### n'est pas pratique a scripter en .http, cf note Day 19 pour le
+### curl de reference. Une fois un uploadId recupere :
+### ==========================================================
+
+### Créer un compte
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "miniature@example.com",
+  "name": "Miniature",
+  "password": "motdepasse123"
+}
+
+### Créer un article SANS miniature (miniatureUrl par defaut attendu)
+POST {{baseUrl}}/api/articles
+Content-Type: application/json
+
+{
+  "title": "Article sans miniature",
+  "content": "Contenu de test"
+}
+
+### Créer un article AVEC miniature (200 attendu, miniatureUrl = /api/uploads/<id>,
+### et l'upload bascule en PUBLIC)
+POST {{baseUrl}}/api/articles
+Content-Type: application/json
+
+{
+  "title": "Article avec miniature",
+  "content": "Contenu de test",
+  "miniatureId": "REMPLACER_PAR_UN_ID_REEL"
+}
+
+### Utiliser l'upload PRIVATE d'un autre compte comme miniature (403 attendu)
+POST {{baseUrl}}/api/articles
+Content-Type: application/json
+
+{
+  "title": "Vol de miniature",
+  "content": "Contenu de test",
+  "miniatureId": "REMPLACER_PAR_L_ID_D_UN_UPLOAD_D_UN_AUTRE_COMPTE"
+}
+
+### Utiliser un PDF comme miniature (400 attendu, pas une image)
+POST {{baseUrl}}/api/articles
+Content-Type: application/json
+
+{
+  "title": "Miniature invalide",
+  "content": "Contenu de test",
+  "miniatureId": "REMPLACER_PAR_UN_ID_DE_PDF"
+}

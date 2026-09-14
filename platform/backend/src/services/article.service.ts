@@ -134,11 +134,11 @@ export async function getArticleById(id: string) {
 	}
 }
 
-export async function createArticle(authorId: string, title: string, content: string, abstract?: string) {
+export async function createArticle(authorId: string, title: string, content: string, abstract?: string, miniatureId?: string) {
 	try {
 		await bumpArticlesCacheVersion();
 		return await prisma.Article.create({
-			data: { title, content, abstract, authorId },
+			data: { title, content, abstract, authorId, miniatureId },
 			include: { author: { select: { id: true, name: true } } },
 		});
 	}
@@ -148,7 +148,13 @@ export async function createArticle(authorId: string, title: string, content: st
 	}
 }
 
-export async function updateArticle(id: string, data: { title?: string, content?: string, abstract?:string }) {
+export function getMiniatureUrl(miniatureId: string | null): string {
+	if (miniatureId)
+		return `/api/uploads/${miniatureId}`;
+	return "/default-article-thumbnail.png";
+}
+
+export async function updateArticle(id: string, data: { title?: string, content?: string, abstract?: string, miniatureId?: string }) {
 	try {
 		await bumpArticlesCacheVersion();
 		return await prisma.Article.update({

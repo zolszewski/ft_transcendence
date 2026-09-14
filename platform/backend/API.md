@@ -79,6 +79,8 @@ Auth required. Returns the identity of the authenticated user.
 
 ## Articles
 
+Every article object returned by these routes includes a computed `miniatureUrl`: a link to the attached upload (`/api/uploads/:id`) if `miniatureId` is set, otherwise a fixed placeholder path (`/default-article-thumbnail.png`) so a client can always render something.
+
 ### `GET /articles/explore`
 Lists published articles, paginated. Public, no authentication required.
 
@@ -96,35 +98,39 @@ Auth required. Lists articles awaiting review: status `SUBMITTED`, excluding you
 | 200 | `{ articles: Article[], total, page, totalPages }` |
 
 ### `GET /articles/:id`
-Detail of a published article. Public.
+Visibility depends on the article's status and who is asking:
+- `PUBLISHED`: visible to everyone.
+- Any other status: visible to the article's author, and also to any authenticated user if the status is `SUBMITTED` (for reviewing). Everyone else gets 404, including anonymous visitors, so an article's existence is never revealed to someone who can't see it.
 
 | Code | Case |
 |---|---|
 | 200 | `Article` |
-| 404 | Not found, or not published yet |
+| 404 | Not found, or not visible to the current caller |
 
 ### `POST /articles`
-Auth required. Creates an article (initial status `DRAFT`).
+Auth required. Creates an article (initial status `DRAFT`). `miniatureId` must reference an upload owned by the caller, of an image type; it is switched to `PUBLIC` visibility automatically once attached.
 
-Body: `{ "title": string, "content": string, "abstract"?: string }`
+Body: `{ "title": string, "content": string, "abstract"?: string, "miniatureId"?: string }`
 
 | Code | Case |
 |---|---|
 | 201 | `Article` |
-| 400 | Invalid title/content |
+| 400 | Invalid title/content, or `miniatureId` is not an image |
 | 401 | Not authenticated |
+| 403 | `miniatureId` does not belong to the caller |
+| 404 | `miniatureId` does not exist |
 
 ### `PUT /articles/:id`
-Auth required, owner only. Updates your own article.
+Auth required, owner only. Updates your own article. Same `miniatureId` rules as `POST /articles`.
 
-Body: `{ "title": string, "content": string, "abstract"?: string }`
+Body: `{ "title": string, "content": string, "abstract"?: string, "miniatureId"?: string }`
 
 | Code | Case |
 |---|---|
 | 200 | Updated `Article` |
-| 400 | Invalid title/content |
-| 403 | Not the author |
-| 404 | Article not found |
+| 400 | Invalid title/content, or `miniatureId` is not an image |
+| 403 | Not the author, or `miniatureId` does not belong to the caller |
+| 404 | Article not found, or `miniatureId` does not exist |
 
 ### `DELETE /articles/:id`
 Auth required, owner only. Deletes your own article.
