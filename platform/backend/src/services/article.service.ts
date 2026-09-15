@@ -48,26 +48,6 @@ export async function listArticles(options: ListArticlesOptions = {}) {
 	}
 }
 
-
-
-
-
-// export async function listArticles() {
-// 	try {
-// 		return await prisma.Article.findMany({
-// 			include: {
-// 				author: {
-// 					select: { id: true, name: true },
-// 				},
-// 			},
-// 		});
-// 	}
-// 	catch (error) {
-// 		console.error("Failed to list articles:", error);
-// 		throw new Error("Could not list articles");
-// 	}
-// }
-
 type ListSubmittedArticlesOptions = {
 	reviewerId: string;
 	search?: string;
@@ -114,6 +94,48 @@ export async function listSubmittedArticlesForReview(options: ListSubmittedArtic
 	catch (error) {
 		console.error("Failed to list submitted articles:", error);
 		throw new Error("Could not list submitted articles");
+	}
+}
+
+type ListMyArticlesOptions = {
+	authorId: string;
+	status?: ArticleStatus;
+	search?: string;
+	sort?: "newest" | "oldest";
+	page?: number;
+	limit?: number;
+};
+
+export async function listMyArticles(options: ListMyArticlesOptions) {
+	const { authorId, status, search, sort = "newest", page = 1, limit = 10 } = options;
+	const version = await getArticlesCacheVersion();
+	const cacheKey = `articles:mine:v${version}:author=${authorId}:status=${status ?? "all"}:search=${search ?? ""}:sort=${sort}:page=${page}:limit=${limit}`;
+	const cached = await getCached<{ articles: unknown[]; total: number, page: number, totalPages: number }>(cacheKey);
+
+	if (cached)
+		return cached;
+	const where = {
+		authorId,
+		...(status ? { status } : {}),
+		...(search
+			? { OR: [
+				{ title: { contains: search, mode: "insensitive" as const } },
+				{ content: { contains: search, mode: "insensitive" as const } },
+			] }
+			: {})
+	};
+	try {
+		const [articles, total] = await Promise.all([
+			prisma.Article.findMany({ where, include: { author: { select: { id: true, name: true } } }, orderBy: { createdAt: sort === "oldest" ? "asc" : "desc" }, skip: (page - 1) * limit, take: limit }),
+			prisma.Article.count({ where }),
+		]);
+		const result = { articles, total, page, totalPages: Math.ceil(total / limit) };
+		await setCached(cacheKey, result, 60);
+		return result;
+	}
+	catch (error) {
+		console.error("Failed to list my articles:", error);
+		throw new Error("Could not list my articles");
 	}
 }
 

@@ -1,5 +1,6 @@
 import { Router } from "express";
-import { listArticles, getArticleById, createArticle, updateArticle, deleteArticle, updateArticleStatus, listSubmittedArticlesForReview, getMiniatureUrl } from "../services/article.service";
+import { ArticleStatus } from "@prisma/client";
+import { listArticles, getArticleById, createArticle, updateArticle, deleteArticle, updateArticleStatus, listSubmittedArticlesForReview, getMiniatureUrl, listMyArticles } from "../services/article.service";
 import { isOwner } from "../utils/authorization"
 import { requireAuth } from "../middleware/auth";
 import { isValidContent, isValidTitle } from "../utils/validation";
@@ -25,16 +26,24 @@ router.get("/explore", async (req, res) => {
 	res.json({ ...result, articles: result.articles.map(withMiniatureUrl) });
 })
 
-// router.get("/", async (req, res) => {
-// 	const articles = await listArticles();
-// 	const publicArticles = articles.filter((article) => article.status === "PUBLISHED")
-// 	res.json(publicArticles);
-// });
-
 router.get("/submitted", requireAuth, async (req, res) => {
 	const { search, sort, page, limit } = req.query;
 	const result = await listSubmittedArticlesForReview({
 		reviewerId: req.session.userId!,
+		search: typeof search === "string" ? search : undefined,
+		sort: sort === "oldest" ? "oldest" : "newest",
+		page: Math.max(1, Number(page) || 1),
+		limit: Math.min(50, Math.max(1, Number(limit) || 10)),
+	});
+	res.json({ ...result, articles: result.articles.map(withMiniatureUrl) });
+});
+
+router.get("/mine", requireAuth, async (req, res) => {
+	const { status, search, sort, page, limit } = req.query;
+	const validStatuses = ["DRAFT", "SUBMITTED", "UNDER_REVIEW", "APPROVED", "REJECTED", "PUBLISHED"];
+	const result = await listMyArticles({
+		authorId: req.session.userId!,
+		status: validStatuses.includes(status as string) ? (status as ArticleStatus) : undefined,
 		search: typeof search === "string" ? search : undefined,
 		sort: sort === "oldest" ? "oldest" : "newest",
 		page: Math.max(1, Number(page) || 1),

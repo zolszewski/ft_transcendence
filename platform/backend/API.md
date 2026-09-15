@@ -79,7 +79,7 @@ Auth required. Returns the identity of the authenticated user.
 
 ## Articles
 
-Every article object returned by these routes includes a computed `miniatureUrl`: a link to the attached upload (`/api/uploads/:id`) if `miniatureId` is set, otherwise a fixed placeholder path (`/default-article-thumbnail.png`) so a client can always render something.
+Every article object returned by these routes includes a computed `miniatureUrl`: a link to the attached upload (`/api/uploads/:id`) if `miniatureId` is set, otherwise a fixed placeholder path (`/default-article-thumbnail.jpg`) so a client can always render something.
 
 ### `GET /articles/explore`
 Lists published articles, paginated. Public, no authentication required.
@@ -92,6 +92,13 @@ Query: `search?` (title/content), `sort?` (`newest` by default, or `oldest`), `p
 
 ### `GET /articles/submitted`
 Auth required. Lists articles awaiting review: status `SUBMITTED`, excluding your own articles and articles you already reviewed. Same query params as `/explore`.
+
+| Code | Case |
+|---|---|
+| 200 | `{ articles: Article[], total, page, totalPages }` |
+
+### `GET /articles/mine`
+Auth required. Lists your own articles regardless of status, paginated. Optional `status` query param (one of `DRAFT`/`SUBMITTED`/`UNDER_REVIEW`/`APPROVED`/`REJECTED`/`PUBLISHED`) filters to that status; omit it to get all your articles. Same other query params as `/explore`.
 
 | Code | Case |
 |---|---|
@@ -189,6 +196,39 @@ Lists an article's comments. Public.
 | Code | Case |
 |---|---|
 | 200 | `Comment[]` |
+
+---
+
+## Uploads
+
+### `POST /uploads`
+Auth required. Uploads a file (image or PDF, 5MB max). Content is validated against its real format (magic bytes), not just the declared type. `visibility` defaults to `PRIVATE`; any value other than exactly `"PUBLIC"` is treated as `PRIVATE`.
+
+Body: `multipart/form-data`, field `file` (required), field `visibility`? (`"PUBLIC"` or `"PRIVATE"`, default `"PRIVATE"`)
+
+| Code | Case |
+|---|---|
+| 201 | `Upload` |
+| 400 | No file provided, or invalid format |
+| 401 | Not authenticated |
+
+### `GET /uploads/:id`
+Serves the file if `PUBLIC`, or if the caller is the owner.
+
+| Code | Case |
+|---|---|
+| 200 | The file |
+| 403 | `PRIVATE` and caller is not the owner |
+| 404 | Not found |
+
+### `DELETE /uploads/:id`
+Auth required, owner only.
+
+| Code | Case |
+|---|---|
+| 204 | Deleted |
+| 403 | Not the owner |
+| 404 | Not found |
 
 ---
 

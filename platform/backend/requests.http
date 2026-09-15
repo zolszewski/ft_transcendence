@@ -1003,3 +1003,79 @@ Content-Type: application/json
   "content": "Contenu de test",
   "miniatureId": "REMPLACER_PAR_UN_ID_DE_PDF"
 }
+
+### ==========================================================
+### GET /articles/mine (tri par statut) + visibilite au moment de
+### l'upload (pour les images inline dans le contenu d'un article).
+### ==========================================================
+
+### Créer un compte
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "mine@example.com",
+  "name": "Mine",
+  "password": "motdepasse123"
+}
+
+### Créer un DRAFT
+# @name mineDraft
+POST {{baseUrl}}/api/articles
+Content-Type: application/json
+
+{
+  "title": "My draft",
+  "content": "c"
+}
+
+### Créer un deuxième article et le soumettre
+# @name mineSubmitted
+POST {{baseUrl}}/api/articles
+Content-Type: application/json
+
+{
+  "title": "My submit",
+  "content": "c"
+}
+
+###
+POST {{baseUrl}}/api/articles/{{mineSubmitted.response.body.$.id}}/submit
+
+### Tous ses articles, peu importe le statut (2 attendus)
+GET {{baseUrl}}/api/articles/mine
+
+### Seulement les DRAFT (1 attendu)
+GET {{baseUrl}}/api/articles/mine?status=DRAFT
+
+### Créer un compte "tiers" (remplace le cookie actuel)
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "mine-other@example.com",
+  "name": "MineOther",
+  "password": "motdepasse123"
+}
+
+### Le tiers n'a aucun article a lui (0 attendu, jamais ceux du premier compte)
+GET {{baseUrl}}/api/articles/mine
+
+### Sans authentification (401 attendu)
+POST {{baseUrl}}/api/auth/logout
+
+###
+GET {{baseUrl}}/api/articles/mine
+
+### Upload direct en PUBLIC (pour une image inline):
+###
+### curl -b cookies.txt -X POST http://localhost:4000/api/uploads \
+###   -F "file=@monimage.png;type=image/png" \
+###   -F "visibility=PUBLIC"
+### -> 201, "visibility": "PUBLIC" directement, consultable par
+### n'importe qui des le depart sans passer par une route de liaison.
+###
+### Une valeur absurde ou absente retombe sur "PRIVATE" (comportement
+### par defaut inchange) :
+### curl -b cookies.txt -X POST http://localhost:4000/api/uploads \
+###   -F "file=@monimage.png;type=image/png" -F "visibility=n'importe quoi"

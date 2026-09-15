@@ -17,12 +17,14 @@ router.post("/", requireAuth, upload.single("file"), async (req, res) => {
 		await fs.unlink(req.file.path);
 		return res.status(400).json({ error: "Invalid file format" });
 	}
+	const visibility = req.body.visibility === "PUBLIC" ? "PUBLIC" : "PRIVATE";
 	const uploadRecord = await createUpload(
 		req.session.userId!,
 		req.file.filename,
 		req.file.originalname,
 		req.file.mimetype,
 		req.file.size,
+		visibility,
 	)
 	res.status(201).json(uploadRecord);
 });
