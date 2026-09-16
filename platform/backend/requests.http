@@ -1079,3 +1079,83 @@ GET {{baseUrl}}/api/articles/mine
 ### par defaut inchange) :
 ### curl -b cookies.txt -X POST http://localhost:4000/api/uploads \
 ###   -F "file=@monimage.png;type=image/png" -F "visibility=n'importe quoi"
+
+### ==========================================================
+### DAY 22 : dashboard (compteurs d'articles/reviews par statut +
+### taux d'approbation + anciennete). Relie au module "User activity
+### analytics and insights dashboard" (Minor, +1) qu'on avait manque.
+### ==========================================================
+
+### Créer un compte
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "dashboard@example.com",
+  "name": "Dashboard",
+  "password": "motdepasse123"
+}
+
+### Dashboard vide au depart (tous les compteurs a 0, approvalRate null)
+GET {{baseUrl}}/api/dashboard
+
+### Créer un article et le soumettre
+# @name dashArticle
+POST {{baseUrl}}/api/articles
+Content-Type: application/json
+
+{
+  "title": "article dashboard",
+  "content": "c"
+}
+
+###
+POST {{baseUrl}}/api/articles/{{dashArticle.response.body.$.id}}/submit
+
+### Créer un compte "relecteur" (remplace le cookie actuel)
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "dashboard-reviewer@example.com",
+  "name": "DashboardReviewer",
+  "password": "motdepasse123"
+}
+
+### Reviewer puis approuver
+# @name dashReview
+POST {{baseUrl}}/api/articles/{{dashArticle.response.body.$.id}}/reviews
+Content-Type: application/json
+
+{
+  "comment": "ok"
+}
+
+###
+PATCH {{baseUrl}}/api/reviews/{{dashReview.response.body.$.id}}
+Content-Type: application/json
+
+{
+  "decision": "APPROVED"
+}
+
+### Dashboard du relecteur : 1 review APPROVED
+GET {{baseUrl}}/api/dashboard
+
+### Reconnexion en tant qu'auteur (remplace le cookie du relecteur)
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "dashboard@example.com",
+  "password": "motdepasse123"
+}
+
+### Dashboard de l'auteur : 1 PUBLISHED, approvalRate = 100
+GET {{baseUrl}}/api/dashboard
+
+### Sans authentification (401 attendu)
+POST {{baseUrl}}/api/auth/logout
+
+###
+GET {{baseUrl}}/api/dashboard

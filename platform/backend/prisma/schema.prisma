@@ -14,8 +14,6 @@ datasource db {
 enum ArticleStatus {
   DRAFT
   SUBMITTED
-  UNDER_REVIEW
-  APPROVED
   REJECTED
   PUBLISHED
 }
