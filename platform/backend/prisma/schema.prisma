@@ -31,6 +31,7 @@ model User {
   email    String   @unique
   name     String
   password String
+  avatarId String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -38,6 +39,10 @@ model User {
   articles        Article[]
   reviews         Review[]
   comments        Comment[]
+  apiKeys         ApiKey[]
+  uploads         Upload[] @relation("UserUploads")
+  avatar          Upload? @relation("UserAvatar", fields: [avatarId], references: [id]) 
+
 }
 
 model Article {
@@ -50,6 +55,9 @@ model Article {
 
   authorId String
   author   User   @relation(fields: [authorId], references: [id])
+
+  miniatureId String?
+  miniature   Upload? @relation(fields: [miniatureId], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -89,5 +97,36 @@ model Comment {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model ApiKey {
+  id            String @id @default(cuid())
+  keyHash       String @unique
+  userId        String
+
+  user User     @relation(fields: [userId], references: [id])
+
+  createdAt     DateTime @default(now())
+}
+
+enum UploadVisibility {
+  PUBLIC
+  PRIVATE
+}
+
+model Upload {
+  id            String @id @default(cuid())
+  filename      String
+  originalName  String
+  mimeType      String
+  size          Int
+  visibility    UploadVisibility @default(PRIVATE)
+
+  ownerId       String
+  owner         User @relation("UserUploads", fields: [ownerId], references: [id])
+  avatarOf      User[] @relation("UserAvatar")
+  articles      Article[]
+
+  createdAt DateTime @default(now())
 }
 

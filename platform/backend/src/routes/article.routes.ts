@@ -1,32 +1,19 @@
 import { Router } from "express";
-import multer from "multer";
-import path from "path";
-import { listArticles, getArticleById, getDraftById, listDrafts, createArticle, updateArticle, deleteArticle, updateArticleStatus, listSubmittedArticlesForReview } from "../services/article.service";
+import { ArticleStatus } from "@prisma/client";
+import { listArticles, getArticleById, createArticle, updateArticle, deleteArticle, updateArticleStatus, listSubmittedArticlesForReview, getMiniatureUrl, listMyArticles } from "../services/article.service";
 import { isOwner } from "../utils/authorization"
 import { requireAuth } from "../middleware/auth";
 import { isValidContent, isValidTitle } from "../utils/validation";
 import { createReview, getReviewByArticleAndReviewer, listReviewsForArticle } from "../services/review.service";
 import { createComment, listCommentsForArticle } from "../services/comment.service";
+import { getUploadById, setUploadVisibility } from "../services/upload.service";
 
 const router = Router();
 
-const storage = multer.diskStorage({
-  destination: "/app/public/uploads",
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname); // e.g. ".png"
-    const unique = `${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`;
-    cb(null, unique);
-  },
-});
+function withMiniatureUrl(article: any) {
+	return { ...article, miniatureUrl: getMiniatureUrl(article.miniatureId) };
+}
 
-const upload = multer({
-  storage,
-  limits: { fileSize: 5 * 1024 * 1024 },
-  fileFilter: (req, file, cb) => {
-    const allowed = ["image/png", "image/jpeg", "image/webp"];
-    cb(null, allowed.includes(file.mimetype));
-  },
-});
 
 router.get("/explore", async (req, res) => {
 	const { search, sort, page, limit } = req.query;
@@ -36,9 +23,8 @@ router.get("/explore", async (req, res) => {
 		page: Math.max(1, Number(page) || 1),
 		limit: Math.min(50, Math.max(1, Number(limit) || 10)),
 	});
-	res.json(result);
+	res.json({ ...result, articles: result.articles.map(withMiniatureUrl) });
 })
-
 
 router.get("/submitted", requireAuth, async (req, res) => {
 	const { search, sort, page, limit } = req.query;
@@ -49,83 +35,56 @@ router.get("/submitted", requireAuth, async (req, res) => {
 		page: Math.max(1, Number(page) || 1),
 		limit: Math.min(50, Math.max(1, Number(limit) || 10)),
 	});
-	res.json(result);
+	res.json({ ...result, articles: result.articles.map(withMiniatureUrl) });
 });
 
-router.get("/drafts", requireAuth, async (req, res) => {
-	const drafts = await listDrafts(req.session.userId!);
-	res.json(drafts);
+router.get("/mine", requireAuth, async (req, res) => {
+	const { status, search, sort, page, limit } = req.query;
+	const validStatuses = ["DRAFT", "SUBMITTED", "UNDER_REVIEW", "APPROVED", "REJECTED", "PUBLISHED"];
+	const result = await listMyArticles({
+		authorId: req.session.userId!,
+		status: validStatuses.includes(status as string) ? (status as ArticleStatus) : undefined,
+		search: typeof search === "string" ? search : undefined,
+		sort: sort === "oldest" ? "oldest" : "newest",
+		page: Math.max(1, Number(page) || 1),
+		limit: Math.min(50, Math.max(1, Number(limit) || 10)),
+	});
+	res.json({ ...result, articles: result.articles.map(withMiniatureUrl) });
 });
-
-router.get("/drafts/:id", requireAuth, async (req, res) => {
-	const draft = await getDraftById(req.params.id, req.session.userId!);
-	if (!draft) return res.status(404).json({ error: "Draft not found" });
-	res.json(draft);
-});
-
-router.post("/image", requireAuth, upload.single("image"), async (req, res) => {
-	if (!req.file) return res.status(400).json({ error: "Image is required" });
-	res.status(201).json({ url: `/uploads/${req.file.filename}` });
-});
-
-router.post("/draft", requireAuth, upload.single("miniature"), async (req, res) => {
-	try {
-		const { title, content, abstract } = req.body;
-		if (!isValidTitle(title) || !isValidContent(content)) {
-			return res.status(400).json({ error: "Invalid input" });
-		}
-
-		const miniature = req.file ? `/uploads/${req.file.filename}` : null;
-		const article = await createArticle(
-			req.session.userId!,
-			title,
-			content,
-			miniature,
-			abstract ?? "",
-		);
-		res.status(201).json(article);
-	} catch (error) {
-		console.error("Failed to create draft:", error);
-		res.status(500).json({ error: "Could not create draft" });
-	}
-});
-
 
 router.get("/:id", async (req, res) => {
 	const article = await getArticleById(req.params.id);
 	if (!article)
 		return res.status(404).json({ error: "Article not found" });
+	if (article.status === "PUBLISHED")
+		return res.json(withMiniatureUrl(article));
 	const userId = req.session?.userId;
-	if (article.status !== "PUBLISHED" || !article)
-		return res.status(403).json({ error: "Forbidden" });
-	res.json(article);
+	if (!userId)
+		return res.status(404).json({ error: "Article not found" });
+	if (isOwner(article.authorId, userId))
+		return res.json(withMiniatureUrl(article));
+	if (article.status === "SUBMITTED")
+		return res.json(withMiniatureUrl(article));
+	return res.status(404).json({ error: "Article not found" });
 });
 
-router.post("/", requireAuth, upload.single("miniature"), async (req, res) => {
-	try {
-            const { title, content, abstract } = req.body;
-            if (!isValidTitle(title) || !isValidContent(content)) {
-                return res.status(400).json({
-                    error: "Invalid input",
-                });
-            }
-            const miniature = req.file ? `/uploads/${req.file.filename}` : null;
-            const article = await createArticle(
-                req.session.userId!,
-                title,
-                content,
-				miniature,
-                abstract ?? "",  
-            );
-            res.status(201).json(article);
-        } catch (error) {
-            console.error("Failed to create article:", error);
-            res.status(500).json({
-                error: "Could not create article",
-            });
-        }
-    });
-
+router.post("/", requireAuth, async (req, res) => {
+	const { title, content, abstract, miniatureId } = req.body;
+	if(!isValidTitle(title) || !isValidContent(content))
+		return res.status(400).json({ error: "Invalid input" });
+	if (miniatureId) {
+		const upload = await getUploadById(miniatureId);
+		if (!upload)
+			return res.status(404).json({ error: "Upload not found" });
+		if (!isOwner(upload.ownerId, req.session.userId!))
+			return res.status(403).json({ error: "Forbidden" });
+		if (!upload.mimeType.startsWith("image/"))
+			return res.status(400).json({ error: "Not an image" });
+		await setUploadVisibility(miniatureId, "PUBLIC");
+	}
+	const article = await createArticle(req.session.userId!, title, content, abstract, miniatureId);
+	res.status(201).json(withMiniatureUrl(article));
+});
 
 router.put("/:id", requireAuth, async (req, res) => {
 	const article = await getArticleById(req.params.id);
@@ -133,11 +92,21 @@ router.put("/:id", requireAuth, async (req, res) => {
 		return res.status(404).json({ error: "Article not found" });
 	if (!isOwner(article.authorId, req.session.userId!))
 		return res.status(403).json({ error: "Forbidden" });
-	const { title, content, abstract } = req.body;
+	const { title, content, abstract, miniatureId } = req.body;
 	if (!isValidTitle(title) || !isValidContent(content))
 		return res.status(400).json({ error: "Invalid input" });
-	const updated = await updateArticle(req.params.id, { title, content, abstract });
-	res.json(updated);
+	if (miniatureId) {
+		const upload = await getUploadById(miniatureId);
+		if (!upload)
+			return res.status(404).json({ error: "Upload not found" });
+		if (!isOwner(upload.ownerId, req.session.userId!))
+			return res.status(403).json({ error: "Forbidden" });
+		if (!upload.mimeType.startsWith("image/"))
+			return res.status(400).json({ error: "Not an image" });
+		await setUploadVisibility(miniatureId, "PUBLIC");
+	}
+	const updated = await updateArticle(req.params.id, { title, content, abstract, miniatureId });
+	res.json(withMiniatureUrl(updated));
 })
 
 router.delete("/:id", requireAuth, async (req, res) => {
@@ -189,8 +158,14 @@ router.post("/:id/comments", requireAuth, async (req, res) => {
 	res.status(201).json(comment);
 });
 
-router.get("/:id/reviews", async (req, res) => {
+router.get("/:id/reviews", requireAuth, async (req, res) => {
+	const article = await getArticleById(req.params.id);
+	if (!article) 
+		return res.status(404).json({ error: "Article not found" });
 	const reviews = await listReviewsForArticle(req.params.id);
+	const isReviewer = reviews.some((r) => isOwner(r.reviewerId, req.session.userId!));
+	if (!isOwner(article.authorId, req.session.userId!) && !isReviewer)
+		return res.status(403).json({ error : "Forbidden" });
 	res.json(reviews);
 });
 
@@ -199,10 +174,4 @@ router.get("/:id/comments", async (req, res) => {
 	res.json(comments);
 });
 
-
-
-
 export default router;
-
-
-// last route by Z for file upload

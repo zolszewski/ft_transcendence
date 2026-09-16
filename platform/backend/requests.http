@@ -61,7 +61,7 @@ Content-Type: application/json
 
 ### Lister tous les articles
 # @name listArticles
-GET {{baseUrl}}/api/articles
+GET {{baseUrl}}/api/articles/explore
 
 ### Voir le détail du premier article de la liste ci-dessus
 GET {{baseUrl}}/api/articles/{{listArticles.response.body.$.0.id}}
@@ -254,7 +254,9 @@ GET {{baseUrl}}/api/articles/{{createArticleDay10.response.body.$.id}}/reviews
 ### ==========================================================
 ### DAY 11 : decision de review (approve/reject) + filtre PUBLISHED
 ### sur les routes publiques. Un article SUBMITTED est invisible
-### publiquement tant qu'il n'a pas ete approuve par un reviewer.
+### publiquement tant qu'il n'a pas ete approuve par un reviewer,
+### mais reste visible par son auteur et par un relecteur potentiel
+### (n'importe quel compte connecte, pas l'auteur).
 ### ==========================================================
 
 ### Créer un compte "auteur"
@@ -280,7 +282,13 @@ Content-Type: application/json
 ### Le soumettre pour review
 POST {{baseUrl}}/api/articles/{{createArticleDay11.response.body.$.id}}/submit
 
-### Vérifier qu'il est invisible publiquement tant qu'il n'est pas publié (404 attendu)
+### L'auteur (toujours connecté à ce stade) peut voir son propre SUBMITTED (200 attendu)
+GET {{baseUrl}}/api/articles/{{createArticleDay11.response.body.$.id}}
+
+### Déconnecté, l'article reste invisible (404 attendu)
+POST {{baseUrl}}/api/auth/logout
+
+###
 GET {{baseUrl}}/api/articles/{{createArticleDay11.response.body.$.id}}
 
 ### Créer un compte "reviewer" (remplace le cookie actuel)
@@ -292,6 +300,9 @@ Content-Type: application/json
   "name": "Reviewer11",
   "password": "motdepasse123"
 }
+
+### Un tiers connecté (relecteur potentiel) peut aussi voir le SUBMITTED (200 attendu)
+GET {{baseUrl}}/api/articles/{{createArticleDay11.response.body.$.id}}
 
 ### Reviewer l'article
 # @name createReviewDay11
@@ -356,7 +367,7 @@ Content-Type: application/json
 GET {{baseUrl}}/api/articles/{{createArticleDay11.response.body.$.id}}
 
 ### Vérifier qu'il apparaît dans le listing public
-GET {{baseUrl}}/api/articles
+GET {{baseUrl}}/api/articles/explore
 
 ### ==========================================================
 ### DAY 12 : commentaires. Seuls les articles PUBLISHED sont
@@ -473,25 +484,25 @@ GET {{baseUrl}}/api/articles/{{createArticleDay12.response.body.$.id}}/comments
 ### ==========================================================
 
 ### Listing par défaut (page 1, 10 par page, plus récents en premier)
-GET {{baseUrl}}/api/articles
+GET {{baseUrl}}/api/articles/explore
 
 ### Recherche (adapte le terme à un titre d'article publié existant)
-GET {{baseUrl}}/api/articles?search=article
+GET {{baseUrl}}/api/articles/explore?search=article
 
 ### Tri du plus ancien au plus récent
-GET {{baseUrl}}/api/articles?sort=oldest
+GET {{baseUrl}}/api/articles/explore?sort=oldest
 
 ### Pagination : 2 par page, page 1
-GET {{baseUrl}}/api/articles?limit=2&page=1
+GET {{baseUrl}}/api/articles/explore?limit=2&page=1
 
 ### Pagination : 2 par page, page 2 (résultats différents de la page 1 attendus)
-GET {{baseUrl}}/api/articles?limit=2&page=2
+GET {{baseUrl}}/api/articles/explore?limit=2&page=2
 
 ### Garde-fous : page négative -> ramenée à 1, pas d'erreur
-GET {{baseUrl}}/api/articles?page=-5
+GET {{baseUrl}}/api/articles/explore?page=-5
 
 ### Garde-fous : limite énorme -> plafonnée à 50, pas d'erreur
-GET {{baseUrl}}/api/articles?limit=99999
+GET {{baseUrl}}/api/articles/explore?limit=99999
 
 ### ==========================================================
 ### DAY 14 : cache Redis sur le listing d'articles. Le contenu de la
@@ -505,4 +516,566 @@ GET {{baseUrl}}/api/articles?limit=99999
 ### ==========================================================
 
 ### Peuple le cache (v0)
-GET {{baseUrl}}/api/articles
+GET {{baseUrl}}/api/articles/explore
+
+### ==========================================================
+### DAY 15 : WebSocket. Pas testable via requests.http, donc :
+###
+### 1. Se connecter sur le site
+###
+### 2. F12 -> Console -> allow pasting -> copier/coller ça :
+###
+### const script = document.createElement("script");
+### script.src = "http://localhost:4000/socket.io/socket.io.js";
+### script.onload = () => {
+###   const socket = io("https://localhost:8443");
+###   socket.on("connect", () => console.log("Connecte !", socket.id));
+###   socket.on("user:online", (id) => console.log("En ligne :", id));
+###   socket.on("user:offline", (id) => console.log("Deconnecte :", id));
+### };
+### document.head.appendChild(script);
+###
+### 2. Dans le terminal (en étant toujours connecté) :
+### docker compose -f platform/docker-compose.yml exec redis redis-cli SMEMBERS "online_users"
+### ==========================================================
+
+### ==========================================================
+### DAY 16 : gestion d'erreurs centralisée (filet de sécurité pour
+### les erreurs imprévues)
+### ==========================================================
+
+### Provoque une vraie erreur non gérée (pas de body/Content-Type) :
+### erreur500 , + un log JSON structuré côté serveur (docker compose logs backend)
+POST {{baseUrl}}/api/articles
+
+### ==========================================================
+### DAY 17 : sécurité de base (helmet, rate limiting, protection
+### de la route GET /:id/reviews).
+###
+### Helmet + rate limiting global ne sont pas testables via une seule
+### requête : vérifier les headers de sécurité sur n'importe quelle
+### réponse ci-dessus (Content-Security-Policy, X-Frame-Options,
+### Strict-Transport-Security...), et pour vraiment déclencher un 429,
+### boucler des requêtes depuis un terminal :
+###   for i in $(seq 1 12); do curl -s -o /dev/null -w "%{http_code}\n" \
+###     -X POST http://localhost:4000/api/auth/login \
+###     -H "Content-Type: application/json" \
+###     -d '{"email":"nobody@test.com","password":"wrongpass"}'; done
+### -> les 10 premiers : 401, à partir du 11e : 429.
+### Le limiter auth ignore les tentatives réussies (skipSuccessfulRequests),
+### donc une même boucle avec un bon mot de passe reste en 200 en continu.
+### ==========================================================
+
+### Créer un compte "auteur"
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "author17@example.com",
+  "name": "Author17",
+  "password": "motdepasse123"
+}
+
+### Créer un article
+# @name createArticleDay17
+POST {{baseUrl}}/api/articles
+Content-Type: application/json
+
+{
+  "title": "Article Day 17",
+  "content": "Contenu pour tester la protection des reviews"
+}
+
+### Le soumettre pour review
+POST {{baseUrl}}/api/articles/{{createArticleDay17.response.body.$.id}}/submit
+
+### Créer un compte "reviewer" (remplace le cookie actuel)
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "reviewer17@example.com",
+  "name": "Reviewer17",
+  "password": "motdepasse123"
+}
+
+### Reviewer l'article
+POST {{baseUrl}}/api/articles/{{createArticleDay17.response.body.$.id}}/reviews
+Content-Type: application/json
+
+{
+  "comment": "À valider"
+}
+
+### Le reviewer consulte les reviews de l'article (200 attendu, il en fait partie)
+GET {{baseUrl}}/api/articles/{{createArticleDay17.response.body.$.id}}/reviews
+
+### Créer un compte "tiers" (remplace le cookie actuel, ni auteur ni reviewer)
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "stranger17@example.com",
+  "name": "Stranger17",
+  "password": "motdepasse123"
+}
+
+### Le tiers tente de consulter les reviews (403 attendu)
+GET {{baseUrl}}/api/articles/{{createArticleDay17.response.body.$.id}}/reviews
+
+### L'auteur se reconnecte (remplace le cookie actuel)
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "author17@example.com",
+  "password": "motdepasse123"
+}
+
+### L'auteur consulte les reviews de son article (200 attendu)
+GET {{baseUrl}}/api/articles/{{createArticleDay17.response.body.$.id}}/reviews
+
+### L'auteur consulte les reviews d'un article inexistant (404 attendu)
+GET {{baseUrl}}/api/articles/nonexistent-id-1234/reviews
+
+### L'auteur se déconnecte
+POST {{baseUrl}}/api/auth/logout
+
+### Visiteur non connecté tente de consulter les reviews (401 attendu)
+GET {{baseUrl}}/api/articles/{{createArticleDay17.response.body.$.id}}/reviews
+
+### ==========================================================
+### DAY 18 : module Public API - authentification par clé API
+### (en plus du cookie de session), documentation dans API.md.
+### ==========================================================
+
+### Créer un compte
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "apikey18@example.com",
+  "name": "ApiKey18",
+  "password": "motdepasse123"
+}
+
+### Générer une clé API (avec le cookie de session actuel)
+# @name createApiKeyDay18
+POST {{baseUrl}}/api/auth/api-keys
+
+### Se déconnecter (plus aucun cookie valide à partir d'ici)
+POST {{baseUrl}}/api/auth/logout
+
+### Utiliser la clé API pour /me, SANS cookie (200 attendu, bonne identité renvoyée)
+GET {{baseUrl}}/api/auth/me
+Authorization: Bearer {{createApiKeyDay18.response.body.$.apiKey}}
+
+### Créer un article via la clé API, SANS cookie (201 attendu, authorId = le bon compte)
+# @name createArticleDay18
+POST {{baseUrl}}/api/articles
+Content-Type: application/json
+Authorization: Bearer {{createApiKeyDay18.response.body.$.apiKey}}
+
+{
+  "title": "Article créé via clé API",
+  "content": "Contenu de test pour le module Public API"
+}
+
+### Modifier ce même article via la clé API (200 attendu, PUT couvert par la clé aussi)
+PUT {{baseUrl}}/api/articles/{{createArticleDay18.response.body.$.id}}
+Content-Type: application/json
+Authorization: Bearer {{createApiKeyDay18.response.body.$.apiKey}}
+
+{
+  "title": "Article modifié via clé API",
+  "content": "Nouveau contenu"
+}
+
+### Clé invalide (401 attendu, jamais traitée comme un vrai userId)
+GET {{baseUrl}}/api/auth/me
+Authorization: Bearer cleinventeequinexistepas
+
+### Aucune authentification du tout, route protégée (401 attendu, comportement inchangé)
+GET {{baseUrl}}/api/auth/me
+
+### ==========================================================
+### BUG ZOE
+### ==========================================================
+
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "test@mail.com",
+  "name": "test",
+  "password": "12345678"
+}
+
+### Créer un DRAFT
+# @name reproArticle
+POST {{baseUrl}}/api/articles
+Content-Type: application/json
+
+{
+  "title": "article test",
+  "content": "contenu test"
+}
+
+### SUBMITTED
+POST {{baseUrl}}/api/articles/{{reproArticle.response.body.$.id}}/submit
+
+### Déco
+POST {{baseUrl}}/api/auth/logout
+
+### Consulter l'article SUBMITTED, déconnecté
+
+GET {{baseUrl}}/api/articles/{{reproArticle.response.body.$.id}}
+
+### Créer un deuxième compte not owner
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "test2@mail.com",
+  "name": "test2",
+  "password": "12345678"
+}
+
+### Login premier compte owner
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "test@mail.com",
+  "password": "12345678"
+}
+
+### Nouveau DRAFT
+# @name reproDraftArticle
+POST {{baseUrl}}/api/articles
+Content-Type: application/json
+
+{
+  "title": "article test 2",
+  "content": "contenu test 2"
+}
+
+### Connexion deuxième compte not owner
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "test2@mail.com",
+  "password": "12345678"
+}
+
+### Not owner GET le draft de owner
+
+GET {{baseUrl}}/api/articles/{{reproDraftArticle.response.body.$.id}}
+
+### ==========================================================
+### DAY 19 : file upload (multer + validation magic-bytes via
+### file-type + stockage non statique + controle d'acces PUBLIC/PRIVATE
+### via /api/uploads).
+###
+### L'upload multipart n'est pas pratique a scripter proprement en
+### .http (fichier binaire requis), donc test de reference via curl
+### depuis un terminal :
+###
+### curl -c cookies.txt -X POST http://localhost:4000/api/auth/register \
+###   -H "Content-Type: application/json" \
+###   -d '{"email":"upload19@test.com","name":"Upload19","password":"12345678"}'
+###
+### curl -b cookies.txt -X POST http://localhost:4000/api/uploads \
+###   -F "file=@monimage.png;type=image/png"
+### -> 201 { id, filename, originalName, mimeType, size, visibility: "PRIVATE", ownerId, createdAt }
+###
+### ==========================================================
+
+### Consulter un upload PRIVATE en tant que proprietaire (200 attendu)
+GET {{baseUrl}}/api/uploads/REMPLACER_PAR_UN_ID_REEL
+
+### Se deconnecter
+POST {{baseUrl}}/api/auth/logout
+
+### Consulter le meme upload PRIVATE, deconnecte (403 attendu)
+GET {{baseUrl}}/api/uploads/REMPLACER_PAR_UN_ID_REEL
+
+### Upload inexistant (404 attendu)
+GET {{baseUrl}}/api/uploads/id-inexistant
+
+### Supprimer un upload sans etre authentifie (401 attendu)
+DELETE {{baseUrl}}/api/uploads/REMPLACER_PAR_UN_ID_REEL
+
+### ==========================================================
+### DAY 20 : profil + avatar (ferme le module User Management avec
+### Day 21). Reutilise le systeme d'upload du Day 19.
+###
+### Piege a connaitre si un jour un champ/relation Prisma "n'existe
+### pas" alors que le schema est correct et la migration appliquee :
+### "prisma migrate dev" ne regenere pas toujours le client tout seul.
+### Si "Unknown argument" apparait sur un champ qui existe bien dans
+### schema.prisma -> docker compose exec backend npx prisma generate
+### puis redemarrer le backend (tsx watch ne surveille pas node_modules).
+### ==========================================================
+
+### Créer un compte
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "day20@example.com",
+  "name": "Day20",
+  "password": "motdepasse123"
+}
+
+### Consulter son propre profil (avatar par defaut attendu)
+GET {{baseUrl}}/api/users/me
+
+### Modifier son profil (200 attendu)
+PATCH {{baseUrl}}/api/users/me
+Content-Type: application/json
+
+{
+  "name": "Day20 Renamed",
+  "email": "day20-renamed@example.com"
+}
+
+### Créer un compte "intrus" (remplace le cookie actuel)
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "day20-intruder@example.com",
+  "name": "Day20Intruder",
+  "password": "motdepasse123"
+}
+
+### L'intrus essaie de prendre l'email deja pris par l'autre compte (409 attendu)
+PATCH {{baseUrl}}/api/users/me
+Content-Type: application/json
+
+{
+  "name": "Peu importe",
+  "email": "day20-renamed@example.com"
+}
+
+### Consulter le profil PUBLIC d'un autre compte (pas d'email dans la reponse)
+GET {{baseUrl}}/api/users/REMPLACER_PAR_UN_ID_REEL
+
+### Profil inexistant (404 attendu)
+GET {{baseUrl}}/api/users/id-inexistant
+
+### Lier un upload comme avatar (necessite d'avoir uploade un fichier
+### via /api/uploads au prealable, cf Day 19 - remplace l'id ci-dessous) :
+### 200 attendu, avatarUrl mis a jour, et l'upload bascule en PUBLIC.
+PUT {{baseUrl}}/api/users/me/avatar
+Content-Type: application/json
+
+{
+  "uploadId": "REMPLACER_PAR_UN_ID_REEL"
+}
+
+### ==========================================================
+### RECONCILIATION front : GET /articles/submitted (queue de
+### relecture). Exclut les articles dont on est l'auteur et ceux
+### qu'on a deja reviewes soi-meme.
+### ==========================================================
+
+### Créer un compte "auteur"
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "queue-author@example.com",
+  "name": "QueueAuthor",
+  "password": "motdepasse123"
+}
+
+### Créer un article
+# @name queueArticle
+POST {{baseUrl}}/api/articles
+Content-Type: application/json
+
+{
+  "title": "Article pour la queue",
+  "content": "Contenu de test"
+}
+
+### Le soumettre (-> SUBMITTED)
+POST {{baseUrl}}/api/articles/{{queueArticle.response.body.$.id}}/submit
+
+### Créer un compte "relecteur" (remplace le cookie actuel)
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "queue-reviewer@example.com",
+  "name": "QueueReviewer",
+  "password": "motdepasse123"
+}
+
+### L'article apparaît dans la queue du relecteur
+GET {{baseUrl}}/api/articles/submitted
+
+### Il reviewe l'article
+POST {{baseUrl}}/api/articles/{{queueArticle.response.body.$.id}}/reviews
+Content-Type: application/json
+
+{
+  "comment": "ok"
+}
+
+### L'article disparaît de sa queue (deja reviewe par lui)
+GET {{baseUrl}}/api/articles/submitted
+
+### Reconnexion en tant qu'auteur (remplace le cookie du relecteur)
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "queue-author@example.com",
+  "password": "motdepasse123"
+}
+
+### L'auteur ne voit jamais son propre article dans la queue
+GET {{baseUrl}}/api/articles/submitted
+
+### Aucune authentification (401 attendu)
+POST {{baseUrl}}/api/auth/logout
+
+###
+GET {{baseUrl}}/api/articles/submitted
+
+### ==========================================================
+### RECONCILIATION front : miniature d'article, reutilise le systeme
+### d'Upload du Day 19 (comme l'avatar du Day 20). L'upload multipart
+### n'est pas pratique a scripter en .http, cf note Day 19 pour le
+### curl de reference. Une fois un uploadId recupere :
+### ==========================================================
+
+### Créer un compte
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "miniature@example.com",
+  "name": "Miniature",
+  "password": "motdepasse123"
+}
+
+### Créer un article SANS miniature (miniatureUrl par defaut attendu)
+POST {{baseUrl}}/api/articles
+Content-Type: application/json
+
+{
+  "title": "Article sans miniature",
+  "content": "Contenu de test"
+}
+
+### Créer un article AVEC miniature (200 attendu, miniatureUrl = /api/uploads/<id>,
+### et l'upload bascule en PUBLIC)
+POST {{baseUrl}}/api/articles
+Content-Type: application/json
+
+{
+  "title": "Article avec miniature",
+  "content": "Contenu de test",
+  "miniatureId": "REMPLACER_PAR_UN_ID_REEL"
+}
+
+### Utiliser l'upload PRIVATE d'un autre compte comme miniature (403 attendu)
+POST {{baseUrl}}/api/articles
+Content-Type: application/json
+
+{
+  "title": "Vol de miniature",
+  "content": "Contenu de test",
+  "miniatureId": "REMPLACER_PAR_L_ID_D_UN_UPLOAD_D_UN_AUTRE_COMPTE"
+}
+
+### Utiliser un PDF comme miniature (400 attendu, pas une image)
+POST {{baseUrl}}/api/articles
+Content-Type: application/json
+
+{
+  "title": "Miniature invalide",
+  "content": "Contenu de test",
+  "miniatureId": "REMPLACER_PAR_UN_ID_DE_PDF"
+}
+
+### ==========================================================
+### GET /articles/mine (tri par statut) + visibilite au moment de
+### l'upload (pour les images inline dans le contenu d'un article).
+### ==========================================================
+
+### Créer un compte
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "mine@example.com",
+  "name": "Mine",
+  "password": "motdepasse123"
+}
+
+### Créer un DRAFT
+# @name mineDraft
+POST {{baseUrl}}/api/articles
+Content-Type: application/json
+
+{
+  "title": "My draft",
+  "content": "c"
+}
+
+### Créer un deuxième article et le soumettre
+# @name mineSubmitted
+POST {{baseUrl}}/api/articles
+Content-Type: application/json
+
+{
+  "title": "My submit",
+  "content": "c"
+}
+
+###
+POST {{baseUrl}}/api/articles/{{mineSubmitted.response.body.$.id}}/submit
+
+### Tous ses articles, peu importe le statut (2 attendus)
+GET {{baseUrl}}/api/articles/mine
+
+### Seulement les DRAFT (1 attendu)
+GET {{baseUrl}}/api/articles/mine?status=DRAFT
+
+### Créer un compte "tiers" (remplace le cookie actuel)
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "mine-other@example.com",
+  "name": "MineOther",
+  "password": "motdepasse123"
+}
+
+### Le tiers n'a aucun article a lui (0 attendu, jamais ceux du premier compte)
+GET {{baseUrl}}/api/articles/mine
+
+### Sans authentification (401 attendu)
+POST {{baseUrl}}/api/auth/logout
+
+###
+GET {{baseUrl}}/api/articles/mine
+
+### Upload direct en PUBLIC (pour une image inline):
+###
+### curl -b cookies.txt -X POST http://localhost:4000/api/uploads \
+###   -F "file=@monimage.png;type=image/png" \
+###   -F "visibility=PUBLIC"
+### -> 201, "visibility": "PUBLIC" directement, consultable par
+### n'importe qui des le depart sans passer par une route de liaison.
+###
+### Une valeur absurde ou absente retombe sur "PRIVATE" (comportement
+### par defaut inchange) :
+### curl -b cookies.txt -X POST http://localhost:4000/api/uploads \
+###   -F "file=@monimage.png;type=image/png" -F "visibility=n'importe quoi"
