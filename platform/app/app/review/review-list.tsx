@@ -2,29 +2,14 @@
  
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { apiFetch } from "@/lib/api";
+import { apiClient } from "@/lib/apiClient";
 import LogoutButton from "@/components/LogoutButton";
- 
-type Article = {
-  id: string;
-  title: string;
-  abstract: string | null;
-  createdAt: string;
-  author: { id: string; name: string };
-  miniature: string | null;
-};
- 
-type ListResult = {
-  articles: Article[];
-  total: number;
-  page: number;
-  totalPages: number;
-};
+import type { Article, ListResult } from "@/lib/types";
  
 const LIMIT = 10;
  
 export default function ReviewList() {
-  const [articles, setArticles] = useState<Article[]>([]);
+  const [articles, setArticles] = useState<ListResult<Article> | null>(null);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [search, setSearch] = useState("");
@@ -41,16 +26,26 @@ export default function ReviewList() {
     if (currentSearch) params.set("search", currentSearch);
  
     try {
-      const response = await apiFetch(`/articles/submitted?${params.toString()}`);
-      if (!response.ok) {
+      const getArticles = await apiClient.articles.getSubmittedArticles({
+        page: targetPage,
+        limit: LIMIT,
+        ...(currentSearch ? { search: currentSearch } : {}),
+      });
+      if (!getArticles.success) {
         setError("Unable to load articles awaiting review.");
         return;
       }
  
-      const data: ListResult = await response.json();
-      setArticles((prev) => (replace ? data.articles : [...prev, ...data.articles]));
-      setPage(data.page);
-      setTotalPages(data.totalPages);
+      setArticles((prev) => {
+        if (replace || !prev) return getArticles.data;
+
+        return {
+          ...getArticles.data,
+          data: [...prev.data, ...getArticles.data.data],
+        };
+      });
+      setPage(getArticles.data.page);
+      setTotalPages(getArticles.data.pages);
     } catch {
       setError("Unable to connect to the server.");
     }
@@ -98,15 +93,15 @@ export default function ReviewList() {
         {loading && <p className="mt-8 text-sm">Loading...</p>}
         {error && <p className="mt-8 text-sm text-red-600">{error}</p>}
  
-        {!loading && !error && articles.length === 0 && (
+        {!loading && !error && articles?.data.length === 0 && (
           <p className="mt-8 text-sm text-gray-600">
             Nothing to review right now.
           </p>
         )}
  
-        {!loading && articles.length > 0 && (
+        {!loading && articles && articles.data.length > 0 && (
           <ul className="mt-8 flex flex-col gap-4">
-            {articles.map((article) => (
+            {articles.data.map((article) => (
               <li key={article.id}>
                 <Link
                   href={`/review/${article.id}`}

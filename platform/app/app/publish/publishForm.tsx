@@ -1,22 +1,107 @@
 "use client";
 
 import type { FormEvent } from "react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { apiFetch } from "@/lib/api";
 import Link from "next/link";
 import LogoutButton from "@/components/LogoutButton";
 import TextEditor from "@/components/text-editor";
 import type { TextEditorHandle } from "@/components/text-editor";
 import { apiClient } from "@/lib/apiClient";
 
+
 export default function PublishForm() {
+  const draftStorageKey = "publish-form-draft";
   const router = useRouter();
   const searchParams = useSearchParams();
   const editorRef = useRef<TextEditorHandle>(null);
-
+  const draftId = searchParams.get("draft");
+  const [cachedFileHandle, setCachedFileHandle] = useState<FileSystemFileHandle | null>(null);
+  const [savedData, setSavedData] = useState({ title: "", content: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (draftId) {
+      apiClient.articles.getDraft(draftId).then((response) => {
+        if (response.success) setSavedData(response.data);
+        else setError(response.error);
+      });
+      return;
+    }
+    try {
+      const storedData = sessionStorage.getItem(draftStorageKey);
+      if (storedData) setSavedData(JSON.parse(storedData));
+    } catch {
+      sessionStorage.removeItem(draftStorageKey);
+    }
+  }, [draftId]);
+
+  function cacheData(data: { title: string; content: string }) {
+    setSavedData(data);
+    sessionStorage.setItem(draftStorageKey, JSON.stringify(data));
+  }
+
+  function clearCachedData() {
+    sessionStorage.removeItem(draftStorageKey);
+    setCachedFileHandle(null);
+  }
+
+  async function persistDraft(allowEmpty = false) {
+    setError("");
+
+    const editorData = editorRef.current?.getData() ?? {
+      title: "",
+      content: "",
+    };
+    const miniatureFile = editorRef.current?.image ?? null;
+    const { title, content } = editorData;
+
+    if (!title) {
+      if (allowEmpty) return true;
+      setError("Add a title before saving the draft.");
+      return false;
+    }
+    if (!content) {
+      if (allowEmpty) return true;
+      setError("Write some content before saving the draft.");
+      return false;
+    }
+
+    setLoading(true);
+    try {
+      const response = draftId
+        ? await apiClient.articles.update(draftId, title, content, miniatureFile)
+        : await apiClient.articles.createDraft(title, content, miniatureFile);
+      if (response.success === false) {
+        setError(response.error);
+        return false;
+      }
+      clearCachedData();
+      return true;
+    } catch {
+      setError("Unable to connect to the server.");
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function saveDraft() {
+    if (await persistDraft()) {
+      router.push("/");
+      router.refresh();
+    }
+  }
+
+  async function handleHomeClick(event: React.MouseEvent<HTMLAnchorElement>) {
+    event.preventDefault();
+    if (await persistDraft(true)) {
+      router.push("/");
+      router.refresh();
+    }
+  }
+
   async function handleSubmit(
   event: FormEvent<HTMLFormElement>
 ) {
@@ -44,7 +129,9 @@ export default function PublishForm() {
 
   try {
     
-    const createResponse = await apiClient.articles.create(title, content, miniatureFile);
+    const createResponse = draftId
+      ? await apiClient.articles.update(draftId, title, content, miniatureFile)
+      : await apiClient.articles.create(title, content, miniatureFile);
     if (createResponse.success === false) {
       setError(createResponse.error);
       return;
@@ -57,6 +144,7 @@ export default function PublishForm() {
       return;
     }
 
+    clearCachedData();
     const redirectTo =
       searchParams.get("redirect") || "/";
     router.push(redirectTo);
@@ -71,14 +159,20 @@ export default function PublishForm() {
   return (
     <main className="relative flex min-h-screen flex-col items-center overflow-hidden">
       <header className="absolute left-0 right-0 top-0 flex items-center justify-between p-4">
-        <Link
-          href="/"
-          className="border px-4 py-2 hover:underline"
-        >
-          Home
-        </Link>
+        <div className="flex gap-2">
+          <Link
+            href="/"
+            onClick={handleHomeClick}
+            className="border px-4 py-2 hover:underline"
+          >
+            Home
+          </Link>
+          <Link href="/drafts" className="border px-4 py-2 hover:underline">
+            Drafts
+          </Link>
+        </div>
 
-        <LogoutButton />
+        <LogoutButton beforeLogout={() => persistDraft(true)} />
       </header>
 
       <div className="flex flex-col items-center justify-center pt-40 text-center">
@@ -95,7 +189,15 @@ export default function PublishForm() {
         onSubmit={handleSubmit}
         className="mt-8 w-full max-w-xl px-4"
       >
-        <TextEditor ref={editorRef} />
+        <TextEditor
+          ref={editorRef}
+          initialData={savedData}
+          onChange={cacheData}
+          onImageUpload={async (file) => {
+            const response = await apiClient.articles.uploadImage(file);
+            return response.success ? response.data.url : null;
+          }}
+        />
 
         {error && (
           <p className="mt-4 text-sm text-red-600">
@@ -109,6 +211,14 @@ export default function PublishForm() {
           className="mt-12 w-full border py-3 font-bold hover:underline disabled:opacity-50"
         >
           {loading ? "Submitting..." : "Submit"}
+        </button>
+        <button
+          type="button"
+          onClick={saveDraft}
+          disabled={loading}
+          className="mt-4 w-full border py-3 font-bold hover:underline disabled:opacity-50"
+        >
+          Save as draft
         </button>
       </form>
     </main>

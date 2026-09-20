@@ -4,11 +4,13 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { apiFetch } from "@/lib/api";
+import { useRouter, useSearchParams  } from "next/navigation";
+import { apiClient } from "@/lib/apiClient";
+
 
 export default function RegisterPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -24,26 +26,14 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      const response = await apiFetch("/auth/register", {
-        method: "POST",
-        body: JSON.stringify({
-          name,
-          email,
-          password,
-        }),
-      });
-
-      if (!response.ok) {
-        const data = await response.json().catch(() => null);
-      
-        setError(
-          data?.error ?? "Unable 4444 to create your account."
-        );
-
+      const registerResponse = await apiClient.auth.register(name, email, password);
+      if (!registerResponse.success) {
+        setError(registerResponse.error ?? "Unable to create your account.");
         return;
       }
-
-      router.push("/authentication/login");
+      const redirectTo = searchParams.get("redirect") || "/";
+      router.push(redirectTo);
+      router.refresh();
     } catch {
       setError("Unable to connect to the server.");
     } finally {

@@ -2,9 +2,13 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { apiFetch } from "@/lib/api";
+import { apiClient } from "@/lib/apiClient";
 
-export default function LogoutButton() {
+type LogoutButtonProps = {
+  beforeLogout?: () => Promise<boolean>;
+};
+
+export default function LogoutButton({ beforeLogout }: LogoutButtonProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
@@ -12,9 +16,10 @@ export default function LogoutButton() {
     setLoading(true);
 
     try {
-      const response = await apiFetch("/auth/logout", { method: "POST" });
+      if (beforeLogout && !(await beforeLogout())) return;
+      const response = await apiClient.auth.logout();
 
-      if (response.ok) {
+      if (response.success  ) {
         router.replace("/");
         router.refresh();
       }

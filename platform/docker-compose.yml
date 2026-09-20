@@ -74,7 +74,7 @@ services:
       dockerfile: dockerfile
     container_name: nginx
     ports:
-      - "8443:443"
+      - "8444:443"
     #volumes:
     #- postgresql_data:/var/www/html 
     depends_on:

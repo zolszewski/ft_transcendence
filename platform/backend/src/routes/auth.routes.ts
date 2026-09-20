@@ -2,11 +2,11 @@ import { Router } from "express";
 import { createUser, getUserByEmail, getUserById } from "../services/user.service";
 import { hashPassword, verifyPassword } from "../services/auth.service";
 import { isValidEmail, isValidPassword, isValidName } from "../utils/validation";
-import { requireAuth } from "../middleware/auth";
+import { authLimiter, requireAuth } from "../middleware/auth";
+import { createApiKey } from "../services/apiKey.service";
 
 const router = Router();
-
-router.post("/register", async (req, res) => {
+router.post("/register", authLimiter, async (req, res) => {
 	const { email, name, password } = req.body;
 	if (!isValidEmail(email) || !isValidPassword(password) || !isValidName(name))
 		return res.status(400).json({ error: "Invalid input" });
@@ -19,25 +19,16 @@ router.post("/register", async (req, res) => {
 	res.status(201).json({ id: user.id, email: user.email, name: user.name })
 });
 
-router.post("/login", async (req, res) => {
+router.post("/login", authLimiter, async (req, res) => {
 	const { email, password } = req.body;
-	console.log("LOGIN REQUEST:");
-	console.log("email: ", email);
-	console.log("password: ", password);
 	if (!isValidEmail(email) || !isValidPassword(password))
 		return res.status(400).json({ error: "Invalid input" });
 	const user = await getUserByEmail(email);
-	console.log("USERFOUND", user);
-	if (!user) {
-		console.log("USERNOTFOUND");
+	if (!user)
 		return res.status(401).json({ error: "Invalid credentials" });
-	}
 	const passwordMatches = await verifyPassword(password, user.password);
-	console.log("pass match : ", passwordMatches);
-	if (!passwordMatches) {
-		console.log("Passowrd not matching");
+	if (!passwordMatches)
 		return res.status(401).json({ error: "Invalid credentials" });
-	}
 	req.session.userId = user.id;
 	res.json({ id: user.id, email: user.email, name: user.name });
 });
@@ -50,6 +41,11 @@ router.post("/logout", (req, res) => {
 		res.json({ success: true });
 	});
 });
+
+router.post("/api-keys", requireAuth, async (req, res) => {
+	const apiKey = await createApiKey(req.session.userId!);
+	res.status(201).json({ apiKey });
+})
 
 router.get("/me", requireAuth, async (req, res) => {
 	const user = await getUserById(req.session.userId!);

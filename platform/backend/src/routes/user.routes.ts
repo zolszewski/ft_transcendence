@@ -1,12 +1,49 @@
 import { Router } from "express";
 import { requireAuth } from "../middleware/auth";
-import { getOtherUsers } from "../services/user.service";
+import { getAvatarUrl, getUserByEmail, getUserById, setUserAvatar, updateUser } from "../services/user.service";
+import { isValidEmail, isValidName } from "../utils/validation";
+import { getUploadById, setUploadVisibility } from "../services/upload.service";
+import { isOwner } from "../utils/authorization";
 
 const router = Router();
 
-router.get("/", requireAuth, async (req, res) => {
-	const users = await getOtherUsers(req.session.userId!);
-	res.json(users);
+router.get("/me", requireAuth, async (req, res) => {
+	const user = await getUserById(req.session.userId!);
+	if (!user)
+		return res.status(401).json({ error: "Not authenticated" });
+	res.json({ id: user.id, email: user.email, name: user.name, avatarUrl: getAvatarUrl(user.avatarId) });
+});
+
+router.get("/:id", async (req, res) => {
+	const user = await getUserById(req.params.id);
+	if (!user)
+		return res.status(404).json({ error: "User not found" });
+	res.json({ id: user.id, name: user.name, avatarUrl: getAvatarUrl(user.avatarId) });
+});
+
+router.patch("/me", requireAuth, async (req, res) => {
+	const { name, email } = req.body;
+	if (!isValidName(name) || !isValidEmail(email))
+		return res.status(400).json({ error: "Invalid input" });
+	const existingUser = await getUserByEmail(email);
+	if (existingUser && ( existingUser.id !== req.session.userId!))
+		return res.status(409).json({ error: "Email already in use"});
+	const updatedUser = await updateUser(req.session.userId!, { name, email });
+	res.json({ id: updatedUser.id, email: updatedUser.email, name: updatedUser.name, avatarUrl: getAvatarUrl(updatedUser.avatarId) });
+});
+
+router.put("/me/avatar", requireAuth, async (req, res) => {
+	const { uploadId } = req.body;
+	const upload = await getUploadById(uploadId);
+	if (!upload)
+		return res.status(404).json({ error: "Upload Unavailable" });
+	if (!isOwner(upload.ownerId, req.session.userId!))
+		return res.status(403).json({ error: "Forbidden"});
+	if (!upload.mimeType.startsWith("image/"))
+		return res.status(400).json({ error: "Not an image"})
+	await setUploadVisibility(uploadId, "PUBLIC");
+	const updated = await setUserAvatar(req.session.userId!, uploadId);
+	res.json({ id: updated.id, email: updated.email, name: updated.name, avatarUrl: getAvatarUrl(updated.avatarId)});
 });
 
 export default router;
