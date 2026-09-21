@@ -32,7 +32,8 @@ export default function Menu({ editorRef, onImageUpload }: MenuProps) {
 
     setUploadingImage(true);
     const imageUrl = await onImageUpload(file);
-    if (imageUrl) applyFormat("insertImage", imageUrl);
+    if (imageUrl) 
+      applyFormat("insertImage", imageUrl);
     setUploadingImage(false);
   }
 

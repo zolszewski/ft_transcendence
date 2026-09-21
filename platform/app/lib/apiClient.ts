@@ -8,6 +8,7 @@ export const apiClient = {
             try {
                 const response = await fetch("/api/auth/login", {
                     method: "POST",
+                    credentials: "include",
                     body: JSON.stringify({ email, password }),
                     headers: { "Content-Type": "application/json" },
                 });
@@ -67,77 +68,147 @@ export const apiClient = {
         }
       },
     },
-    articles : { 
+    dashboard: {
+    mine: async (params?: {
+      status?: "DRAFT" | "SUBMITTED" | "UNDER_REVIEW" | "APPROVED" | "REJECTED" | "PUBLISHED";
+      search?: string;
+      sort?: "newest" | "oldest";
+      page?: number;
+      limit?: number; }) => {
+      const queryParams = new URLSearchParams();
+      if (params?.status)
+        queryParams.append("status", params.status);
+      if (params?.search)
+        queryParams.append("search", params.search);
+      if (params?.sort)
+        queryParams.append("sort", params.sort);
+      if (params?.page)
+        queryParams.append("page", params.page.toString());
+      if (params?.limit)
+        queryParams.append("limit", params.limit.toString());
+      try {
+        const response = await fetch(
+          `/api/articles/mine?${queryParams.toString()}`,
+          {
+            method: "GET",
+            credentials: "include",
+          }
+        );
+        const data = await response.json();
+
+        if (!response.ok) {
+          return {
+            success: false,
+            error: data.error || "Failed to load articles",
+          } as ApiResponse<ListResult<Article>>;
+        }
+        return {
+          success: true,
+          data: {
+            data: data.articles,
+            total: data.total,
+            page: data.page,
+            pages: data.totalPages,
+            hasNext: data.page < data.totalPages,
+            hasPrev: data.page > 1,
+          },
+        } as ApiResponse<ListResult<Article>>;
+
+      } catch {
+        return {
+          success: false,
+          error: "Unable to connect to the server",
+        } as ApiResponse<ListResult<Article>>;
+      }
+    }
+  },
+  uploads: {
+    image: async (file: File) => {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("visibility", "PUBLIC");
+
+      try {
+        const response = await fetch("/api/uploads", {
+          method: "POST",
+          body: formData,
+          credentials: "include",
+        });
+        const data = await response.json();
+
+        if (!response.ok) {
+          return { success: false, error: data.error || "Failed to upload image" } as ApiResponse<never>;
+        }
+        return {
+          success: true,
+          data: { id: data.id as string, url: `/api/uploads/${data.id}` },
+        } as ApiResponse<{ id: string; url: string }>;
+      } catch {
+        return { success: false, error: "Unable to connect to the server" } as ApiResponse<never>;
+      }
+    },
+  },
+  articles: { 
     //publish
-    create: async (title: string, content: string, miniature?: File | null) => {
-      const formData = new FormData();
-      formData.append("title", title);
-      formData.append("content", content);
-      if (miniature) formData.append("miniature", miniature);
+    create: async (title: string, content: string, miniature?: File | null, abstract?: string) => {
       try {
-        const response = await fetch(`/api/articles`, {
-          method: "POST",
-          body: formData,
-          credentials: "include",
-        });
-        const data = await response.json();
-        if (!response.ok) {
-          return { success: false, error: data.error || "Failed to create article" } as ApiResponse<Article>;
+        let miniatureId: string | undefined;
+      
+        if (miniature) {
+          const formData = new FormData();
+          formData.append("file", miniature)
+          const uploadResponse = await fetch("/api/uploads", {
+            method: "POST",
+            body: formData,
+            credentials: "include"
+          });
+          const uploadData = await uploadResponse.json();
+          if (!uploadResponse.ok) {
+            return {
+              success: false,
+              error: uploadData.error || "Failed to upload miniature",
+            } as ApiResponse<Article>;
+          }
+          miniatureId = uploadData.id;
         }
-        return { success: true, data } as ApiResponse<Article>;
-      } catch (err) {
-        return { success: false, error: "Unable to connect to the server" } as ApiResponse<Article>;
-      }
-    },
-    createDraft: async (title: string, content: string, miniature?: File | null) => {
-      const formData = new FormData();
-      formData.append("title", title);
-      formData.append("content", content);
-      if (miniature) formData.append("miniature", miniature);
-      try {
-        const response = await fetch(`/api/articles/draft`, {
+        const response = await fetch("/api/articles", {
           method: "POST",
-          body: formData,
+          headers: {
+            "Content-Type": "application/json",
+          },
           credentials: "include",
+          body: JSON.stringify({
+            title,
+            content,
+            abstract,
+            miniatureId,
+          }),
         });
+
         const data = await response.json();
+
         if (!response.ok) {
-          return { success: false, error: data.error || "Failed to save draft" } as ApiResponse<Article>;
+          return {
+            success: false,
+            error: data.error || "Failed to create article",
+          } as ApiResponse<Article>;
         }
-        return { success: true, data } as ApiResponse<Article>;
-      } catch (err) {
-        return { success: false, error: "Unable to connect to the server" } as ApiResponse<Article>;
-      }
-    },
-    uploadImage: async (image: File) => {
-      const formData = new FormData();
-      formData.append("image", image);
-      try {
-        const response = await fetch("/api/articles/image", {
-          method: "POST",
-          body: formData,
-          credentials: "include",
-        });
-        const data = await response.json();
-        if (!response.ok) return { success: false, error: data.error || "Failed to upload image" } as ApiResponse<{ url: string }>;
-        return { success: true, data } as ApiResponse<{ url: string }>;
+
+        return {
+          success: true,
+          data,
+        } as ApiResponse<Article>;
+
       } catch {
-        return { success: false, error: "Unable to connect to the server" } as ApiResponse<{ url: string }>;
-      }
-    },
-    listDrafts: async () => {
-      try {
-        const response = await fetch("/api/articles/drafts", { credentials: "include" });
-        const data = await response.json();
-        if (!response.ok) return { success: false, error: data.error || "Failed to load drafts" } as ApiResponse<Article[]>;
-        return { success: true, data } as ApiResponse<Article[]>;
-      } catch {
-        return { success: false, error: "Unable to connect to the server" } as ApiResponse<Article[]>;
+        return {
+          success: false,
+          error: "Unable to connect to the server",
+        } as ApiResponse<Article>;
       }
     },
     getDraft: async (articleId: string) => {
       try {
-        const response = await fetch(`/api/articles/drafts/${articleId}`, { credentials: "include" });
+        const response = await fetch(`/api/articles/${articleId}`, { credentials: "include" });
         const data = await response.json();
         if (!response.ok) return { success: false, error: data.error || "Failed to load draft" } as ApiResponse<Article>;
         return { success: true, data } as ApiResponse<Article>;
@@ -161,20 +232,46 @@ export const apiClient = {
       }
     },
     //update article saved in dashboard
-    update: async (articleId: string, title: string, content: string, miniature?: File | null) => {
+    update: async (
+      articleId: string,
+      title: string,
+      content: string,
+      miniature?: File | null,
+      abstract?: string
+    ) => {
       try {
+        let miniatureId: string | undefined;
+
+        if (miniature) {
+          const formData = new FormData();
+          formData.append("file", miniature);
+          const uploadResponse = await fetch("/api/uploads", {
+            method: "POST",
+            body: formData,
+            credentials: "include",
+          });
+          const uploadData = await uploadResponse.json();
+          if (!uploadResponse.ok) {
+            return {
+              success: false,
+              error: uploadData.error || "Failed to upload miniature",
+            } as ApiResponse<Article>;
+          }
+          miniatureId = uploadData.id;
+        }
+
         const response = await fetch(`/api/articles/${articleId}`, {
           method: "PUT",
-          body: JSON.stringify({ title, content }),
           headers: { "Content-Type": "application/json" },
           credentials: "include",
+          body: JSON.stringify({ title, content, abstract, miniatureId }),
         });
         const data = await response.json();
         if (!response.ok) {
           return { success: false, error: data.error || "Failed to update article" } as ApiResponse<Article>;
         }
         return { success: true, data } as ApiResponse<Article>;
-      } catch (err) {
+      } catch {
         return { success: false, error: "Unable to connect to the server" } as ApiResponse<Article>;
       }
     },
@@ -209,6 +306,8 @@ export const apiClient = {
       } catch (err) {
         return { success: false, error: "Unable to connect to the server" } as ApiResponse<any>;
       }
+    },listDraft: async () => {
+      return apiClient.dashboard.mine({status:"DRAFT"});
     },
     //get single article by ID
     getById: async (articleId: string) => {

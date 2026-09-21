@@ -107,9 +107,9 @@ export default function ReviewList() {
                   href={`/review/${article.id}`}
                   className="block border p-4 hover:underline"
                 >
-                  {article.miniature && (
+                  {article.miniatureUrl && (
                     <img
-                      src={article.miniature}
+                      src={article.miniatureUrl}
                       alt={`Miniature for ${article.title}`}
                       className="h-40 w-full object-cover"
                     />

@@ -9,15 +9,22 @@ import { Eye, EyeOff, Upload } from "lucide-react";
 export type TextEditorHandle = {
   getData: () => { title: string; content: string };
   image: File | null;
+  clearImage: () => void;
 };
 
 type TextEditorProps = {
   initialData?: { title: string; content: string };
+  initialImageUrl?: string;
   onChange?: (data: { title: string; content: string }) => void;
   onImageUpload: (file: File) => Promise<string | null>;
 };
  
-  const TextEditor = forwardRef<TextEditorHandle, TextEditorProps>(function TextEditor({ initialData, onChange, onImageUpload }, ref) {
+  const TextEditor = forwardRef<TextEditorHandle, TextEditorProps>(
+    function TextEditor({ initialData,
+    initialImageUrl,
+    onChange,
+    onImageUpload },
+    ref) {
   const editorRef = useRef<HTMLDivElement>(null);
   const titleRef = useRef<HTMLTextAreaElement>(null);
   const hasEditedRef = useRef(false);
@@ -101,6 +108,7 @@ type TextEditorProps = {
       content: getEditorContent(),
     }),
     image,
+    clearImage: () => setImage(null),
   }));
  
   return (
@@ -113,16 +121,26 @@ type TextEditorProps = {
           onPointerUp={stopMiniatureDrag}
           onPointerCancel={stopMiniatureDrag}
         >
-          {imageUrl ? (
+        {imageUrl || initialImageUrl ? (
             <img
-              src={imageUrl}
-              alt="Article miniature"
-              className={showMiniaturePreview ? "absolute h-full w-full object-cover" : "max-h-32 max-w-full object-contain"}
-              style={showMiniaturePreview ? { objectPosition: `${miniaturePosition.x}% ${miniaturePosition.y}%` } : undefined}
-            />
-          ) : (
-            <span>Import an image for your article</span>
-          )}
+            src={imageUrl || initialImageUrl}
+            alt="Article miniature"
+            className={
+              showMiniaturePreview
+                ? "absolute h-full w-full object-cover"
+                : "max-h-32 max-w-full object-contain"
+            }
+            style={
+              showMiniaturePreview
+                ? {
+                    objectPosition: `${miniaturePosition.x}% ${miniaturePosition.y}%`,
+                  }
+                : undefined
+            }
+          />
+        ) : (
+          <span>Import an image for your article</span>
+        )}
           <input
             ref={miniatureInputRef}
             type="file"

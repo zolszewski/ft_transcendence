@@ -72,7 +72,7 @@ export default function PublishForm() {
     try {
       const response = draftId
         ? await apiClient.articles.update(draftId, title, content, miniatureFile)
-        : await apiClient.articles.createDraft(title, content, miniatureFile);
+        : await apiClient.articles.create(title, content, miniatureFile);
       if (response.success === false) {
         setError(response.error);
         return false;
@@ -194,7 +194,8 @@ export default function PublishForm() {
           initialData={savedData}
           onChange={cacheData}
           onImageUpload={async (file) => {
-            const response = await apiClient.articles.uploadImage(file);
+            const response = await apiClient.uploads.image(file);
+
             return response.success ? response.data.url : null;
           }}
         />

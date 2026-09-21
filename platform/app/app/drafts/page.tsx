@@ -10,7 +10,7 @@ export default function DraftsPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    apiClient.articles.listDrafts().then((response) => {
+    apiClient.dashboard.mine({status: "DRAFT"}).then((response) => {
       if (response.success) setDrafts(response.data);
       else setError(response.error);
     });

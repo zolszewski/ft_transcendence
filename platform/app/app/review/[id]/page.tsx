@@ -6,17 +6,7 @@ import Link from "next/link";
 import LogoutButton from "@/components/LogoutButton";
 import DOMPurify from "dompurify";
 import { apiClient } from "@/lib/apiClient";
-
-type Article = {
-  id: string;
-  title: string;
-  content: string;
-  abstract: string | null;
-  miniature: string | null;
-  status: string;
-  updatedAt: string;
-  author: { id: string; name: string };
-};
+import { Article } from "@/lib/types";
 
 export default function ReviewDetail() {
   const params = useParams<{ id: string }>();
@@ -88,9 +78,9 @@ export default function ReviewDetail() {
 
         {!loading && !error && article && (
           <>
-            {article.miniature && (
+            {article.miniatureUrl && (
             <img
-              src={article.miniature}
+              src={article.miniatureUrl}
               alt={`Miniature for ${article.title}`}
               className="h-64 w-full object-cover" 
             />)}
