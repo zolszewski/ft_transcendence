@@ -25,11 +25,15 @@ enum ReviewStatus {
 }
 
 model User {
-  id       String   @id @default(cuid())
-  email    String   @unique
-  name     String
-  password String
-  avatarId String?
+  id                String   @id @default(cuid())
+  email             String   @unique
+  name              String
+  password          String?
+  avatarId          String?
+  twoFactorSecret   String?
+  twoFactorEnabled  Boolean @default(false)
+  oauthProvider     String?
+  oauthId           String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -40,6 +44,7 @@ model User {
   apiKeys         ApiKey[]
   uploads         Upload[] @relation("UserUploads")
   avatar          Upload? @relation("UserAvatar", fields: [avatarId], references: [id]) 
+  @@unique([oauthProvider, oauthId])
 
 }
 

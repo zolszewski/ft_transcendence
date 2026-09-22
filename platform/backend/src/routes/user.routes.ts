@@ -1,9 +1,11 @@
 import { Router } from "express";
-import { requireAuth } from "../middleware/auth";
+import { authLimiter, requireAuth } from "../middleware/auth";
 import { getAvatarUrl, getUserByEmail, getUserById, setUserAvatar, updateUser } from "../services/user.service";
-import { isValidEmail, isValidName } from "../utils/validation";
+import { isValidEmail, isValidName, isValidTotpCode } from "../utils/validation";
 import { getUploadById, setUploadVisibility } from "../services/upload.service";
 import { isOwner } from "../utils/authorization";
+import { disableTwoFactor, enableTwoFactor, startTwoFactorSetup, verifyTwoFactorCode } from "../services/twoFactor.service";
+import { verifyPassword } from "../services/auth.service";
 
 const router = Router();
 
@@ -11,7 +13,7 @@ router.get("/me", requireAuth, async (req, res) => {
 	const user = await getUserById(req.session.userId!);
 	if (!user)
 		return res.status(401).json({ error: "Not authenticated" });
-	res.json({ id: user.id, email: user.email, name: user.name, avatarUrl: getAvatarUrl(user.avatarId) });
+	res.json({ id: user.id, email: user.email, name: user.name, avatarUrl: getAvatarUrl(user.avatarId), twoFactorEnabled : user.twoFactorEnabled });
 });
 
 router.get("/:id", async (req, res) => {
@@ -29,7 +31,7 @@ router.patch("/me", requireAuth, async (req, res) => {
 	if (existingUser && ( existingUser.id !== req.session.userId!))
 		return res.status(409).json({ error: "Email already in use"});
 	const updatedUser = await updateUser(req.session.userId!, { name, email });
-	res.json({ id: updatedUser.id, email: updatedUser.email, name: updatedUser.name, avatarUrl: getAvatarUrl(updatedUser.avatarId) });
+	res.json({ id: updatedUser.id, email: updatedUser.email, name: updatedUser.name, avatarUrl: getAvatarUrl(updatedUser.avatarId), twoFactorEnabled: updatedUser.twoFactorEnabled });
 });
 
 router.put("/me/avatar", requireAuth, async (req, res) => {
@@ -44,6 +46,48 @@ router.put("/me/avatar", requireAuth, async (req, res) => {
 	await setUploadVisibility(uploadId, "PUBLIC");
 	const updated = await setUserAvatar(req.session.userId!, uploadId);
 	res.json({ id: updated.id, email: updated.email, name: updated.name, avatarUrl: getAvatarUrl(updated.avatarId)});
+});
+
+router.post("/me/2fa/setup", requireAuth, async (req, res) => {
+	const user = await getUserById(req.session.userId!);
+	if (!user)
+		return res.status(401).json({ error: "Not authenticated"});
+	if (user.twoFactorEnabled)
+		return res.status(409).json({ error: "2FA already enabled" });
+	const { otpauthUrl, qrCode } = await startTwoFactorSetup(user.id, user.email);
+	res.json({ otpauthUrl, qrCode });
+});
+
+router.post("/me/2fa/enable", requireAuth, authLimiter, async (req, res) => {
+	const { code } = req.body;
+	if (!isValidTotpCode(code))
+		return res.status(400).json({ error: "Invalid input" });
+	const user = await getUserById(req.session.userId!);
+	if (!user || !user.twoFactorSecret)
+		return res.status(400).json({ error: "2FA setup not started" });
+	if (user.twoFactorEnabled)
+		return res.status(409).json({ error: "2FA already enabled" });
+	if (!verifyTwoFactorCode(user.twoFactorSecret, code))
+		return res.status(400).json({ error: "Invalid code" });
+	await enableTwoFactor(user.id);
+	res.json({ twoFactorEnabled: true });
+});
+
+router.post("/me/2fa/disable", requireAuth, authLimiter, async (req, res) => {
+	const { password, code } = req.body;
+	if (!isValidTotpCode(code))
+		return res.status(400).json({ error: "Invalid input" });
+	const user = await getUserById(req.session.userId!);
+	if (!user || !user.twoFactorEnabled || !user.twoFactorSecret)
+		return res.status(400).json({ error: "2FA not enabled" });
+	if (user.password) {
+		if (typeof password !== "string" || !(await verifyPassword(password, user.password)))
+			return res.status(401).json({ error: "Invalid credentials"})
+	}
+	if (!verifyTwoFactorCode(user.twoFactorSecret, code))
+		return res.status(400).json({ error: "Invalid code" });
+	await disableTwoFactor(user.id);
+	res.json({ twoFactorEnabled: false });
 });
 
 export default router;

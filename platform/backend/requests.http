@@ -1159,3 +1159,170 @@ POST {{baseUrl}}/api/auth/logout
 
 ###
 GET {{baseUrl}}/api/dashboard
+
+
+### ==========================================================
+### DAY 25 : 2FA (TOTP) optionnelle, activee depuis le profil.
+### Le code a 6 chiffres change toutes les 30 s et ne peut pas etre genere par ce fichier. Pour en obtenir un :
+###   1. copier le parametre "secret=..." de l'otpauthUrl renvoyee par le setup (ou lire twoFactorSecret en base)
+###   2. depuis la racine du projet :
+###      docker compose -f platform/docker-compose.yml exec backend node -e "console.log(require('otplib').authenticator.generate('LE_SECRET'))"
+###   3. coller le code dans la variable @totpCode ci-dessous (a refaire avant CHAQUE requete qui l'utilise)
+### Les mauvais codes / mots de passe comptent dans authLimiter (10 echecs / 15 min / IP) : si 429, `make restart`.
+### ==========================================================
+
+@totpCode = 763533
+
+### Créer un compte dédié (409 si déjà créé : passer directement au login)
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "twofa@example.com",
+  "name": "twofa",
+  "password": "motdepasse123"
+}
+
+### Profil : twoFactorEnabled = false
+GET {{baseUrl}}/api/users/me
+
+### Démarrer l'activation : renvoie otpauthUrl + qrCode (data URL). Le secret est stocké mais la 2FA n'est PAS encore active
+# @name twoFaSetup
+POST {{baseUrl}}/api/users/me/2fa/setup
+
+### Activer avec un mauvais code (400 attendu)
+POST {{baseUrl}}/api/users/me/2fa/enable
+Content-Type: application/json
+
+{
+  "code": "000000"
+}
+
+### Activer avec un code au mauvais format (400 attendu)
+POST {{baseUrl}}/api/users/me/2fa/enable
+Content-Type: application/json
+
+{
+  "code": "abc"
+}
+
+### Activer avec un code valide (200, twoFactorEnabled: true) — mettre à jour @totpCode avant
+POST {{baseUrl}}/api/users/me/2fa/enable
+Content-Type: application/json
+
+{
+  "code": "{{totpCode}}"
+}
+
+### Profil : twoFactorEnabled = true
+GET {{baseUrl}}/api/users/me
+
+### Relancer le setup alors que la 2FA est active (409 attendu)
+POST {{baseUrl}}/api/users/me/2fa/setup
+
+### Se déconnecter
+POST {{baseUrl}}/api/auth/logout
+
+### Login mot de passe correct : pas de session, { requires2fa: true } attendu
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "twofa@example.com",
+  "password": "motdepasse123"
+}
+
+### Doit être 401 : l'état "en attente" n'ouvre aucun accès
+GET {{baseUrl}}/api/auth/me
+
+### Doit être 401 aussi
+GET {{baseUrl}}/api/dashboard
+
+### Mauvais code (401 attendu)
+POST {{baseUrl}}/api/auth/login/2fa
+Content-Type: application/json
+
+{
+  "code": "000000"
+}
+
+### Mauvais format (400 attendu)
+POST {{baseUrl}}/api/auth/login/2fa
+Content-Type: application/json
+
+{
+  "code": 123456
+}
+
+### Bon code (200, session ouverte) — mettre à jour @totpCode avant. Si le code a déjà servi dans les 30 s, attendre le suivant
+POST {{baseUrl}}/api/auth/login/2fa
+Content-Type: application/json
+
+{
+  "code": "{{totpCode}}"
+}
+
+### Maintenant connecté (200 attendu)
+GET {{baseUrl}}/api/auth/me
+
+### Rejouer /login/2fa sans login préalable : l'état en attente a été consommé (401 attendu)
+POST {{baseUrl}}/api/auth/login/2fa
+Content-Type: application/json
+
+{
+  "code": "{{totpCode}}"
+}
+
+### Désactiver avec un mauvais mot de passe (401 attendu)
+POST {{baseUrl}}/api/users/me/2fa/disable
+Content-Type: application/json
+
+{
+  "password": "mauvaismotdepasse",
+  "code": "{{totpCode}}"
+}
+
+### Désactiver avec le bon mot de passe mais un mauvais code (400 attendu)
+POST {{baseUrl}}/api/users/me/2fa/disable
+Content-Type: application/json
+
+{
+  "password": "motdepasse123",
+  "code": "000000"
+}
+
+### Désactiver avec les deux corrects (200, twoFactorEnabled: false) — mettre à jour @totpCode avant
+POST {{baseUrl}}/api/users/me/2fa/disable
+Content-Type: application/json
+
+{
+  "password": "motdepasse123",
+  "code": "{{totpCode}}"
+}
+
+### Désactiver alors que la 2FA est déjà off (400 attendu)
+POST {{baseUrl}}/api/users/me/2fa/disable
+Content-Type: application/json
+
+{
+  "password": "motdepasse123",
+  "code": "{{totpCode}}"
+}
+
+### Se déconnecter puis se reconnecter : login classique, sans requires2fa
+POST {{baseUrl}}/api/auth/logout
+
+###
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "twofa@example.com",
+  "password": "motdepasse123"
+}
+
+### Sans authentification : setup refusé (401 attendu)
+POST {{baseUrl}}/api/auth/logout
+
+###
+POST {{baseUrl}}/api/users/me/2fa/setup
