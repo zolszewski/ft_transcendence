@@ -1,5 +1,5 @@
 import type { User, Article, Comment, Review, ArticleDetail, ListResult } from "./types";
-
+import { uploadFileWithProgress } from "./progressUpload";
 type ApiResponse<T> =
   | { success: true; status?: number; data: T }
   | { success: false; status: number; error: string };
@@ -112,31 +112,34 @@ export const apiClient = {
     },
   },
   uploads: {
-    image: async (file: File, visibility: "PUBLIC" | "PRIVATE" = "PUBLIC") => {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("visibility", visibility);
+  image: async (
+    file: File,
+    visibility: "PUBLIC" | "PRIVATE" = "PUBLIC",
+    onProgress?: (percent: number) => void
+  ) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("visibility", visibility);
 
-      try {
-        const response = await fetch("/api/uploads", {
-          method: "POST",
-          body: formData,
-          credentials: "include",
-        });
-        const data = await response.json();
+    try {
+      const { status, data } = await uploadFileWithProgress(
+        "/api/uploads",
+        formData,
+        onProgress ?? (() => {})
+      );
 
-        if (!response.ok) {
-          return apiError<{ id: string; url: string }>(data.error || "Failed to upload image", response.status);
-        }
-        return apiSuccess<{ id: string; url: string }>(
-          { id: data.id as string, url: `/api/uploads/${data.id}` },
-          response.status
-        );
-      } catch {
-        return apiError<{ id: string; url: string }>("Unable to connect to the server");
+      if (status < 200 || status >= 300) {
+        return apiError<{ id: string; url: string }>(data.error || "Failed to upload image", status);
       }
-    },
+      return apiSuccess<{ id: string; url: string }>(
+        { id: data.id as string, url: `/api/uploads/${data.id}` },
+        status
+      );
+    } catch {
+      return apiError<{ id: string; url: string }>("Unable to connect to the server");
+    }
   },
+},
   articles: {
     //publish
     create: async (title: string, content: string, miniature?: File | null, abstract?: string) => {
