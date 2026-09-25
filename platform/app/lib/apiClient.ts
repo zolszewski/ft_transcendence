@@ -1,26 +1,34 @@
 import type { User, Article, Comment, Review, ArticleDetail, ListResult } from "./types";
 
-type ApiResponse<T> = { success: true; data: T } | { success: false; error: string };
+type ApiResponse<T> =
+  | { success: true; status?: number; data: T }
+  | { success: false; status: number; error: string };
+
+function apiError<T>(error: string, status = 0): ApiResponse<T> {
+  return { success: false, status, error };
+}
+
+function apiSuccess<T>(data: T, status?: number): ApiResponse<T> {
+  return { success: true, status, data };
+}
 
 export const apiClient = {
-    auth: {
+  auth: {
     login: async (email: string, password: string) => {
-            try {
-                const response = await fetch("/api/auth/login", {
-                    method: "POST",
-                    credentials: "include",
-                    body: JSON.stringify({ email, password }),
-                    headers: { "Content-Type": "application/json" },
-                });
-                const data = await response.json();
-                if (!response.ok) {
-                    return { success: false, error: data.error || "Failed to login" } as ApiResponse<User>;
-                }
-                return { success: true, data } as ApiResponse<User>;
-            } catch (err) {
-                return { success: false, error: "Unable to connect to the server" } as ApiResponse<User>;
-            }
-        },
+      try {
+        const response = await fetch("/api/auth/login", {
+          method: "POST",
+          credentials: "include",
+          body: JSON.stringify({ email, password }),
+          headers: { "Content-Type": "application/json" },
+        });
+        const data = await response.json();
+        if (!response.ok) return apiError<User>(data.error || "Failed to login", response.status);
+        return apiSuccess<User>(data, response.status);
+      } catch {
+        return apiError<User>("Unable to connect to the server");
+      }
+    },
     logout: async () => {
       try {
         const response = await fetch("/api/auth/logout", {
@@ -29,11 +37,11 @@ export const apiClient = {
         });
         if (!response.ok) {
           const data = await response.json();
-          return { success: false, error: data.error || "Failed to logout" } as ApiResponse<null>;
+          return apiError<null>(data.error || "Failed to logout", response.status);
         }
-        return { success: true, data: null } as ApiResponse<null>;
-      } catch (err) {
-        return { success: false, error: "Unable to connect to the server" } as ApiResponse<null>;
+        return apiSuccess<null>(null, response.status);
+      } catch {
+        return apiError<null>("Unable to connect to the server");
       }
     },
     me: async () => {
@@ -43,68 +51,52 @@ export const apiClient = {
           credentials: "include",
         });
         const data = await response.json();
-        if (!response.ok) {
-          return { success: false, error: data.error || "Failed to fetch user info" } as ApiResponse<User>;
-        }
-        return { success: true, data } as ApiResponse<User>;
-      } catch (err) {
-        return { success: false, error: "Unable to connect to the server" } as ApiResponse<User>;
+        if (!response.ok) return apiError<User>(data.error || "Failed to fetch user info", response.status);
+        return apiSuccess<User>(data, response.status);
+      } catch {
+        return apiError<User>("Unable to connect to the server");
       }
     },
     register: async (name: string, email: string, password: string) => {
-        try {
-          const response = await fetch("/api/auth/register", {
-            method: "POST",
-            body: JSON.stringify({ name, email, password }),
-            headers: { "Content-Type": "application/json" },
-          });
-          const data = await response.json();
-          if (!response.ok) {
-            return { success: false, error: data.error || "Failed to register" } as ApiResponse<User>;
-          }
-          return { success: true, data } as ApiResponse<User>;
-        } catch (err) {
-          return { success: false, error: "Unable to connect to the server" } as ApiResponse<User>;
-        }
-      },
+      try {
+        const response = await fetch("/api/auth/register", {
+          method: "POST",
+          body: JSON.stringify({ name, email, password }),
+          headers: { "Content-Type": "application/json" },
+        });
+        const data = await response.json();
+        if (!response.ok) return apiError<User>(data.error || "Failed to register", response.status);
+        return apiSuccess<User>(data, response.status);
+      } catch {
+        return apiError<User>("Unable to connect to the server");
+      }
     },
-    dashboard: {
+  },
+  dashboard: {
     mine: async (params?: {
       status?: "DRAFT" | "SUBMITTED" | "UNDER_REVIEW" | "APPROVED" | "REJECTED" | "PUBLISHED";
       search?: string;
       sort?: "newest" | "oldest";
       page?: number;
-      limit?: number; }) => {
+      limit?: number;
+    }) => {
       const queryParams = new URLSearchParams();
-      if (params?.status)
-        queryParams.append("status", params.status);
-      if (params?.search)
-        queryParams.append("search", params.search);
-      if (params?.sort)
-        queryParams.append("sort", params.sort);
-      if (params?.page)
-        queryParams.append("page", params.page.toString());
-      if (params?.limit)
-        queryParams.append("limit", params.limit.toString());
+      if (params?.status) queryParams.append("status", params.status);
+      if (params?.search) queryParams.append("search", params.search);
+      if (params?.sort) queryParams.append("sort", params.sort);
+      if (params?.page) queryParams.append("page", params.page.toString());
+      if (params?.limit) queryParams.append("limit", params.limit.toString());
       try {
-        const response = await fetch(
-          `/api/articles/mine?${queryParams.toString()}`,
-          {
-            method: "GET",
-            credentials: "include",
-          }
-        );
+        const response = await fetch(`/api/articles/mine?${queryParams.toString()}`, {
+          method: "GET",
+          credentials: "include",
+        });
         const data = await response.json();
-
         if (!response.ok) {
-          return {
-            success: false,
-            error: data.error || "Failed to load articles",
-          } as ApiResponse<ListResult<Article>>;
+          return apiError<ListResult<Article>>(data.error || "Failed to load articles", response.status);
         }
-        return {
-          success: true,
-          data: {
+        return apiSuccess<ListResult<Article>>(
+          {
             data: data.articles,
             total: data.total,
             page: data.page,
@@ -112,21 +104,18 @@ export const apiClient = {
             hasNext: data.page < data.totalPages,
             hasPrev: data.page > 1,
           },
-        } as ApiResponse<ListResult<Article>>;
-
+          response.status
+        );
       } catch {
-        return {
-          success: false,
-          error: "Unable to connect to the server",
-        } as ApiResponse<ListResult<Article>>;
+        return apiError<ListResult<Article>>("Unable to connect to the server");
       }
-    }
+    },
   },
   uploads: {
-    image: async (file: File) => {
+    image: async (file: File, visibility: "PUBLIC" | "PRIVATE" = "PUBLIC") => {
       const formData = new FormData();
       formData.append("file", file);
-      formData.append("visibility", "PUBLIC");
+      formData.append("visibility", visibility);
 
       try {
         const response = await fetch("/api/uploads", {
@@ -137,83 +126,59 @@ export const apiClient = {
         const data = await response.json();
 
         if (!response.ok) {
-          return { success: false, error: data.error || "Failed to upload image" } as ApiResponse<never>;
+          return apiError<{ id: string; url: string }>(data.error || "Failed to upload image", response.status);
         }
-        return {
-          success: true,
-          data: { id: data.id as string, url: `/api/uploads/${data.id}` },
-        } as ApiResponse<{ id: string; url: string }>;
+        return apiSuccess<{ id: string; url: string }>(
+          { id: data.id as string, url: `/api/uploads/${data.id}` },
+          response.status
+        );
       } catch {
-        return { success: false, error: "Unable to connect to the server" } as ApiResponse<never>;
+        return apiError<{ id: string; url: string }>("Unable to connect to the server");
       }
     },
   },
-  articles: { 
+  articles: {
     //publish
     create: async (title: string, content: string, miniature?: File | null, abstract?: string) => {
       try {
         let miniatureId: string | undefined;
-      
+
         if (miniature) {
           const formData = new FormData();
-          formData.append("file", miniature)
+          formData.append("file", miniature);
           const uploadResponse = await fetch("/api/uploads", {
             method: "POST",
             body: formData,
-            credentials: "include"
+            credentials: "include",
           });
           const uploadData = await uploadResponse.json();
           if (!uploadResponse.ok) {
-            return {
-              success: false,
-              error: uploadData.error || "Failed to upload miniature",
-            } as ApiResponse<Article>;
+            return apiError<Article>(uploadData.error || "Failed to upload miniature", uploadResponse.status);
           }
           miniatureId = uploadData.id;
         }
         const response = await fetch("/api/articles", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           credentials: "include",
-          body: JSON.stringify({
-            title,
-            content,
-            abstract,
-            miniatureId,
-          }),
+          body: JSON.stringify({ title, content, abstract, miniatureId }),
         });
 
         const data = await response.json();
-
-        if (!response.ok) {
-          return {
-            success: false,
-            error: data.error || "Failed to create article",
-          } as ApiResponse<Article>;
-        }
-
-        return {
-          success: true,
-          data,
-        } as ApiResponse<Article>;
-
+        if (!response.ok) return apiError<Article>(data.error || "Failed to create article", response.status);
+        return apiSuccess<Article>(data, response.status);
       } catch {
-        return {
-          success: false,
-          error: "Unable to connect to the server",
-        } as ApiResponse<Article>;
+        return apiError<Article>("Unable to connect to the server");
       }
     },
     getDraft: async (articleId: string) => {
       try {
         const response = await fetch(`/api/articles/${articleId}`, { credentials: "include" });
         const data = await response.json();
-        if (!response.ok) return { success: false, error: data.error || "Failed to load draft" } as ApiResponse<Article>;
-        return { success: true, data } as ApiResponse<Article>;
+        if (!response.ok) return apiError<Article>(data.error || "Failed to load draft", response.status);
+        return apiSuccess<Article>(data, response.status);
       } catch {
-        return { success: false, error: "Unable to connect to the server" } as ApiResponse<Article>;
+        return apiError<Article>("Unable to connect to the server");
       }
     },
     submit: async (articleId: string) => {
@@ -223,12 +188,10 @@ export const apiClient = {
           credentials: "include",
         });
         const data = await response.json();
-        if (!response.ok) {
-          return { success: false, error: data.error || "Failed to submit article" } as ApiResponse<null>;
-        }
-        return { success: true, data: null } as ApiResponse<null>;
-      } catch (err) {
-        return { success: false, error: "Unable to connect to the server" } as ApiResponse<null>;
+        if (!response.ok) return apiError<null>(data.error || "Failed to submit article", response.status);
+        return apiSuccess<null>(null, response.status);
+      } catch {
+        return apiError<null>("Unable to connect to the server");
       }
     },
     //update article saved in dashboard
@@ -252,10 +215,7 @@ export const apiClient = {
           });
           const uploadData = await uploadResponse.json();
           if (!uploadResponse.ok) {
-            return {
-              success: false,
-              error: uploadData.error || "Failed to upload miniature",
-            } as ApiResponse<Article>;
+            return apiError<Article>(uploadData.error || "Failed to upload miniature", uploadResponse.status);
           }
           miniatureId = uploadData.id;
         }
@@ -267,22 +227,25 @@ export const apiClient = {
           body: JSON.stringify({ title, content, abstract, miniatureId }),
         });
         const data = await response.json();
-        if (!response.ok) {
-          return { success: false, error: data.error || "Failed to update article" } as ApiResponse<Article>;
-        }
-        return { success: true, data } as ApiResponse<Article>;
+        if (!response.ok) return apiError<Article>(data.error || "Failed to update article", response.status);
+        return apiSuccess<Article>(data, response.status);
       } catch {
-        return { success: false, error: "Unable to connect to the server" } as ApiResponse<Article>;
+        return apiError<Article>("Unable to connect to the server");
       }
     },
     //explore - list articles
-    explore: async (params?: { search?: string; sort?: "newest" | "oldest"; page?: number; limit?: number }): Promise<ApiResponse<ListResult<Article>>> => {
+    explore: async (params?: {
+      search?: string;
+      sort?: "newest" | "oldest";
+      page?: number;
+      limit?: number;
+    }): Promise<ApiResponse<ListResult<Article>>> => {
       const queryParams = new URLSearchParams();
       if (params?.search) queryParams.append("search", params.search);
       if (params?.sort) queryParams.append("sort", params.sort);
       if (params?.page) queryParams.append("page", params.page.toString());
       if (params?.limit) queryParams.append("limit", params.limit.toString());
-      
+
       try {
         const response = await fetch(`/api/articles/explore?${queryParams.toString()}`, {
           method: "GET",
@@ -290,11 +253,10 @@ export const apiClient = {
         });
         const data = await response.json();
         if (!response.ok) {
-          return { success: false, error: data.error || "Failed to load articles" };
+          return apiError<ListResult<Article>>(data.error || "Failed to load articles", response.status);
         }
-        return {
-          success: true,
-          data: {
+        return apiSuccess<ListResult<Article>>(
+          {
             data: data.articles,
             total: data.total,
             page: data.page,
@@ -302,12 +264,14 @@ export const apiClient = {
             hasNext: data.page < data.totalPages,
             hasPrev: data.page > 1,
           },
-        };
-      } catch (err) {
-        return { success: false, error: "Unable to connect to the server" } as ApiResponse<any>;
+          response.status
+        );
+      } catch {
+        return apiError<ListResult<Article>>("Unable to connect to the server");
       }
-    },listDraft: async () => {
-      return apiClient.dashboard.mine({status:"DRAFT"});
+    },
+    listDraft: async () => {
+      return apiClient.dashboard.mine({ status: "DRAFT" });
     },
     //get single article by ID
     getById: async (articleId: string) => {
@@ -317,12 +281,10 @@ export const apiClient = {
           credentials: "include",
         });
         const data = await response.json();
-        if (!response.ok) {
-          return { success: false, error: data.error || "Article not found" } as ApiResponse<ArticleDetail>;
-        }
-        return { success: true, data } as ApiResponse<ArticleDetail>;
-      } catch (err) {
-        return { success: false, error: "Unable to connect to the server" } as ApiResponse<ArticleDetail>;
+        if (!response.ok) return apiError<ArticleDetail>(data.error || "Article not found", response.status);
+        return apiSuccess<ArticleDetail>(data, response.status);
+      } catch {
+        return apiError<ArticleDetail>("Unable to connect to the server");
       }
     },
     //comments
@@ -333,12 +295,10 @@ export const apiClient = {
           credentials: "include",
         });
         const data = await response.json();
-        if (!response.ok) {
-          return { success: false, error: data.error || "Failed to load comments" } as ApiResponse<Comment[]>;
-        }
-        return { success: true, data } as ApiResponse<Comment[]>;
-      } catch (err) {
-        return { success: false, error: "Unable to connect to the server" } as ApiResponse<Comment[]>;
+        if (!response.ok) return apiError<Comment[]>(data.error || "Failed to load comments", response.status);
+        return apiSuccess<Comment[]>(data, response.status);
+      } catch {
+        return apiError<Comment[]>("Unable to connect to the server");
       }
     },
     postComment: async (articleId: string, content: string) => {
@@ -350,21 +310,19 @@ export const apiClient = {
           credentials: "include",
         });
         const data = await response.json();
-        if (!response.ok) {
-          return { success: false, error: data.error || "Failed to post comment" } as ApiResponse<Comment>;
-        }
-        return { success: true, data } as ApiResponse<Comment>;
-      } catch (err) {
-        return { success: false, error: "Unable to connect to the server" } as ApiResponse<Comment>;
+        if (!response.ok) return apiError<Comment>(data.error || "Failed to post comment", response.status);
+        return apiSuccess<Comment>(data, response.status);
+      } catch {
+        return apiError<Comment>("Unable to connect to the server");
       }
     },
-    //reviews main page 
+    //reviews main page
     getSubmittedArticles: async (params?: { search?: string; page?: number; limit?: number }) => {
       const queryParams = new URLSearchParams();
       if (params?.search) queryParams.append("search", params.search);
       if (params?.page) queryParams.append("page", params.page.toString());
       if (params?.limit) queryParams.append("limit", params.limit.toString());
-      
+
       try {
         const response = await fetch(`/api/articles/submitted?${queryParams.toString()}`, {
           method: "GET",
@@ -372,11 +330,10 @@ export const apiClient = {
         });
         const data = await response.json();
         if (!response.ok) {
-          return { success: false, error: data.error || "Failed to load submitted articles" };
+          return apiError<ListResult<Article>>(data.error || "Failed to load submitted articles", response.status);
         }
-        return {
-          success: true,
-          data: {
+        return apiSuccess<ListResult<Article>>(
+          {
             data: data.articles,
             total: data.total,
             page: data.page,
@@ -384,9 +341,10 @@ export const apiClient = {
             hasNext: data.page < data.totalPages,
             hasPrev: data.page > 1,
           },
-        };
-      } catch (err) {
-        return { success: false, error: "Unable to connect to the server" } as ApiResponse<ListResult<Article>>;
+          response.status
+        );
+      } catch {
+        return apiError<ListResult<Article>>("Unable to connect to the server");
       }
     },
     //single article review page
@@ -398,11 +356,11 @@ export const apiClient = {
         });
         const data = await response.json();
         if (!response.ok) {
-          return { success: false, error: data.error || "Failed to load reviewing article" } as ApiResponse<Article>;
+          return apiError<Article>(data.error || "Failed to load reviewing article", response.status);
         }
-        return { success: true, data } as ApiResponse<Article>;
-      } catch (err) {
-        return { success: false, error: "Unable to connect to the server" } as ApiResponse<Article>;
+        return apiSuccess<Article>(data, response.status);
+      } catch {
+        return apiError<Article>("Unable to connect to the server");
       }
     },
     postDecision: async (reviewId: string, decision: "APPROVED" | "REJECTED") => {
@@ -414,12 +372,10 @@ export const apiClient = {
           credentials: "include",
         });
         const data = await response.json();
-        if (!response.ok) {
-          return { success: false, error: data.error || "Failed to post decision" } as ApiResponse<null>;
-        }
-        return { success: true, data: null } as ApiResponse<null>;
-      } catch (err) {
-        return { success: false, error: "Unable to connect to the server" } as ApiResponse<null>;
+        if (!response.ok) return apiError<null>(data.error || "Failed to post decision", response.status);
+        return apiSuccess<null>(null, response.status);
+      } catch {
+        return apiError<null>("Unable to connect to the server");
       }
     },
     postReview: async (articleId: string, comment?: string) => {
@@ -431,12 +387,10 @@ export const apiClient = {
           credentials: "include",
         });
         const data = await response.json();
-        if (!response.ok) {
-          return { success: false, error: data.error || "Failed to post review" } as ApiResponse<Review>;
-        }
-        return { success: true, data } as ApiResponse<Review>;
-      } catch (err) {
-        return { success: false, error: "Unable to connect to the server" } as ApiResponse<Review>;
+        if (!response.ok) return apiError<Review>(data.error || "Failed to post review", response.status);
+        return apiSuccess<Review>(data, response.status);
+      } catch {
+        return apiError<Review>("Unable to connect to the server");
       }
     },
     getReviews: async (articleId: string) => {
@@ -446,14 +400,11 @@ export const apiClient = {
           credentials: "include",
         });
         const data = await response.json();
-        if (!response.ok) {
-          return { success: false, error: data.error || "Failed to load reviews" } as ApiResponse<Review[]>;
-        }
-        return { success: true, data } as ApiResponse<Review[]>;
-      } catch (err) {
-        return { success: false, error: "Unable to connect to the server" } as ApiResponse<Review[]>;
+        if (!response.ok) return apiError<Review[]>(data.error || "Failed to load reviews", response.status);
+        return apiSuccess<Review[]>(data, response.status);
+      } catch {
+        return apiError<Review[]>("Unable to connect to the server");
       }
     },
   },
-}
-
+};

@@ -7,13 +7,14 @@ import LogoutButton from "@/components/LogoutButton";
 import { Article } from "@/lib/types"
 import ArticleSection from "./components/articleSection";
 import { apiClient } from "@/lib/apiClient";
+import ErrorPage from "@/components/ErrorPage";
 
 export default function DashboardForm() {
   const [drafts, setDrafts] = useState<Article[]>([]);
   const [submitted, setSubmitted] = useState<Article[]>([]);
   const [published, setPublished] = useState<Article[]>([]);
   const [rejected, setRejected] = useState<Article[]>([]);
-
+  const [errorStatus, setErrorStatus] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -25,9 +26,11 @@ export default function DashboardForm() {
       try {
         const response = await apiClient.dashboard.mine({ });
         if (!response.success) {
-          throw new Error(response.error); }
+          setError(response.error || "Unable to load dashboard." );
+          setErrorStatus(response.status || null);
+          return;
+        }
         const articles = response.data.data;
-        
         setDrafts(articles.filter((article) => article.status == "DRAFT"));
         setSubmitted(articles.filter((article) => article.status == "SUBMITTED"));
         setPublished(articles.filter((article) => article.status == "PUBLISHED"));
@@ -50,6 +53,9 @@ export default function DashboardForm() {
   if (loading) {
     return <p className="p-8">Loading...</p>;
   }
+  if (error) {
+  return <ErrorPage statusCode={errorStatus ?? 500} message={error} />;
+  }
 
   return (
     <main className="min-h-screen">
@@ -70,11 +76,6 @@ export default function DashboardForm() {
 
       <div className="mx-auto max-w-4xl px-4 py-8">
 
-        {error && (
-          <p className="mb-6 text-red-500">
-            {error}
-          </p>
-        )}
 
         <ArticleSection
           title="Drafts"

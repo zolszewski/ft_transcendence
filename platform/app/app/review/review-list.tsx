@@ -5,7 +5,8 @@ import Link from "next/link";
 import { apiClient } from "@/lib/apiClient";
 import LogoutButton from "@/components/LogoutButton";
 import type { Article, ListResult } from "@/lib/types";
- 
+import ErrorPage from "@/components/ErrorPage";
+
 const LIMIT = 10;
  
 export default function ReviewList() {
@@ -13,7 +14,7 @@ export default function ReviewList() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [search, setSearch] = useState("");
- 
+  const [errorStatus, setErrorStatus] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState("");
@@ -33,9 +34,9 @@ export default function ReviewList() {
       });
       if (!getArticles.success) {
         setError("Unable to load articles awaiting review.");
+        setErrorStatus(getArticles.status || null);
         return;
       }
- 
       setArticles((prev) => {
         if (replace || !prev) return getArticles.data;
 
@@ -50,13 +51,10 @@ export default function ReviewList() {
       setError("Unable to connect to the server.");
     }
   }
- 
-  // Initial load, and reload whenever the search term changes.
   useEffect(() => {
     setLoading(true);
     setError("");
     fetchPage(1, search, true).finally(() => setLoading(false));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search]);
  
   async function handleLoadMore() {
@@ -67,6 +65,9 @@ export default function ReviewList() {
  
   const hasMore = page < totalPages;
  
+  if (error) {
+    return ErrorPage({ statusCode: errorStatus ?? 500, message: error });
+  }
   return (
     <main className="relative flex min-h-screen flex-col items-center overflow-hidden">
       <header className="absolute left-0 right-0 top-0 flex items-center justify-between p-4">

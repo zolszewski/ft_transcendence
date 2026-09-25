@@ -7,6 +7,7 @@ import LogoutButton from "@/components/LogoutButton";
 import DOMPurify from "dompurify";
 import type { Article, Comment } from "@/lib/types";
 import { apiClient } from "@/lib/apiClient";
+import ErrorPage from "@/components/ErrorPage";
 
 export default function ExploreDetail() {
   const params = useParams<{ id: string }>();
@@ -16,19 +17,11 @@ export default function ExploreDetail() {
   const [loading, setLoading] = useState(true);
   const [commentsLoading, setCommentsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [errorStatus, setErrorStatus] = useState<number | null>(null);
   const [comment, setComment] = useState("");
   const [commentError, setCommentError] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
 
-  useEffect(() => {
-    async function checkAuth() {
-      const response = await apiClient.auth.me();
-      setIsLoggedIn(response.success);
-    }
-
-    checkAuth();
-  }, []);
 
   useEffect(() => {
     async function loadArticle() {
@@ -40,6 +33,8 @@ export default function ExploreDetail() {
           setArticle(getArticleResponse.data);
         } else {
           setError("Unable to load this article.");
+          setErrorStatus(getArticleResponse.status || null);
+          return;
         }
       } catch {
         setError("Unable to connect to the server.");
@@ -83,8 +78,9 @@ export default function ExploreDetail() {
 
     try {
       const postCommentResponse = await apiClient.articles.postComment(params.id, comment.trim());
-      if (postCommentResponse.success === false) {
+      if (!postCommentResponse.success) {
         setCommentError(postCommentResponse.error ?? "Unable to submit comment.");
+        setErrorStatus(postCommentResponse.status || null);
         return;
       }
       const newComment = await postCommentResponse.data;
@@ -96,7 +92,9 @@ export default function ExploreDetail() {
       setSubmitting(false);
     }
   }
-
+  if (error)  {
+    return <ErrorPage statusCode={errorStatus ?? 500} message={error} />;
+  }
   return (
     <main className="relative flex min-h-screen flex-col items-center overflow-hidden">
       <header className="absolute left-0 right-0 top-0 flex items-center justify-between p-4">
@@ -108,7 +106,6 @@ export default function ExploreDetail() {
 
       <div className="mt-32 w-full max-w-2xl px-4 pb-16">
         {loading && <p className="text-sm">Loading...</p>}
-        {error && <p className="text-sm text-red-600">{error}</p>}
 
         {!loading && !error && article && (
           <>

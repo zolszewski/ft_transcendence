@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-
+import ErrorPage from "@/components/ErrorPage";
 import TextEditor, { type TextEditorHandle, } from "@/components/text-editor";
 
 import { apiClient } from "@/lib/apiClient";
@@ -21,8 +21,9 @@ export default function EditArticlePage() {
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-
+  const [errorStatus, setErrorStatus] = useState<number | null>(null);
   const [error, setError] = useState("");
+  const [pageError, setPageError] = useState("");
   const [success, setSuccess] = useState("");
 
   useEffect(() => {
@@ -35,9 +36,10 @@ export default function EditArticlePage() {
         const response = await apiClient.articles.getById(articleId);
 
         if (!response.success) {
-          throw new Error(
-            response.error || "Failed to load article"
-          );
+
+            setError(response.error || "Failed to load article");
+            setErrorStatus(response.status || null);
+            return;
         }
 
         setArticle(response.data);
@@ -58,6 +60,7 @@ export default function EditArticlePage() {
     const response = await apiClient.uploads.image(file);
     if (!response.success) {
         setError(response.error || "Failed to upload image");
+        setErrorStatus(response.status || null);
         return null;
     }
     return response.data.url; // "/api/uploads/<id>"
@@ -65,7 +68,7 @@ export default function EditArticlePage() {
 
   async function handleSave() {
     if (!editorRef.current) {
-      setError("Editor is not ready.");
+      setPageError("Editor is not ready.");
       return;
     }
 
@@ -94,7 +97,9 @@ export default function EditArticlePage() {
         article?.abstract ?? ""
         );
         if (!updateResponse.success) {
-        throw new Error(updateResponse.error || "Failed to update article");
+          setError(updateResponse.error || "Failed to update article");
+          setErrorStatus(updateResponse.status || null);
+          return;
         }
 
       setSuccess("Article updated successfully.");
@@ -102,9 +107,12 @@ export default function EditArticlePage() {
       const refreshed =
         await apiClient.articles.getById(articleId);
 
-      if (refreshed.success) {
-        setArticle(refreshed.data);
-      }
+      if (!refreshed.success) {
+          setError(refreshed.error || "Failed to update article");
+          setErrorStatus(refreshed.status || null);
+          return;
+        }
+      setArticle(refreshed.data);
     } catch (err) {
       setError(
         err instanceof Error
@@ -124,27 +132,12 @@ export default function EditArticlePage() {
     );
   }
 
-  if (error && !article) {
-    return (
-      <main className="p-8">
-        <p className="text-red-500">{error}</p>
-
-        <Link
-          href="/dashboard"
-          className="mt-4 inline-block border px-4 py-2 hover:underline"
-        >
-          Back to dashboard
-        </Link>
-      </main>
-    );
+  if (error) {
+    return <ErrorPage statusCode={errorStatus ?? 500} message={error} />;
   }
 
   if (!article) {
-    return (
-      <main className="p-8">
-        <p>Article not found.</p>
-      </main>
-    );
+    return <ErrorPage statusCode={404} message="Article not found" />;
   }
 
   return (
@@ -212,6 +205,11 @@ export default function EditArticlePage() {
             Cancel
           </button>
         </div>
+        {pageError && (
+          <p className="mt-4 text-sm text-red-600">
+            {error}
+          </p>
+        )}
       </div>
     </main>
   );

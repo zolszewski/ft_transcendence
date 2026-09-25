@@ -7,7 +7,7 @@ import LogoutButton from "@/components/LogoutButton";
 import { apiClient } from "@/lib/apiClient";
 import { Article, Comment } from "@/lib/types";
 import DOMPurify from "dompurify";
-
+import ErrorPage from "@/components/ErrorPage";
 export default function MyArticleDetail() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
@@ -15,6 +15,7 @@ export default function MyArticleDetail() {
   const [article, setArticle] = useState<Article | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [errorStatus, setErrorStatus] = useState<number | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [commentsLoading, setCommentsLoading] = useState(true);
 
@@ -27,11 +28,13 @@ useEffect(() => {
         const response = await apiClient.articles.getById(params.id);
         if (!response.success) {
           setError(response.error || "Unable to load this article." );
+          setErrorStatus(response.status || null);
           return;
         }
         setArticle(await response.data);
       } catch {
         setError("Unable to connect to the server.");
+        
       } finally {
         setLoading(false);
       }
@@ -57,6 +60,12 @@ useEffect(() => {
     }
     loadComments();
   }, [params.id]);
+  if (error) {
+    return <ErrorPage statusCode={errorStatus ?? 500} message={error} />;
+  }
+  if (!article) 
+    return <ErrorPage statusCode={404} message="Article not found" />;
+
   return (
     <main className="relative flex min-h-screen flex-col items-center overflow-hidden">
         <header className="absolute left-0 right-0 top-0 flex items-center justify-between p-4">
@@ -67,11 +76,10 @@ useEffect(() => {
           </header>
           <div className="mt-32 w-full max-w-2xl px-4 pb-16">
         {loading && <p className="text-sm">Loading...</p>}
-        {error && <p className="text-sm text-red-600">{error}</p>}
-
+        
         {!loading && !error && article && (
           <>
-            {article.miniatureUrl && (
+            {article.miniature && (
               <img
                 src={article.miniatureUrl}
                 alt={`Miniature for ${article.title}`}

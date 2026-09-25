@@ -4,18 +4,25 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { apiClient } from "@/lib/apiClient";
 import type { Article } from "@/lib/types";
+import ErrorPage from "@/components/ErrorPage";
+
 
 export default function DraftsPage() {
   const [drafts, setDrafts] = useState<Article[]>([]);
   const [error, setError] = useState("");
-
+  const [errorStatus, setErrorStatus] = useState<number | null>(null);
   useEffect(() => {
     apiClient.dashboard.mine({status: "DRAFT"}).then((response) => {
-      if (response.success) setDrafts(response.data);
-      else setError(response.error);
+      if (!response.success) {
+        setError(response.error);
+        setErrorStatus(response.status || null);
+        return;
+      }
+      setDrafts(response.data);
     });
   }, []);
-
+  if (error)
+    return <ErrorPage statusCode={errorStatus ?? 500} message={error} />;
   return (
     <main className="mx-auto min-h-screen w-full max-w-2xl px-4 py-12">
       <header className="flex items-center justify-between">
@@ -24,8 +31,6 @@ export default function DraftsPage() {
           Publish
         </Link>
       </header>
-
-      {error && <p className="mt-6 text-sm text-red-600">{error}</p>}
       {!error && drafts.length === 0 && (
         <p className="mt-8 text-sm text-gray-600">You have no drafts yet.</p>
       )}

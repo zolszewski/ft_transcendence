@@ -7,6 +7,7 @@ import LogoutButton from "@/components/LogoutButton";
 import DOMPurify from "dompurify";
 import { apiClient } from "@/lib/apiClient";
 import { Article } from "@/lib/types";
+import ErrorPage from "@/components/ErrorPage";
 
 export default function ReviewDetail() {
   const params = useParams<{ id: string }>();
@@ -15,10 +16,10 @@ export default function ReviewDetail() {
   const [article, setArticle] = useState<Article | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
+  const [errorStatus, setErrorStatus] = useState<number | null>(null);
   const [comment, setComment] = useState("");
   const [submitting, setSubmitting] = useState<"APPROVED" | "REJECTED" | null>(null);
-  const [submitError, setSubmitError] = useState("");
+
 
   useEffect(() => {
     async function load() {
@@ -28,6 +29,7 @@ export default function ReviewDetail() {
         const response = await apiClient.articles.getReviewingArticle(params.id);
         if (!response.success) {
           setError(response.error || "Unable to load this article." );
+          setErrorStatus(response.status || null);
           return;
         }
         setArticle(await response.data);
@@ -40,27 +42,35 @@ export default function ReviewDetail() {
     load();
   }, [params.id]);
   async function handleDecision(decision: "APPROVED" | "REJECTED") {
-    setSubmitError("");
+
     setSubmitting(decision);
 
     try {
       const reviewComment = await apiClient.articles.postReview(params.id, comment);
       if (!reviewComment.success) {
-        setSubmitError(reviewComment.error || "Unable to submit review.");
+        setError(reviewComment.error || "Unable to submit review.");
+        setErrorStatus(reviewComment.status || null);
         return;
       }
       const reviewDecision = await apiClient.articles.postDecision(reviewComment.data.id, decision);
       if (!reviewDecision.success) {
-        setSubmitError(reviewDecision.error || "Unable to record decision.");
+        setError(reviewDecision.error || "Unable to record decision.");
+        setErrorStatus(reviewDecision.status || null);
         return;
       }
       router.push("/review");
       router.refresh();
     } catch {
-      setSubmitError("Unable to connect to the server.");
+      setError("Unable to connect to the server.");
     } finally {
       setSubmitting(null);
     }
+  }
+  if (error) {
+    return <ErrorPage statusCode={errorStatus ?? 500} message={error} />;
+  }
+  if (!article) {
+    return <ErrorPage statusCode={404} message="Article not found" />;
   }
 
   return (
@@ -115,9 +125,7 @@ export default function ReviewDetail() {
                 placeholder="Share your feedback..."
               />
 
-              {submitError && (
-                <p className="mt-2 text-sm text-red-600">{submitError}</p>
-              )}
+           
 
               <div className="mt-4 flex gap-4">
                 <button

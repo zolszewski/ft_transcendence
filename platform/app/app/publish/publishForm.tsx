@@ -8,6 +8,7 @@ import LogoutButton from "@/components/LogoutButton";
 import TextEditor from "@/components/text-editor";
 import type { TextEditorHandle } from "@/components/text-editor";
 import { apiClient } from "@/lib/apiClient";
+import ErrorPage from "@/components/ErrorPage";
 
 
 export default function PublishForm() {
@@ -18,14 +19,20 @@ export default function PublishForm() {
   const draftId = searchParams.get("draft");
   const [cachedFileHandle, setCachedFileHandle] = useState<FileSystemFileHandle | null>(null);
   const [savedData, setSavedData] = useState({ title: "", content: "" });
+  const [pageError, setPageError] = useState("");
   const [error, setError] = useState("");
+  const [errorStatus, setErrorStatus] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (draftId) {
       apiClient.articles.getDraft(draftId).then((response) => {
-        if (response.success) setSavedData(response.data);
-        else setError(response.error);
+        if (!response.success) {
+          setError(response.error);
+          setErrorStatus(response.status);
+          return;
+        }
+        setSavedData(response.data);
       });
       return;
     }
@@ -59,12 +66,12 @@ export default function PublishForm() {
 
     if (!title) {
       if (allowEmpty) return true;
-      setError("Add a title before saving the draft.");
+      setPageError("Add a title before saving the draft.");
       return false;
     }
     if (!content) {
       if (allowEmpty) return true;
-      setError("Write some content before saving the draft.");
+      setPageError("Write some content before saving the draft.");
       return false;
     }
 
@@ -75,6 +82,7 @@ export default function PublishForm() {
         : await apiClient.articles.create(title, content, miniatureFile);
       if (response.success === false) {
         setError(response.error);
+        setErrorStatus(response.status || null);
         return false;
       }
       clearCachedData();
@@ -118,11 +126,11 @@ export default function PublishForm() {
   const { title, content } = editorData;
 
   if (!title) {
-    setError("Add a title before continuing.");
+    setPageError("Add a title before continuing.");
     return;
   }
   if (!content) {
-    setError("Write some content before continuing.");
+    setPageError("Write some content before continuing.");
     return;
   }
   setLoading(true);
@@ -132,15 +140,17 @@ export default function PublishForm() {
     const createResponse = draftId
       ? await apiClient.articles.update(draftId, title, content, miniatureFile)
       : await apiClient.articles.create(title, content, miniatureFile);
-    if (createResponse.success === false) {
+    if (!createResponse.success) {
       setError(createResponse.error);
+      setErrorStatus(createResponse.status || null);
       return;
     }
     const article = createResponse.data;
     
     const submitResponse = await apiClient.articles.submit(article.id);
-    if (submitResponse.success === false) {
+    if (!submitResponse.success) {
       setError("Article was saved, but submitting for review failed: " + submitResponse.error);
+      setErrorStatus(submitResponse.status || null);
       return;
     }
 
@@ -156,6 +166,9 @@ export default function PublishForm() {
     setLoading(false);
   }
 }
+  if (error) {
+    return <ErrorPage statusCode={errorStatus ?? 500} message={error} />;
+  }
   return (
     <main className="relative flex min-h-screen flex-col items-center overflow-hidden">
       <header className="absolute left-0 right-0 top-0 flex items-center justify-between p-4">
@@ -200,7 +213,7 @@ export default function PublishForm() {
           }}
         />
 
-        {error && (
+        {pageError && (
           <p className="mt-4 text-sm text-red-600">
             {error}
           </p>

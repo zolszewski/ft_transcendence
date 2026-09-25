@@ -6,7 +6,7 @@ import Link from "next/link";
 import LogoutButton from "@/components/LogoutButton";
 import { apiClient } from "@/lib/apiClient";
 import type { Article, ListResult } from "@/lib/types";
- 
+import ErrorPage from "@/components/ErrorPage";
 
 const LIMIT = 10;
 
@@ -15,7 +15,7 @@ export default function ExplorePageContent() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [search, setSearch] = useState("");
- 
+  const [errorStatus, setErrorStatus] = useState<number | null>(null); 
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState("");
@@ -35,6 +35,7 @@ export default function ExplorePageContent() {
             });
             if (!getArticles.success) {
                 setError("Unable to load articles.");
+                setErrorStatus(getArticles.status);
                 return;
             }
             setArticles((previousArticles) =>
@@ -63,7 +64,9 @@ export default function ExplorePageContent() {
     }
     const hasMore = page < totalPages;
 
-
+    if (error) {
+      return <ErrorPage statusCode={errorStatus ?? 500} message={error} />;
+    }
     return (
         <main className="relative flex min-h-screen flex-col items-center overflow-hidden">
             <header className="absolute left-0 right-0 top-0 flex items-center justify-between p-4">
