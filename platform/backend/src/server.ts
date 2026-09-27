@@ -12,6 +12,7 @@ import { rateLimit } from "express-rate-limit";
 import { resolveApiKey } from "./middleware/auth";
 import uploadRoutes from "./routes/upload.routes"
 import userRoutes from "./routes/user.routes"
+import dashboardRoutes from "./routes/dashboard.routes"
 
 const app = express();
 const apiLimiter = rateLimit({
@@ -33,6 +34,7 @@ app.use("/api/reviews", reviewRoutes);
 app.use("/api/comments", commentRoutes);
 app.use("/api/uploads", uploadRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/dashboard", dashboardRoutes);
 
 
 app.get("/health", (_req, res) => {

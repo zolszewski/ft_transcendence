@@ -21,3 +21,7 @@ export function isValidTitle(title: string): boolean {
 export function isValidContent(content: string): boolean {
 	return typeof content === "string" && content.trim().length >= 1;
 }
+
+export function isValidTotpCode(code: unknown): boolean {
+	return typeof code === "string" && /^\d{6}$/.test(code);
+}
