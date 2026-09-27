@@ -3,8 +3,10 @@
 import type { FormEvent } from "react";
 import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import Link from "next/link";
 import LogoutButton from "@/components/LogoutButton";
+import PageShell from "@/components/PageShell";
+import AppHeader from "@/components/AppHeader";
+import NavLink from "@/components/NavLink";
 import TextEditor from "@/components/text-editor";
 import type { TextEditorHandle } from "@/components/text-editor";
 import { apiClient } from "@/lib/apiClient";
@@ -170,38 +172,31 @@ export default function PublishForm() {
     return <ErrorPage statusCode={errorStatus ?? 500} message={error} />;
   }
   return (
-    <main className="relative flex min-h-screen flex-col items-center overflow-hidden">
-      <header className="absolute left-0 right-0 top-0 flex items-center justify-between p-4">
-        <div className="flex gap-2">
-          <Link
-            href="/"
-            onClick={handleHomeClick}
-            className="border px-4 py-2 hover:underline"
-          >
-            Home
-          </Link>
-          <Link href="/drafts" className="border px-4 py-2 hover:underline">
-            Drafts
-          </Link>
-        </div>
-
-        <LogoutButton beforeLogout={() => persistDraft(true)} />
-      </header>
-
-      <div className="flex flex-col items-center justify-center pt-40 text-center">
+    <PageShell
+      offset="none"
+      containerClassName="max-w-xl pt-40"
+      header={
+        <AppHeader
+          left={
+            <div className="flex gap-2">
+              <NavLink href="/" onClick={handleHomeClick}>
+                Home
+              </NavLink>
+              <NavLink href="/drafts">Drafts</NavLink>
+            </div>
+          }
+          right={<LogoutButton beforeLogout={() => persistDraft(true)} />}
+        />
+      }
+    >
+      <div className="flex flex-col items-center text-center">
         <h1 className="text-5xl font-bold">Publish</h1>
-
-        <p className="mt-2 text-xl">
-          your academic work
-        </p>
+        <p className="mt-2 text-xl">your academic work</p>
       </div>
 
-      <hr className="mt-16 w-full max-w-xl border-t" />
+      <hr className="mt-16 border-t" />
 
-      <form
-        onSubmit={handleSubmit}
-        className="mt-8 w-full max-w-xl px-4"
-      >
+      <form onSubmit={handleSubmit} className="mt-8">
         <TextEditor
           ref={editorRef}
           initialData={savedData}
@@ -213,16 +208,12 @@ export default function PublishForm() {
           }}
         />
 
-        {pageError && (
-          <p className="mt-4 text-sm text-red-600">
-            {error}
-          </p>
-        )}
+        {pageError ? <p className="mt-4 form-error">{pageError}</p> : null}
 
         <button
           type="submit"
           disabled={loading}
-          className="mt-12 w-full border py-3 font-bold hover:underline disabled:opacity-50"
+          className="btn-action-full mt-12 py-3 font-bold"
         >
           {loading ? "Submitting..." : "Submit"}
         </button>
@@ -230,11 +221,11 @@ export default function PublishForm() {
           type="button"
           onClick={saveDraft}
           disabled={loading}
-          className="mt-4 w-full border py-3 font-bold hover:underline disabled:opacity-50"
+          className="btn-action-full mt-4 py-3 font-bold"
         >
           Save as draft
         </button>
       </form>
-    </main>
+    </PageShell>
   );
 }

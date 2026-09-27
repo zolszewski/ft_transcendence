@@ -76,3 +76,5 @@ export interface ListResult<T> {
   hasNext: boolean;
   hasPrev: boolean;
 }
+
+export type FriendRelationStatus = "none" | "friends" | "pending_outgoing" | "pending_incoming";

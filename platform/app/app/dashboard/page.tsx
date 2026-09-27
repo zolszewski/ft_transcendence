@@ -6,7 +6,7 @@ export default async function PublishPage() {
 
   const auth = await isAuthenticated();
     if (!auth) {
-      redirect("/authentication/login?redirect=/publish");
+      redirect("/authentication/login?redirect=/dashboard");
     } 
     return <DashboardForm/>;
   }

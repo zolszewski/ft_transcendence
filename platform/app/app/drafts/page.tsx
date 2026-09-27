@@ -5,6 +5,11 @@ import Link from "next/link";
 import { apiClient } from "@/lib/apiClient";
 import type { Article } from "@/lib/types";
 import ErrorPage from "@/components/ErrorPage";
+import PageShell from "@/components/PageShell";
+import AppHeader from "@/components/AppHeader";
+import NavLink from "@/components/NavLink";
+import PageHeading from "@/components/PageHeading";
+import { Card } from "@/components/ui/card";
 
 
 export default function DraftsPage() {
@@ -24,28 +29,37 @@ export default function DraftsPage() {
   if (error)
     return <ErrorPage statusCode={errorStatus ?? 500} message={error} />;
   return (
-    <main className="mx-auto min-h-screen w-full max-w-2xl px-4 py-12">
-      <header className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Drafts</h1>
-        <Link href="/publish" className="border px-4 py-2 hover:underline">
-          Publish
-        </Link>
-      </header>
+    <PageShell
+      variant="dashboard"
+      containerClassName="max-w-2xl py-12"
+      header={
+        <AppHeader
+          variant="bordered"
+          left={<PageHeading title="Drafts" />}
+          right={<NavLink href="/publish">Publish</NavLink>}
+        />
+      }
+    >
       {!error && drafts.length === 0 && (
-        <p className="mt-8 text-sm text-gray-600">You have no drafts yet.</p>
+        <p className="text-sm text-muted-foreground">You have no drafts yet.</p>
       )}
       <ul className="mt-8 space-y-3">
         {drafts.map((draft) => (
-          <li key={draft.id} className="border p-4">
-            <Link href={`/publish?draft=${draft.id}`} className="font-bold hover:underline">
-              {draft.title}
-            </Link>
-            <p className="mt-1 text-sm text-gray-600">
-              Edited on {new Date(draft.updatedAt).toLocaleDateString()}
-            </p>
+          <li key={draft.id}>
+            <Card className="p-4">
+              <Link
+                href={`/publish?draft=${draft.id}`}
+                className="font-bold hover:underline"
+              >
+                {draft.title}
+              </Link>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Edited on {new Date(draft.updatedAt).toLocaleDateString()}
+              </p>
+            </Card>
           </li>
         ))}
       </ul>
-    </main>
+    </PageShell>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import ArticleCard from "./articleCard";
+import ArticleCard from "@/components/articleCard";
 import type { Article } from "@/lib/types";
 
 type ArticleSectionProps = {
@@ -19,13 +19,13 @@ export default function ArticleSection({
           {title}
         </h2>
 
-        <span className="text-sm text-gray-500">
+        <span className="text-sm text-muted-foreground">
           {articles.length}
         </span>
       </div>
 
       {articles.length === 0 ? (
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-muted-foreground">
           No articles.
         </p>
       ) : (

@@ -30,7 +30,7 @@ export default function MyDashboardButton({ beforeLogout }: DashboardButtonProps
     <button
       type="button"
       onClick={goToDashboard}
-      className="border px-4 py-2 mr-2 hover:underline"
+      className="btn-nav mr-2"
     >
       My Dashboard
     </button>

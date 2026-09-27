@@ -1,16 +1,19 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
-import Link from "next/link";
+import { useParams } from "next/navigation";
 import LogoutButton from "@/components/LogoutButton";
 import { apiClient } from "@/lib/apiClient";
 import { Article, Comment } from "@/lib/types";
-import DOMPurify from "dompurify";
 import ErrorPage from "@/components/ErrorPage";
+import PageShell from "@/components/PageShell";
+import AppHeader from "@/components/AppHeader";
+import NavLink from "@/components/NavLink";
+import ArticleDetailView from "@/components/ArticleDetailView";
+import CommentsSection from "@/components/CommentsSection";
+
 export default function MyArticleDetail() {
   const params = useParams<{ id: string }>();
-  const router = useRouter();
 
   const [article, setArticle] = useState<Article | null>(null);
   const [loading, setLoading] = useState(true);
@@ -63,65 +66,30 @@ useEffect(() => {
   if (error) {
     return <ErrorPage statusCode={errorStatus ?? 500} message={error} />;
   }
-  if (!article) 
+  if (!article && !loading) 
     return <ErrorPage statusCode={404} message="Article not found" />;
 
   return (
-    <main className="relative flex min-h-screen flex-col items-center overflow-hidden">
-        <header className="absolute left-0 right-0 top-0 flex items-center justify-between p-4">
-         <Link href="/dashboard" className="border px-4 py-2 hover:underline">
-              Back to dashboard
-            </Link>
-            <LogoutButton />
-          </header>
-          <div className="mt-32 w-full max-w-2xl px-4 pb-16">
-        {loading && <p className="text-sm">Loading...</p>}
-        
-        {!loading && !error && article && (
-          <>
-            {article.miniature && (
-              <img
-                src={article.miniatureUrl}
-                alt={`Miniature for ${article.title}`}
-                className="h-64 w-full object-cover"
-              />
-            )}
+    <PageShell
+      header={
+        <AppHeader
+          left={<NavLink href="/dashboard">Back to dashboard</NavLink>}
+          right={<LogoutButton />}
+        />
+      }
+    >
+      {loading && <p className="text-sm">Loading...</p>}
 
-            <h1 className="mt-6 border p-4 text-3xl font-bold">{article.title}</h1>
-            {article.abstract && (
-              <p className="mt-4 text-sm italic text-gray-700">{article.abstract}</p>
-            )}
-
-            <div
-              className="article-content mt-6 text-sm leading-relaxed"
-              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(article.content) }}
-            />
-
-            <p className="mt-8 border-t pt-4 text-sm text-gray-600">
-                Edited on {new Date(article.updatedAt).toLocaleDateString()}
-            </p>
-            <section className="mt-10 border-t pt-6">
-              <h2 className="text-xl font-bold">Comments</h2>
-
-              {commentsLoading ? (
-                <p className="mt-4 text-sm">Loading comments...</p>
-              ) : comments.length === 0 ? (
-                <p className="mt-4 text-sm text-gray-600">No comments yet.</p>
-              ) : (
-                <ul className="mt-4 space-y-4">
-                  {comments.map((item) => (
-                    <li key={item.id} className="rounded border p-4">
-                      <p className="text-sm font-semibold">{item.author?.name ?? "User"}</p>
-                      <p className="mt-2 text-sm whitespace-pre-wrap">{item.content}</p>
-                    </li>
-                  ))}
-                </ul>
-              )}
-              </section>
-            </>
-          )}
-        </div>
-      </main>
+      {!loading && article && (
+        <>
+          <ArticleDetailView
+            article={article}
+            showAuthorByline={false}
+            showAuthorInFooter={false}
+          />
+          <CommentsSection comments={comments} loading={commentsLoading} />
+        </>
+      )}
+    </PageShell>
   );
 }
-

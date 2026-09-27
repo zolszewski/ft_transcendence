@@ -1,7 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import PageShell from "@/components/PageShell";
+import AppHeader from "@/components/AppHeader";
+import NavLink from "@/components/NavLink";
 import { useParams, useRouter } from "next/navigation";
 import ErrorPage from "@/components/ErrorPage";
 import TextEditor, { type TextEditorHandle } from "@/components/text-editor";
@@ -123,24 +125,25 @@ export default function EditArticlePage() {
   }
 
   return (
-    <main className="min-h-screen">
-      <header className="flex items-center justify-between border-b p-4">
-        <Link href={`/dashboard/${article.id}`} className="border px-4 py-2 hover:underline">
-          Back to article
-        </Link>
-        <h1 className="text-xl font-bold">Edit Article</h1>
-        <Link href="/dashboard" className="border px-4 py-2 hover:underline">
-          Dashboard
-        </Link>
-      </header>
-
-      <div className="mx-auto max-w-4xl px-4 py-8">
-        {pageError && (
-          <p className="mb-6 border border-red-300 p-3 text-red-600">{pageError}</p>
-        )}
-        {success && (
-          <p className="mb-6 border border-green-300 p-3 text-green-600">{success}</p>
-        )}
+    <PageShell
+      variant="dashboard"
+      header={
+        <AppHeader
+          variant="bordered"
+          left={
+            <NavLink href={`/dashboard/${article.id}`}>Back to article</NavLink>
+          }
+          center={<h1 className="text-xl font-bold">Edit Article</h1>}
+          right={<NavLink href="/dashboard">Dashboard</NavLink>}
+        />
+      }
+    >
+        {pageError ? (
+          <p className="alert-banner-error">{pageError}</p>
+        ) : null}
+        {success ? (
+          <p className="alert-banner-success">{success}</p>
+        ) : null}
         <UploadProgress percent={uploadProgress} />
 
         <TextEditor
@@ -155,19 +158,18 @@ export default function EditArticlePage() {
             type="button"
             onClick={handleSave}
             disabled={saving}
-            className="border px-4 py-2 hover:bg-gray-50 disabled:opacity-50"
+            className="btn-nav disabled:opacity-50"
           >
             {saving ? "Saving..." : "Save changes"}
           </button>
           <button
             type="button"
             onClick={() => router.push(`/dashboard/${article.id}`)}
-            className="border px-4 py-2 hover:bg-gray-50"
+            className="btn-nav"
           >
             Cancel
           </button>
         </div>
-      </div>
-    </main>
+    </PageShell>
   );
 }
