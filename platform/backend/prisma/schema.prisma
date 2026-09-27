@@ -32,6 +32,8 @@ model User {
   name     String
   password String
   avatarId String?
+  faculty  String?
+  specialization String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

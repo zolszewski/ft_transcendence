@@ -11,25 +11,51 @@ router.get("/me", requireAuth, async (req, res) => {
 	const user = await getUserById(req.session.userId!);
 	if (!user)
 		return res.status(401).json({ error: "Not authenticated" });
-	res.json({ id: user.id, email: user.email, name: user.name, avatarUrl: getAvatarUrl(user.avatarId) });
+	res.json({ id: user.id, 
+		email: user.email, 
+		name: user.name,
+		faculty: user.faculty,
+		specialization: user.specialization,
+		avatarUrl: getAvatarUrl(user.avatarId) });
 });
 
 router.get("/:id", async (req, res) => {
 	const user = await getUserById(req.params.id);
 	if (!user)
 		return res.status(404).json({ error: "User not found" });
-	res.json({ id: user.id, name: user.name, avatarUrl: getAvatarUrl(user.avatarId) });
+	res.json({ id: user.id, 
+		name: user.name,
+		faculty: user.faculty,
+		specialization: user.specialization,
+		avatarUrl: getAvatarUrl(user.avatarId) });
 });
 
 router.patch("/me", requireAuth, async (req, res) => {
-	const { name, email } = req.body;
+	const { name, email, faculty, specialization } = req.body;
 	if (!isValidName(name) || !isValidEmail(email))
 		return res.status(400).json({ error: "Invalid input" });
+	 if (faculty !== undefined && faculty !== null && typeof faculty !== "string")
+    	return res.status(400).json({ error: "Invalid faculty" });
+  	if (specialization !== undefined && specialization !== null && typeof specialization !== "string")
+    	return res.status(400).json({ error: "Invalid specialization" });
+
 	const existingUser = await getUserByEmail(email);
 	if (existingUser && ( existingUser.id !== req.session.userId!))
 		return res.status(409).json({ error: "Email already in use"});
-	const updatedUser = await updateUser(req.session.userId!, { name, email });
-	res.json({ id: updatedUser.id, email: updatedUser.email, name: updatedUser.name, avatarUrl: getAvatarUrl(updatedUser.avatarId) });
+	const updatedUser = await updateUser(req.session.userId!, {
+		name,
+		email,
+		faculty: faculty ?? null,
+		specialization: specialization ?? null,
+	});
+	res.json({
+		id: updatedUser.id,
+		email: updatedUser.email,
+		name: updatedUser.name,
+		faculty: updatedUser.faculty,
+		specialization: updatedUser.specialization,
+		avatarUrl: getAvatarUrl(updatedUser.avatarId),
+	});
 });
 
 router.put("/me/avatar", requireAuth, async (req, res) => {
@@ -43,7 +69,14 @@ router.put("/me/avatar", requireAuth, async (req, res) => {
 		return res.status(400).json({ error: "Not an image"})
 	await setUploadVisibility(uploadId, "PUBLIC");
 	const updated = await setUserAvatar(req.session.userId!, uploadId);
-	res.json({ id: updated.id, email: updated.email, name: updated.name, avatarUrl: getAvatarUrl(updated.avatarId)});
+	res.json({
+		id: updated.id,
+		email: updated.email,
+		name: updated.name,
+		faculty: updated.faculty,
+		specialization: updated.specialization,
+		avatarUrl: getAvatarUrl(updated.avatarId),
+	});
 });
 
 export default router;
