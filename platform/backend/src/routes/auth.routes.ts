@@ -1,5 +1,12 @@
 import { Router } from "express";
-import { createUser, getUserByEmail, getUserById } from "../services/user.service";
+import {
+	createOAuthUser,
+	createUser,
+	getAvatarUrl,
+	getUserByEmail,
+	getUserById,
+	getUserByOAuth,
+} from "../services/user.service";
 import { hashPassword, verifyPassword } from "../services/auth.service";
 import { isValidEmail, isValidPassword, isValidName, isValidTotpCode } from "../utils/validation";
 import { authLimiter, requireAuth } from "../middleware/auth";
@@ -7,7 +14,6 @@ import { createApiKey } from "../services/apiKey.service";
 import { verifyTwoFactorCode } from "../services/twoFactor.service";
 import crypto from "crypto";
 import { getGithubAuthorizeUrl, exchangeGithubCode, fetchGithubProfile } from "../services/github.service";
-import { createOAuthUser, getUserByOAuth } from "../services/user.service";
 
 
 
@@ -85,7 +91,16 @@ router.get("/me", requireAuth, async (req, res) => {
 	const user = await getUserById(req.session.userId!);
 	if (!user)
 		return res.status(401).json({ error: "Not authenticated" });
-	res.json({ id: user.id, email: user.email, name: user.name });
+	res.json({
+		id: user.id,
+		email: user.email,
+		name: user.name,
+		faculty: user.faculty,
+		specialization: user.specialization,
+		avatarId: user.avatarId,
+		avatarUrl: getAvatarUrl(user.avatarId),
+		createdAt: user.createdAt,
+	});
 });
 
 router.get("/oauth/github", (req, res) => {

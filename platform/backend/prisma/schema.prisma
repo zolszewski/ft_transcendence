@@ -62,8 +62,8 @@ model Article {
 
   miniatureId String?
   miniature   Upload? @relation(fields: [miniatureId], references: [id])
-  miniatureFocusX Float @default(50)
-  miniatureFocusY Float @default(50)
+  miniatureFocusX Float? @default(50)
+  miniatureFocusY Float? @default(50)
 
   pdfId String?
   pdf   Upload? @relation("ArticlePdf", fields: [pdfId], references: [id])

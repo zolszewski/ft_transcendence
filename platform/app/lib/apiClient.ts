@@ -1,6 +1,6 @@
 import type { User, Article, Comment, Review, ArticleDetail, ListResult } from "./types";
 import { uploadFileWithProgress } from "./progressUpload";
-import { validateUpload } from "./validateUpload";
+import { validateUpload, validateFile } from "./validateUpload";
 
 type ApiResponse<T> =
   | { success: true; status?: number; data: T }
@@ -135,6 +135,77 @@ export const apiClient = {
         );
       } catch {
         return apiError<ListResult<Article>>("Unable to connect to the server");
+      }
+    }
+  },
+  profile: {
+    get: async (userId?: string) => {
+      try {
+        const endpoint = userId ? `/api/users/${userId}` : "/api/users/me";
+        const response = await fetch(endpoint, {
+          method: "GET",
+          credentials: "include",
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          return apiError<User>(data.error || "Failed to fetch user profile", response.status);
+        }
+        return apiSuccess<User>(data, response.status);
+      } catch {
+        return apiError<User>("Unable to connect to the server");
+      }
+    },
+    update: async (payload: {
+      name?: string;
+      email?: string;
+      faculty?: string | null;
+      specialization?: string | null;
+      avatarFile?: File | null;
+    }) => {
+      try {
+        const patchResponse = await fetch("/api/users/me", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            name: payload.name,
+            email: payload.email,
+            faculty: payload.faculty,
+            specialization: payload.specialization,
+          }),
+        });
+        const patchData = await patchResponse.json();
+        if (!patchResponse.ok) {
+          return apiError<User>(
+            patchData.error || "Failed to update profile",
+            patchResponse.status,
+          );
+        }
+        let currentUser: User = patchData;
+        if (payload.avatarFile) {
+          const uploadRes = await apiClient.uploads.image(payload.avatarFile, "PUBLIC");
+          if (!uploadRes.success) {
+            return apiError<User>(uploadRes.error || "Failed to upload avatar image", uploadRes.status);
+          }
+          const avatarResponse = await fetch("/api/users/me/avatar", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({ uploadId: uploadRes.data.id }),
+          });
+
+          const avatarData = await avatarResponse.json();
+          if (!avatarResponse.ok) {
+            return apiError<User>(
+              avatarData.error || "Failed to set user avatar",
+              avatarResponse.status,
+            );
+          }
+        currentUser = avatarData;
+        }
+        return apiSuccess<User>(currentUser, patchResponse.status);
+      } catch {
+        return apiError<User>("Unable to connect to the server");
       }
     },
   },

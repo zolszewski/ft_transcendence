@@ -15,6 +15,8 @@ import userRoutes from "./routes/user.routes"
 import dashboardRoutes from "./routes/dashboard.routes"
 
 const app = express();
+app.set("trust proxy", 1);
+
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: process.env.NODE_ENV === "production" ? 300 : 2000,

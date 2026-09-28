@@ -4,7 +4,7 @@ import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "re
 import DOMPurify from "dompurify";
 import type { ChangeEvent } from "react";
 import Menu from "./menu";
-import { Eye, EyeOff, Upload, FileText, X } from "lucide-react";
+import { Upload, FileText, X } from "lucide-react";
 import { validateUpload } from "@/lib/validateUpload";
 
 

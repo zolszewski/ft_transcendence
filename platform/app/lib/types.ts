@@ -17,6 +17,17 @@ export interface User {
   id: string;
   name: string;
   email: string;
+  faculty: string;
+  specialization: string;
+  createdAt?: string;
+  avatarId?: string | null;
+  avatarUrl?: string | null; // <-- Computed URL returned by backend (/api/users/me, /api/users/:id)
+  avatar?: {
+    id: string;
+    url: string;
+  } | null;
+  
+
 }
 
 export interface Article {

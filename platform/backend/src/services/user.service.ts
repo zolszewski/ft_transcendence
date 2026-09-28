@@ -40,10 +40,15 @@ export async function getUserById(id: string) {
 	}
 }
 
-export async function updateUser(id: string, data: { name?: string, 
-	email?: string, 
-	faculty?: string, 
-	specialization?: string }) {
+export async function updateUser(
+	id: string,
+	data: {
+		name?: string;
+		email?: string;
+		faculty?: string | null;
+		specialization?: string | null;
+	},
+) {
 	try {
 		return await prisma.User.update({
 			where: { id },
