@@ -10,6 +10,13 @@ import TextEditor, { type TextEditorHandle } from "@/components/text-editor";
 import UploadProgress from "@/components/uploadProgress";
 import { apiClient } from "@/lib/apiClient";
 import type { Article } from "@/lib/types";
+import {
+  getArticleMiniatureFocus,
+  getArticleMiniatureUrl,
+  getArticlePdfUrl,
+  hasStoredMiniature,
+  hasStoredPdf,
+} from "@/lib/articleUtils";
 
 export default function EditArticlePage() {
   const params = useParams<{ id: string }>();
@@ -28,7 +35,6 @@ export default function EditArticlePage() {
 
   // action failure (save / image upload) -> inline banner
   const [pageError, setPageError] = useState("");
-  const [success, setSuccess] = useState("");
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
 
   useEffect(() => {
@@ -79,7 +85,6 @@ export default function EditArticlePage() {
 
     setSaving(true);
     setPageError("");
-    setSuccess("");
 
     try {
       const data = editorRef.current.getData();
@@ -87,28 +92,32 @@ export default function EditArticlePage() {
       if (!data.title.trim()) throw new Error("Title is required.");
       if (!data.content.trim()) throw new Error("Article content is required.");
 
-      if (editorRef.current.image) setUploadProgress(0);
+      if (editorRef.current.image) 
+        setUploadProgress(0);
       const updateResponse = await apiClient.articles.update(
         articleId,
         data.title,
         data.content,
         editorRef.current.image,
-        article?.abstract ?? ""
+        article?.abstract ?? "",
+        editorRef.current.pdf,
+        editorRef.current.pdfRemoved,
+        editorRef.current.getMiniatureFocus(),
       );
-      setUploadProgress(null);
       if (!updateResponse.success) {
         throw new Error(updateResponse.error || "Failed to update article");
       }
 
-      setSuccess("Article updated successfully.");
       editorRef.current.clearImage();
-
-      const refreshed = await apiClient.articles.getById(articleId);
-      if (refreshed.success) setArticle(refreshed.data);
+      editorRef.current.clearPdf();
+      sessionStorage.setItem("flash-message", "Article updated successfully.");
+      router.push(`/dashboard/${articleId}`);
+      router.refresh();
     } catch (err) {
       setPageError(err instanceof Error ? err.message : "Failed to update article");
     } finally {
       setSaving(false);
+      setUploadProgress(null);
     }
   }
 
@@ -141,19 +150,29 @@ export default function EditArticlePage() {
         {pageError ? (
           <p className="alert-banner-error">{pageError}</p>
         ) : null}
-        {success ? (
-          <p className="alert-banner-success">{success}</p>
-        ) : null}
+        
         <UploadProgress percent={uploadProgress} />
 
-        <TextEditor
-          ref={editorRef}
-          initialData={{ title: article.title, content: article.content }}
-          initialImageUrl={article.miniatureUrl}
-          onImageUpload={handleContentImageUpload}
-        />
+        <div className="mt-6">
+          <TextEditor
+            ref={editorRef}
+            initialData={{ title: article.title, content: article.content }}
+            initialImageUrl={
+              hasStoredMiniature(article)
+                ? (getArticleMiniatureUrl(article) ?? undefined)
+                : undefined
+            }
+            initialPdfUrl={
+              hasStoredPdf(article) ? (getArticlePdfUrl(article) ?? undefined) : undefined
+            }
+            initialMiniatureFocus={
+              hasStoredMiniature(article) ? getArticleMiniatureFocus(article) : undefined
+            }
+            onImageUpload={handleContentImageUpload}
+          />
+        </div>
 
-        <div className="mt-6 flex gap-3">
+        <div className="mt-6 flex flex-wrap gap-3">
           <button
             type="button"
             onClick={handleSave}

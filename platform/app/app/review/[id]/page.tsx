@@ -34,7 +34,7 @@ export default function ReviewDetail() {
           setErrorStatus(response.status || null);
           return;
         }
-        setArticle(await response.data);
+        setArticle(response.data);
       } catch {
         setError("Unable to connect to the server.");
       } finally {

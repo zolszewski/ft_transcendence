@@ -218,7 +218,7 @@
   }
 
   .btn-nav {
-    @apply inline-flex items-center rounded-none border border-border bg-background px-4 py-2 text-sm transition-colors hover:bg-muted hover:underline disabled:opacity-50;
+  @apply inline-flex items-center rounded-none border-2 border-border bg-white px-4 py-2 text-sm transition-colors hover:bg-muted hover:underline disabled:opacity-50;
   }
 
   .btn-nav-sm {
@@ -287,5 +287,49 @@
 
   .alert-banner-success {
     @apply mb-6 rounded-none border border-green-600/30 p-3 text-green-700 dark:text-green-400;
+  }
+
+  .editor-panel {
+    @apply overflow-hidden rounded-none border border-border bg-card;
+  }
+
+  .editor-miniature-zone {
+    @apply relative flex aspect-square min-h-32 flex-1 cursor-pointer items-center justify-center overflow-hidden border border-dashed border-border bg-muted/30 p-4 text-center text-sm text-muted-foreground transition-colors hover:bg-muted/50;
+  }
+
+  .editor-miniature-zone--preview {
+    @apply aspect-auto h-40 cursor-grab border-solid p-0 active:cursor-grabbing;
+  }
+
+  .editor-field-label {
+    @apply mb-2 block text-sm font-semibold;
+  }
+
+  .editor-title-input {
+    @apply w-full resize-none rounded-none border border-input bg-background px-4 py-3 text-base font-medium outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50;
+  }
+
+  .editor-toolbar {
+    @apply flex flex-wrap items-center gap-2 border-y border-border bg-muted/50 p-3;
+  }
+
+  .editor-toolbar-btn {
+    @apply inline-flex items-center rounded-none border border-border bg-background px-3 py-1 text-sm transition-colors hover:bg-muted;
+  }
+
+  .editor-surface {
+    @apply min-h-96 border-0 bg-background p-6 text-left outline-none empty:before:text-muted-foreground empty:before:content-[attr(data-placeholder)];
+  }
+
+  .article-list-meta {
+    @apply mt-1 text-sm text-muted-foreground;
+  }
+
+  .article-list-abstract {
+    @apply mt-2 text-sm text-foreground;
+  }
+
+  .article-detail {
+    @apply w-full;
   }
 }

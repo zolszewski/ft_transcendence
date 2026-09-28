@@ -14,8 +14,6 @@ datasource db {
 enum ArticleStatus {
   DRAFT
   SUBMITTED
-  UNDER_REVIEW
-  APPROVED
   REJECTED
   PUBLISHED
 }
@@ -27,13 +25,17 @@ enum ReviewStatus {
 }
 
 model User {
-  id       String   @id @default(cuid())
-  email    String   @unique
-  name     String
-  password String
-  avatarId String?
-  faculty  String?
-  specialization String?
+  id                String   @id @default(cuid())
+  email             String   @unique
+  name              String
+  password          String?
+  avatarId          String?
+  faculty           String?
+  specialization    String?
+  twoFactorSecret   String?
+  twoFactorEnabled  Boolean @default(false)
+  oauthProvider     String?
+  oauthId           String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -44,6 +46,7 @@ model User {
   apiKeys         ApiKey[]
   uploads         Upload[] @relation("UserUploads")
   avatar          Upload? @relation("UserAvatar", fields: [avatarId], references: [id]) 
+  @@unique([oauthProvider, oauthId])
 
 }
 
@@ -54,12 +57,16 @@ model Article {
   content  String
   status   ArticleStatus @default(DRAFT)
 
-
   authorId String
   author   User   @relation(fields: [authorId], references: [id])
 
   miniatureId String?
   miniature   Upload? @relation(fields: [miniatureId], references: [id])
+  miniatureFocusX Float @default(50)
+  miniatureFocusY Float @default(50)
+
+  pdfId String?
+  pdf   Upload? @relation("ArticlePdf", fields: [pdfId], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -128,7 +135,6 @@ model Upload {
   owner         User @relation("UserUploads", fields: [ownerId], references: [id])
   avatarOf      User[] @relation("UserAvatar")
   articles      Article[]
-
+  pdfOf    Article[] @relation("ArticlePdf")
   createdAt DateTime @default(now())
 }
-

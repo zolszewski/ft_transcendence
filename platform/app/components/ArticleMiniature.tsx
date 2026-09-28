@@ -5,6 +5,7 @@ type ArticleMiniatureProps = {
   title: string;
   size?: "thumb" | "hero";
   className?: string;
+  focus?: { x: number; y: number };
 };
 
 export default function ArticleMiniature({
@@ -12,6 +13,7 @@ export default function ArticleMiniature({
   title,
   size = "thumb",
   className,
+  focus,
 }: ArticleMiniatureProps) {
   return (
     <img
@@ -21,6 +23,11 @@ export default function ArticleMiniature({
         size === "hero" ? "article-miniature-hero" : "article-miniature-thumb",
         className,
       )}
+      style={
+        focus
+          ? { objectPosition: `${focus.x}% ${focus.y}%` }
+          : undefined
+      }
     />
   );
 }

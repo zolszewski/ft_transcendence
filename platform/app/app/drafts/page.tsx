@@ -23,7 +23,7 @@ export default function DraftsPage() {
         setErrorStatus(response.status || null);
         return;
       }
-      setDrafts(response.data);
+      setDrafts(response.data.data);
     });
   }, []);
   if (error)

@@ -1,7 +1,8 @@
 import Link from "next/link";
 import type { Article } from "@/lib/types";
-import { getArticleMiniatureUrl } from "@/lib/articleUtils";
+import { getArticleMiniatureFocus, getArticleMiniatureUrl } from "@/lib/articleUtils";
 import ArticleMiniature from "@/components/ArticleMiniature";
+import ArticlePreviewContent from "@/components/ArticlePreviewContent";
 import { Card } from "@/components/ui/card";
 
 type ArticleListLinkItemProps = {
@@ -14,31 +15,22 @@ export default function ArticleListLinkItem({
   href,
 }: ArticleListLinkItemProps) {
   const miniatureUrl = getArticleMiniatureUrl(article);
+  const miniatureFocus = getArticleMiniatureFocus(article);
 
   return (
-    <Card className="overflow-hidden py-0 transition-opacity hover:ring-foreground/20">
-      <Link href={href} className="block">
-        {miniatureUrl ? (
+    <Card className="overflow-hidden rounded-none py-0 transition-opacity hover:ring-foreground/20">
+      {miniatureUrl ? (
+        <Link href={href} className="block">
           <ArticleMiniature
             src={miniatureUrl}
             title={article.title}
             size="thumb"
             className="rounded-none"
+            focus={miniatureFocus}
           />
-        ) : null}
-      </Link>
-      <div className="p-4">
-        <Link href={href} className="block font-bold hover:underline">
-          {article.title}
         </Link>
-        <p className="mt-1 text-sm text-muted-foreground">
-          by {article.author.name} ·{" "}
-          {new Date(article.createdAt).toLocaleDateString()}
-        </p>
-        {article.abstract ? (
-          <p className="mt-2 text-sm">{article.abstract}</p>
-        ) : null}
-      </div>
+      ) : null}
+      <ArticlePreviewContent article={article} href={href} />
     </Card>
   );
 }

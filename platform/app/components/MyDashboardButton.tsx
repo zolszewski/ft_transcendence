@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { apiClient } from "@/lib/apiClient";
 
   type DashboardButtonProps = {
     beforeLogout?: () => Promise<boolean>;

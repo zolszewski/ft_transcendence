@@ -21,9 +21,18 @@ export default function MyArticleDetail() {
   const [errorStatus, setErrorStatus] = useState<number | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [commentsLoading, setCommentsLoading] = useState(true);
+  const [flash, setFlash] = useState("");
+
+  useEffect(() => {
+    const message = sessionStorage.getItem("flash-message");
+    if (message) {
+      setFlash(message);
+      sessionStorage.removeItem("flash-message");
+    }
+  }, []);
 
 
-useEffect(() => {
+  useEffect(() => {
     async function load() {
       setLoading(true);
       setError("");
@@ -81,15 +90,20 @@ useEffect(() => {
       {loading && <p className="text-sm">Loading...</p>}
 
       {!loading && article && (
-        <>
-          <ArticleDetailView
-            article={article}
-            showAuthorByline={false}
-            showAuthorInFooter={false}
-          />
-          <CommentsSection comments={comments} loading={commentsLoading} />
-        </>
-      )}
+  <>
+    {flash ? (
+      <p role="status" className="mb-6 border p-3 text-sm text-black">
+        {flash}
+      </p>
+    ) : null}
+    <ArticleDetailView
+      article={article}
+      showAuthorByline={false}
+      showAuthorInFooter={false}
+    />
+    <CommentsSection comments={comments} loading={commentsLoading} />
+  </>
+)}
     </PageShell>
   );
 }

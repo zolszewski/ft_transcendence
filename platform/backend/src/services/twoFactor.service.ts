@@ -1,7 +1,6 @@
 import { authenticator } from "otplib";
 import QRCode from "qrcode";
 import { prisma } from "../lib/prisma";
-import { authenticator } from "otplib";
 
 authenticator.options = { window: 1 };
 

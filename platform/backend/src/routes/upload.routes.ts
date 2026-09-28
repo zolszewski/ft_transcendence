@@ -1,4 +1,6 @@
 import { Router } from "express";
+import multer from "multer";
+import type { Request, Response, NextFunction } from "express";
 import fs from "fs/promises";
 import { upload } from "../middleware/upload";
 import { requireAuth } from "../middleware/auth";
@@ -9,7 +11,20 @@ import { createUpload, deleteUpload, getUploadById, isValidFileFormat } from "..
 
 const router = Router();
 
-router.post("/", requireAuth, upload.single("file"), async (req, res) => {
+function handleUpload(req: Request, res: Response, next: NextFunction) {
+  upload.single("file")(req, res, (err: unknown) => {
+    if (err instanceof multer.MulterError) {
+      if (err.code === "LIMIT_FILE_SIZE") {
+        return res.status(413).json({ error: "File is too large. Maximum size is 5 MB." });
+      }
+      return res.status(400).json({ error: err.message });
+    }
+    if (err) return next(err);
+    next();
+  });
+}
+
+router.post("/", requireAuth, handleUpload, async (req, res) => {
 	if (!req.file)
 		return res.status(400).json({ error: "No file provided" });
 	const validFormat = await isValidFileFormat(req.file.path);

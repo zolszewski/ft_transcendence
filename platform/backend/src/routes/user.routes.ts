@@ -77,6 +77,48 @@ router.put("/me/avatar", requireAuth, async (req, res) => {
 		specialization: updated.specialization,
 		avatarUrl: getAvatarUrl(updated.avatarId),
 	});
+
+router.post("/me/2fa/setup", requireAuth, async (req, res) => {
+	const user = await getUserById(req.session.userId!);
+	if (!user)
+		return res.status(401).json({ error: "Not authenticated"});
+	if (user.twoFactorEnabled)
+		return res.status(409).json({ error: "2FA already enabled" });
+	const { otpauthUrl, qrCode } = await startTwoFactorSetup(user.id, user.email);
+	res.json({ otpauthUrl, qrCode });
+});
+
+router.post("/me/2fa/enable", requireAuth, authLimiter, async (req, res) => {
+	const { code } = req.body;
+	if (!isValidTotpCode(code))
+		return res.status(400).json({ error: "Invalid input" });
+	const user = await getUserById(req.session.userId!);
+	if (!user || !user.twoFactorSecret)
+		return res.status(400).json({ error: "2FA setup not started" });
+	if (user.twoFactorEnabled)
+		return res.status(409).json({ error: "2FA already enabled" });
+	if (!verifyTwoFactorCode(user.twoFactorSecret, code))
+		return res.status(400).json({ error: "Invalid code" });
+	await enableTwoFactor(user.id);
+	res.json({ twoFactorEnabled: true });
+});
+
+router.post("/me/2fa/disable", requireAuth, authLimiter, async (req, res) => {
+	const { password, code } = req.body;
+	if (!isValidTotpCode(code))
+		return res.status(400).json({ error: "Invalid input" });
+	const user = await getUserById(req.session.userId!);
+	if (!user || !user.twoFactorEnabled || !user.twoFactorSecret)
+		return res.status(400).json({ error: "2FA not enabled" });
+	if (user.password) {
+		if (typeof password !== "string" || !(await verifyPassword(password, user.password)))
+			return res.status(401).json({ error: "Invalid credentials"})
+	}
+	if (!verifyTwoFactorCode(user.twoFactorSecret, code))
+		return res.status(400).json({ error: "Invalid code" });
+	await disableTwoFactor(user.id);
+	res.json({ twoFactorEnabled: false });
+	});
 });
 
 export default router;

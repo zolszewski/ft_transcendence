@@ -17,10 +17,12 @@ import dashboardRoutes from "./routes/dashboard.routes"
 const app = express();
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  limit: 100,
-  standardHeaders: 'draft-8',
+  limit: process.env.NODE_ENV === "production" ? 300 : 2000,
+  standardHeaders: "draft-8",
   legacyHeaders: false,
   ipv6Subnet: 56,
+  skip: (req) =>
+    req.method === "GET" && /^\/api\/uploads\/[^/]+$/.test(req.path),
 });
 
 app.use(helmet());

@@ -6,7 +6,7 @@ export function uploadFileWithProgress(
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.open("POST", url);
-    xhr.withCredentials = true; // equivalent of fetch's credentials: "include"
+    xhr.withCredentials = true;
 
     xhr.upload.onprogress = (event) => {
       if (event.lengthComputable) {

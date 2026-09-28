@@ -1,5 +1,7 @@
 import type { User, Article, Comment, Review, ArticleDetail, ListResult } from "./types";
 import { uploadFileWithProgress } from "./progressUpload";
+import { validateUpload } from "./validateUpload";
+
 type ApiResponse<T> =
   | { success: true; status?: number; data: T }
   | { success: false; status: number; error: string };
@@ -10,6 +12,31 @@ function apiError<T>(error: string, status = 0): ApiResponse<T> {
 
 function apiSuccess<T>(data: T, status?: number): ApiResponse<T> {
   return { success: true, status, data };
+}
+
+
+async function uploadRawFile(file: File, visibility: "PUBLIC" | "PRIVATE" = "PRIVATE") {
+  const kind = file.type === "application/pdf" ? "pdf" : "image";
+  const validationError = await validateUpload(file, kind);
+  if (validationError) {
+    return { ok: false, status: 400, data: { error: validationError } as any };
+  }
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("visibility", visibility);
+
+  const response = await fetch("/api/uploads", {
+    method: "POST",
+    body: formData,
+    credentials: "include",
+  });
+  let data: any = {};
+  try {
+    data = await response.json();
+  } catch {
+    if (response.status === 413) data = { error: "File is too large." };
+  }
+  return { ok: response.ok, status: response.status, data };
 }
 
 export const apiClient = {
@@ -112,59 +139,76 @@ export const apiClient = {
     },
   },
   uploads: {
-  image: async (
-    file: File,
-    visibility: "PUBLIC" | "PRIVATE" = "PUBLIC",
-    onProgress?: (percent: number) => void
-  ) => {
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("visibility", visibility);
+    image: async (
+      file: File,
+      visibility: "PUBLIC" | "PRIVATE" = "PUBLIC",
+      onProgress?: (percent: number) => void
+    ) => {
+      const validationError = validateFile(file, "image");
+      if (validationError) 
+        return apiError<{ id: string; url: string }>(validationError, 400);
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("visibility", visibility);
 
-    try {
-      const { status, data } = await uploadFileWithProgress(
-        "/api/uploads",
-        formData,
-        onProgress ?? (() => {})
-      );
+      try {
+        const { status, data } = await uploadFileWithProgress(
+          "/api/uploads",
+          formData,
+          onProgress ?? (() => {})
+        );
 
-      if (status < 200 || status >= 300) {
-        return apiError<{ id: string; url: string }>(data.error || "Failed to upload image", status);
+        if (status < 200 || status >= 300) {
+          return apiError<{ id: string; url: string }>(data.error || "Failed to upload image", status);
+        }
+        return apiSuccess<{ id: string; url: string }>(
+          { id: data.id as string, url: `/api/uploads/${data.id}` },
+          status
+        );
+      } catch {
+        return apiError<{ id: string; url: string }>("Unable to connect to the server");
       }
-      return apiSuccess<{ id: string; url: string }>(
-        { id: data.id as string, url: `/api/uploads/${data.id}` },
-        status
-      );
-    } catch {
-      return apiError<{ id: string; url: string }>("Unable to connect to the server");
-    }
+    },
   },
-},
   articles: {
     //publish
-    create: async (title: string, content: string, miniature?: File | null, abstract?: string) => {
+    create: async (
+      title: string,
+      content: string,
+      miniature?: File | null,
+      abstract?: string,
+      pdf?: File | null,
+      miniatureFocus?: { x: number; y: number },
+    ) => {
       try {
         let miniatureId: string | undefined;
+        let pdfId: string | undefined;
 
         if (miniature) {
-          const formData = new FormData();
-          formData.append("file", miniature);
-          const uploadResponse = await fetch("/api/uploads", {
-            method: "POST",
-            body: formData,
-            credentials: "include",
-          });
-          const uploadData = await uploadResponse.json();
-          if (!uploadResponse.ok) {
-            return apiError<Article>(uploadData.error || "Failed to upload miniature", uploadResponse.status);
-          }
-          miniatureId = uploadData.id;
+          const up = await uploadRawFile(miniature);
+          if (!up.ok) return apiError<Article>(up.data.error || "Failed to upload miniature", up.status);
+          miniatureId = up.data.id;
         }
+
+        if (pdf) {
+          const up = await uploadRawFile(pdf);
+          if (!up.ok) return apiError<Article>(up.data.error || "Failed to upload PDF", up.status);
+          pdfId = up.data.id;
+        }
+
         const response = await fetch("/api/articles", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
-          body: JSON.stringify({ title, content, abstract, miniatureId }),
+          body: JSON.stringify({
+            title,
+            content,
+            abstract,
+            miniatureId,
+            pdfId,
+            miniatureFocusX: miniatureFocus?.x ?? 50,
+            miniatureFocusY: miniatureFocus?.y ?? 50,
+          }),
         });
 
         const data = await response.json();
@@ -203,31 +247,42 @@ export const apiClient = {
       title: string,
       content: string,
       miniature?: File | null,
-      abstract?: string
+      abstract?: string,
+      pdf?: File | null,
+      removePdf?: boolean,
+      miniatureFocus?: { x: number; y: number },
     ) => {
       try {
         let miniatureId: string | undefined;
+        let pdfId: string | null | undefined;
 
         if (miniature) {
-          const formData = new FormData();
-          formData.append("file", miniature);
-          const uploadResponse = await fetch("/api/uploads", {
-            method: "POST",
-            body: formData,
-            credentials: "include",
-          });
-          const uploadData = await uploadResponse.json();
-          if (!uploadResponse.ok) {
-            return apiError<Article>(uploadData.error || "Failed to upload miniature", uploadResponse.status);
-          }
-          miniatureId = uploadData.id;
+          const up = await uploadRawFile(miniature);
+          if (!up.ok) return apiError<Article>(up.data.error || "Failed to upload miniature", up.status);
+          miniatureId = up.data.id;
+        }
+
+        if (pdf) {
+          const up = await uploadRawFile(pdf);
+          if (!up.ok) return apiError<Article>(up.data.error || "Failed to upload PDF", up.status);
+          pdfId = up.data.id;
+        } else if (removePdf) {
+          pdfId = null;
         }
 
         const response = await fetch(`/api/articles/${articleId}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
-          body: JSON.stringify({ title, content, abstract, miniatureId }),
+          body: JSON.stringify({
+            title,
+            content,
+            abstract,
+            miniatureId,
+            pdfId,
+            miniatureFocusX: miniatureFocus?.x ?? 50,
+            miniatureFocusY: miniatureFocus?.y ?? 50,
+          }),
         });
         const data = await response.json();
         if (!response.ok) return apiError<Article>(data.error || "Failed to update article", response.status);

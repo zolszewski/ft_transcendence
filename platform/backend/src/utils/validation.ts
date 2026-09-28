@@ -22,6 +22,29 @@ export function isValidContent(content: string): boolean {
 	return typeof content === "string" && content.trim().length >= 1;
 }
 
+export function isValidMiniatureFocus(value: unknown): value is number {
+	return typeof value === "number" && Number.isFinite(value) && value >= 0 && value <= 100;
+}
+
+export function parseMiniatureFocus(body: {
+	miniatureFocusX?: unknown;
+	miniatureFocusY?: unknown;
+}): { miniatureFocusX: number; miniatureFocusY: number } | null | undefined {
+	if (body.miniatureFocusX === undefined && body.miniatureFocusY === undefined) {
+		return undefined;
+	}
+	if (
+		!isValidMiniatureFocus(body.miniatureFocusX) ||
+		!isValidMiniatureFocus(body.miniatureFocusY)
+	) {
+		return null;
+	}
+	return {
+		miniatureFocusX: body.miniatureFocusX,
+		miniatureFocusY: body.miniatureFocusY,
+	};
+}
+
 export function isValidTotpCode(code: unknown): boolean {
 	return typeof code === "string" && /^\d{6}$/.test(code);
 }
