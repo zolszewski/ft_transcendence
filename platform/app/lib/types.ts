@@ -68,6 +68,16 @@ export interface UserDetail extends User {
 }
 
 
+export interface Message {
+  id: string;
+  content: string;
+  conversationId: string;
+  senderId: string;
+  createdAt: string;
+  readAt: string | null;
+}
+
+
 export interface ListResult<T> {
   data: T[];
   total: number;

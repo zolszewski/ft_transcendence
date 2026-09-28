@@ -1,0 +1,172 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import type { FormEvent } from "react";
+import Link from "next/link";
+import { apiClient } from "@/lib/apiClient";
+import type { Message, User } from "@/lib/types";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+
+const MAX_MESSAGE_LENGTH = 2000;
+
+export default function ChatPage() {
+  const [me, setMe] = useState<User | null>(null);
+  const [notLoggedIn, setNotLoggedIn] = useState(false);
+  const [users, setUsers] = useState<User[]>([]);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [content, setContent] = useState("");
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState("");
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  // au chargement : qui est connecté + liste des autres utilisateurs
+  useEffect(() => {
+    apiClient.auth.me().then((response) => {
+      if (!response.success) {
+        setNotLoggedIn(true);
+        return;
+      }
+      setMe(response.data);
+      apiClient.chat.listUsers().then((usersResponse) => {
+        if (usersResponse.success) setUsers(usersResponse.data);
+        else setError(usersResponse.error);
+      });
+    });
+  }, []);
+
+  // à chaque changement de destinataire : charger la conversation
+  useEffect(() => {
+    if (!selectedUser) return;
+    // ignore la réponse si on a changé de destinataire entre-temps
+    let cancelled = false;
+    apiClient.chat.getMessages(selectedUser.id).then((response) => {
+      if (cancelled) return;
+      if (response.success) setMessages(response.data);
+      else setError(response.error);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedUser]);
+
+  // descend automatiquement au dernier message
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  function selectUser(user: User) {
+    setSelectedUser(user);
+    setMessages([]);
+    setError("");
+  }
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!selectedUser || !content.trim() || sending) return;
+
+    setSending(true);
+    setError("");
+    const response = await apiClient.chat.sendMessage(selectedUser.id, content);
+    if (response.success) {
+      setMessages((previous) => [...previous, response.data]);
+      setContent("");
+    } else {
+      setError(response.error);
+    }
+    setSending(false);
+  }
+
+  if (notLoggedIn) {
+    return (
+      <main className="flex min-h-screen flex-col items-center justify-center gap-4">
+        <p>You must be logged in to use the chat.</p>
+        <Link href="/authentication/login?redirect=/chat" className="border px-4 py-2 hover:underline">
+          Login
+        </Link>
+      </main>
+    );
+  }
+
+  return (
+    <main className="mx-auto flex h-screen w-full max-w-4xl flex-col px-4 py-8">
+      <header className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold">Chat</h1>
+        <Link href="/" className="hover:underline">
+          Home
+        </Link>
+      </header>
+
+      <div className="mt-6 flex min-h-0 flex-1 border">
+        {/* liste des utilisateurs */}
+        <aside className="w-56 shrink-0 overflow-y-auto border-r">
+          {users.length === 0 && <p className="p-4 text-sm text-gray-600">No other users yet.</p>}
+          <ul>
+            {users.map((user) => (
+              <li key={user.id}>
+                <button
+                  onClick={() => selectUser(user)}
+                  className={`w-full px-4 py-3 text-left hover:bg-muted ${
+                    selectedUser?.id === user.id ? "bg-muted font-bold" : ""
+                  }`}
+                >
+                  {user.name}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </aside>
+
+        {/* conversation */}
+        <section className="flex min-w-0 flex-1 flex-col">
+          {!selectedUser ? (
+            <p className="m-auto text-sm text-gray-600">Select a user to start chatting.</p>
+          ) : (
+            <>
+              <h2 className="border-b px-4 py-3 font-bold">{selectedUser.name}</h2>
+
+              <div className="flex-1 space-y-2 overflow-y-auto p-4">
+                {messages.length === 0 && (
+                  <p className="text-sm text-gray-600">No messages yet. Say hello!</p>
+                )}
+                {messages.map((message) => {
+                  const isMine = message.senderId === me?.id;
+                  return (
+                    <div key={message.id} className={`flex ${isMine ? "justify-end" : "justify-start"}`}>
+                      <div
+                        className={`max-w-[70%] rounded-lg px-3 py-2 ${
+                          isMine ? "bg-primary text-primary-foreground" : "bg-muted"
+                        }`}
+                      >
+                        <p className="break-words whitespace-pre-wrap">{message.content}</p>
+                        <p className="mt-1 text-right text-xs opacity-70">
+                          {new Date(message.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+                <div ref={bottomRef} />
+              </div>
+
+              {error && <p className="px-4 text-sm text-red-600">{error}</p>}
+
+              <form onSubmit={handleSubmit} className="flex gap-2 border-t p-4">
+                <Input
+                  value={content}
+                  onChange={(event) => setContent(event.target.value)}
+                  placeholder={`Message ${selectedUser.name}`}
+                  maxLength={MAX_MESSAGE_LENGTH}
+                />
+                <Button type="submit" disabled={sending || !content.trim()}>
+                  Send
+                </Button>
+              </form>
+            </>
+          )}
+        </section>
+      </div>
+    </main>
+  );
+}

@@ -31,6 +31,9 @@ export default async function Home() {
           <Link href="/explore" className="hover:underline">
             Explore.
           </Link>
+          <Link href="/chat" className="hover:underline">
+            Chat.
+          </Link>
         </p>
         
       </div>

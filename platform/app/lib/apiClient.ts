@@ -1,4 +1,4 @@
-import type { User, Article, Comment, Review, ArticleDetail, ListResult } from "./types";
+import type { User, Article, Comment, Review, ArticleDetail, ListResult, Message } from "./types";
 
 type ApiResponse<T> = { success: true; data: T } | { success: false; error: string };
 
@@ -353,6 +353,44 @@ export const apiClient = {
         return { success: true, data } as ApiResponse<Review[]>;
       } catch (err) {
         return { success: false, error: "Unable to connect to the server" } as ApiResponse<Review[]>;
+      }
+    },
+  },
+  chat: {
+    // les autres utilisateurs (à qui on peut écrire)
+    listUsers: async () => {
+      try {
+        const response = await fetch("/api/users", { credentials: "include" });
+        const data = await response.json();
+        if (!response.ok) return { success: false, error: data.error || "Failed to load users" } as ApiResponse<User[]>;
+        return { success: true, data } as ApiResponse<User[]>;
+      } catch {
+        return { success: false, error: "Unable to connect to the server" } as ApiResponse<User[]>;
+      }
+    },
+    getMessages: async (userId: string) => {
+      try {
+        const response = await fetch(`/api/chat/${userId}`, { credentials: "include" });
+        const data = await response.json();
+        if (!response.ok) return { success: false, error: data.error || "Failed to load messages" } as ApiResponse<Message[]>;
+        return { success: true, data } as ApiResponse<Message[]>;
+      } catch {
+        return { success: false, error: "Unable to connect to the server" } as ApiResponse<Message[]>;
+      }
+    },
+    sendMessage: async (userId: string, content: string) => {
+      try {
+        const response = await fetch(`/api/chat/${userId}`, {
+          method: "POST",
+          body: JSON.stringify({ content }),
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+        });
+        const data = await response.json();
+        if (!response.ok) return { success: false, error: data.error || "Failed to send message" } as ApiResponse<Message>;
+        return { success: true, data } as ApiResponse<Message>;
+      } catch {
+        return { success: false, error: "Unable to connect to the server" } as ApiResponse<Message>;
       }
     },
   },
