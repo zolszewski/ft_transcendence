@@ -1,11 +1,17 @@
 import { Router } from "express";
 import { requireAuth } from "../middleware/auth";
-import { getAvatarUrl, getUserByEmail, getUserById, setUserAvatar, updateUser } from "../services/user.service";
+import { getAvatarUrl, getOtherUsers, getUserByEmail, getUserById, setUserAvatar, updateUser } from "../services/user.service";
 import { isValidEmail, isValidName } from "../utils/validation";
 import { getUploadById, setUploadVisibility } from "../services/upload.service";
 import { isOwner } from "../utils/authorization";
 
 const router = Router();
+
+// liste des autres utilisateurs (choix du destinataire dans le chat)
+router.get("/", requireAuth, async (req, res) => {
+	const users = await getOtherUsers(req.session.userId!);
+	res.json(users);
+});
 
 router.get("/me", requireAuth, async (req, res) => {
 	const user = await getUserById(req.session.userId!);
