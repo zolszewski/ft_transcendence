@@ -53,7 +53,6 @@ model Article {
   abstract String?
   content  String
   status   ArticleStatus @default(DRAFT)
-  miniature String?
 
   authorId String
   author   User   @relation(fields: [authorId], references: [id])
@@ -103,6 +102,8 @@ model Comment {
 
 model Conversation {
   id           String                   @id @default(cuid())
+  // conversation privée : les deux userId triés et joints par ":" (unique = pas de doublon)
+  directKey    String?                  @unique
   createdAt    DateTime                 @default(now())
   updatedAt    DateTime                 @updatedAt
 

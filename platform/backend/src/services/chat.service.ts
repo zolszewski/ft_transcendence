@@ -1,27 +1,13 @@
 import { prisma } from "../lib/prisma";
 
-async function findConversation(userId: string, otherUserId: string) {
-	return prisma.Conversation.findFirst({
-		where: {
-			participants: {
-				some: { userId },
-			},
-			AND: {
-				participants: {
-					some: { userId: otherUserId },
-				},
-			},
-		},
-	});
+// même clé quel que soit l'ordre des deux users (A:B == B:A)
+function getDirectKey(userId: string, otherUserId: string) {
+	return [userId, otherUserId].sort().join(":");
 }
 
 export async function listMessages(userId: string, otherUserId: string) {
-	const conversation = await findConversation(userId, otherUserId);
-	if (!conversation)
-		return [];
-
 	return prisma.Message.findMany({
-		where: { conversationId: conversation.id },
+		where: { conversation: { directKey: getDirectKey(userId, otherUserId) } },
 		select: {
 			id: true,
 			content: true,
@@ -34,47 +20,43 @@ export async function listMessages(userId: string, otherUserId: string) {
 	});
 }
 
-export async function sendMessage(userId: string, otherUserId: string, content: string) {
+async function createMessage(userId: string, otherUserId: string, content: string) {
+	const directKey = getDirectKey(userId, otherUserId);
+
 	return prisma.$transaction(async (transaction) => {
-		let conversation = await transaction.Conversation.findFirst({
-			where: {
+		// crée la conversation si elle n'existe pas, sinon met à jour updatedAt
+		const conversation = await transaction.Conversation.upsert({
+			where: { directKey },
+			update: { updatedAt: new Date() },
+			create: {
+				directKey,
 				participants: {
-					some: { userId },
-				},
-				AND: {
-					participants: {
-						some: { userId: otherUserId },
-					},
+					create: [
+						{ userId },
+						{ userId: otherUserId },
+					],
 				},
 			},
 		});
 
-		if (!conversation) {
-			conversation = await transaction.Conversation.create({
-				data: {
-					participants: {
-						create: [
-							{ userId },
-							{ userId: otherUserId },
-						],
-					},
-				},
-			});
-		}
-
-		const message = await transaction.Message.create({
+		return transaction.Message.create({
 			data: {
 				content: content.trim(),
 				conversationId: conversation.id,
 				senderId: userId,
 			},
 		});
-
-		await transaction.Conversation.update({
-			where: { id: conversation.id },
-			data: { updatedAt: new Date() },
-		});
-
-		return message;
 	});
+}
+
+export async function sendMessage(userId: string, otherUserId: string, content: string) {
+	try {
+		return await createMessage(userId, otherUserId, content);
+	}
+	catch (error: any) {
+		// P2002 : l'autre user a créé la conversation au même moment, elle existe maintenant
+		if (error?.code === "P2002")
+			return createMessage(userId, otherUserId, content);
+		throw error;
+	}
 }
