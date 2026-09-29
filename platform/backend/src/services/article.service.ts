@@ -1,6 +1,7 @@
 import { setCached, getCached, getArticlesCacheVersion, bumpArticlesCacheVersion } from "../lib/cache";
 import { prisma } from "../lib/prisma";
 import { ArticleStatus } from "@prisma/client";
+import { isOwner } from "../utils/authorization";
 
 type ListArticlesOptions = {
 	search?: string;
@@ -139,6 +140,16 @@ export async function listMyArticles(options: ListMyArticlesOptions) {
 	}
 }
 
+export function canViewArticle(article: { status: ArticleStatus; authorId: string }, userId?: string): boolean {
+	if (article.status === "PUBLISHED")
+		return true;
+	if (!userId)
+		return false;
+	if (isOwner(article.authorId, userId))
+		return true;
+	return article.status === "SUBMITTED";
+}
+
 export async function getArticleById(id: string) {
 	try {
 		return await prisma.Article.findUnique({
@@ -156,11 +167,11 @@ export async function getArticleById(id: string) {
 	}
 }
 
-export async function createArticle(authorId: string, title: string, content: string, abstract?: string, miniatureId?: string) {
+export async function createArticle(authorId: string, title: string, content: string, abstract?: string, miniatureId?: string, documentId?: string) {
 	try {
 		await bumpArticlesCacheVersion();
 		return await prisma.Article.create({
-			data: { title, content, abstract, authorId, miniatureId },
+			data: { title, content, abstract, authorId, miniatureId, documentId },
 			include: { author: { select: { id: true, name: true } } },
 		});
 	}
@@ -176,7 +187,7 @@ export function getMiniatureUrl(miniatureId: string | null): string {
 	return "/default-article-thumbnail.jpg";
 }
 
-export async function updateArticle(id: string, data: { title?: string, content?: string, abstract?: string, miniatureId?: string }) {
+export async function updateArticle(id: string, data: { title?: string, content?: string, abstract?: string, miniatureId?: string, documentId?: string }) {
 	try {
 		await bumpArticlesCacheVersion();
 		return await prisma.Article.update({
@@ -216,3 +227,18 @@ export async function updateArticleStatus(id: string,status: ArticleStatus) {
 		throw new Error("Could not update article status");
 	}
 }
+
+export async function recordArticleView(userId: string, articleId: string) {
+	try {
+		await prisma.ArticleView.upsert({
+			where: { userId_articleId: { userId, articleId } },
+			create: { userId, articleId },
+			update: {},
+		});
+	}
+	catch (error) {
+		console.error("Failed to record article view:", error);
+		throw new Error("Could not record article view");
+	}
+}
+

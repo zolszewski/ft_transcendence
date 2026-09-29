@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { ArticleStatus } from "@prisma/client";
-import { listArticles, getArticleById, createArticle, updateArticle, deleteArticle, updateArticleStatus, listSubmittedArticlesForReview, getMiniatureUrl, listMyArticles } from "../services/article.service";
+import { listArticles, getArticleById, createArticle, updateArticle, deleteArticle, updateArticleStatus, listSubmittedArticlesForReview, getMiniatureUrl, listMyArticles, canViewArticle, recordArticleView } from "../services/article.service";
 import { isOwner } from "../utils/authorization"
 import { requireAuth } from "../middleware/auth";
 import { isValidContent, isValidTitle } from "../utils/validation";
@@ -10,8 +10,14 @@ import { getUploadById, setUploadVisibility } from "../services/upload.service";
 
 const router = Router();
 
-function withMiniatureUrl(article: any) {
-	return { ...article, miniatureUrl: getMiniatureUrl(article.miniatureId) };
+function withComputedUrls(article: any, userId?: string) {
+	return {
+		...article,
+		miniatureUrl: getMiniatureUrl(article.miniatureId),
+		documentUrl: article.documentId && canViewArticle(article, userId)
+			? `/api/articles/${article.id}/document`
+			: null,
+	};
 }
 
 
@@ -23,7 +29,7 @@ router.get("/explore", async (req, res) => {
 		page: Math.max(1, Number(page) || 1),
 		limit: Math.min(50, Math.max(1, Number(limit) || 10)),
 	});
-	res.json({ ...result, articles: result.articles.map(withMiniatureUrl) });
+	res.json({ ...result, articles: result.articles.map(a => withComputedUrls(a, req.session?.userId)) });
 })
 
 router.get("/submitted", requireAuth, async (req, res) => {
@@ -35,7 +41,7 @@ router.get("/submitted", requireAuth, async (req, res) => {
 		page: Math.max(1, Number(page) || 1),
 		limit: Math.min(50, Math.max(1, Number(limit) || 10)),
 	});
-	res.json({ ...result, articles: result.articles.map(withMiniatureUrl) });
+	res.json({ ...result, articles: result.articles.map(a => withComputedUrls(a, req.session?.userId)) });
 });
 
 router.get("/mine", requireAuth, async (req, res) => {
@@ -49,27 +55,20 @@ router.get("/mine", requireAuth, async (req, res) => {
 		page: Math.max(1, Number(page) || 1),
 		limit: Math.min(50, Math.max(1, Number(limit) || 10)),
 	});
-	res.json({ ...result, articles: result.articles.map(withMiniatureUrl) });
+	res.json({ ...result, articles: result.articles.map(a => withComputedUrls(a, req.session?.userId)) });
 });
 
 router.get("/:id", async (req, res) => {
 	const article = await getArticleById(req.params.id);
-	if (!article)
+	if (!article || !canViewArticle(article, req.session?.userId))
 		return res.status(404).json({ error: "Article not found" });
-	if (article.status === "PUBLISHED")
-		return res.json(withMiniatureUrl(article));
-	const userId = req.session?.userId;
-	if (!userId)
-		return res.status(404).json({ error: "Article not found" });
-	if (isOwner(article.authorId, userId))
-		return res.json(withMiniatureUrl(article));
-	if (article.status === "SUBMITTED")
-		return res.json(withMiniatureUrl(article));
-	return res.status(404).json({ error: "Article not found" });
+	if (article.status === "PUBLISHED" && req.session?.userId)
+		await recordArticleView(req.session.userId, article.id);
+	res.json(withComputedUrls(article, req.session?.userId));
 });
 
 router.post("/", requireAuth, async (req, res) => {
-	const { title, content, abstract, miniatureId } = req.body;
+	const { title, content, abstract, miniatureId, documentId } = req.body;
 	if(!isValidTitle(title) || !isValidContent(content))
 		return res.status(400).json({ error: "Invalid input" });
 	if (miniatureId) {
@@ -82,8 +81,17 @@ router.post("/", requireAuth, async (req, res) => {
 			return res.status(400).json({ error: "Not an image" });
 		await setUploadVisibility(miniatureId, "PUBLIC");
 	}
-	const article = await createArticle(req.session.userId!, title, content, abstract, miniatureId);
-	res.status(201).json(withMiniatureUrl(article));
+	if (documentId) {
+		const document = await getUploadById(documentId);
+		if (!document)
+			return res.status(404).json({ error: "Upload not found" });
+		if (!isOwner(document.ownerId, req.session.userId!))
+			return res.status(403).json({ error: "Forbidden" });
+		if (document.mimeType !== "application/pdf")
+			return res.status(400).json({ error: "Not a PDF" });
+	}
+	const article = await createArticle(req.session.userId!, title, content, abstract, miniatureId, documentId);
+	res.status(201).json(withComputedUrls(article, req.session?.userId));
 });
 
 router.put("/:id", requireAuth, async (req, res) => {
@@ -92,7 +100,7 @@ router.put("/:id", requireAuth, async (req, res) => {
 		return res.status(404).json({ error: "Article not found" });
 	if (!isOwner(article.authorId, req.session.userId!))
 		return res.status(403).json({ error: "Forbidden" });
-	const { title, content, abstract, miniatureId } = req.body;
+	const { title, content, abstract, miniatureId, documentId } = req.body;
 	if (!isValidTitle(title) || !isValidContent(content))
 		return res.status(400).json({ error: "Invalid input" });
 	if (miniatureId) {
@@ -105,8 +113,18 @@ router.put("/:id", requireAuth, async (req, res) => {
 			return res.status(400).json({ error: "Not an image" });
 		await setUploadVisibility(miniatureId, "PUBLIC");
 	}
-	const updated = await updateArticle(req.params.id, { title, content, abstract, miniatureId });
-	res.json(withMiniatureUrl(updated));
+	if (documentId) {
+		const document = await getUploadById(documentId);
+		if (!document)
+			return res.status(404).json({ error: "Upload not found" });
+		if (!isOwner(document.ownerId, req.session.userId!))
+			return res.status(403).json({ error: "Forbidden" });
+		if (document.mimeType !== "application/pdf")
+			return res.status(400).json({ error: "Not a PDF" });
+	}
+
+	const updated = await updateArticle(req.params.id, { title, content, abstract, miniatureId, documentId });
+	res.json(withComputedUrls(updated, req.session?.userId));
 })
 
 router.delete("/:id", requireAuth, async (req, res) => {
@@ -173,5 +191,17 @@ router.get("/:id/comments", async (req, res) => {
 	const comments = await listCommentsForArticle(req.params.id);
 	res.json(comments);
 });
+
+router.get("/:id/document", async (req, res) => {
+	const article = await getArticleById(req.params.id);
+	if (!article || !article.documentId || !canViewArticle(article, req.session?.userId))
+		return res.status(404).json({ error: "Document not found" });
+	const document = await getUploadById(article.documentId);
+	if (!document)
+		return res.status(404).json({ error: "Document not found" });
+	res.sendFile(`/app/uploads/${document.filename}`);
+});
+
+
 
 export default router;

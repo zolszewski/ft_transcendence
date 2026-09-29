@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { authLimiter, requireAuth } from "../middleware/auth";
-import { getAvatarUrl, getUserByEmail, getUserById, setUserAvatar, updateUser } from "../services/user.service";
+import { getAvatarUrl, getUserByEmail, getUserById, searchUsersByName, setUserAvatar, updateUser } from "../services/user.service";
 import { isValidEmail, isValidName, isValidTotpCode } from "../utils/validation";
 import { getUploadById, setUploadVisibility } from "../services/upload.service";
 import { isOwner } from "../utils/authorization";
@@ -15,6 +15,15 @@ router.get("/me", requireAuth, async (req, res) => {
 		return res.status(401).json({ error: "Not authenticated" });
 	res.json({ id: user.id, email: user.email, name: user.name, avatarUrl: getAvatarUrl(user.avatarId), twoFactorEnabled : user.twoFactorEnabled });
 });
+
+router.get("/search", requireAuth, async (req, res) => {
+	const { q } = req.query;
+	if (typeof q !== "string" || q.trim().length === 0)
+		return res.json([]);
+	const users = await searchUsersByName(q, req.session.userId!);
+	res.json(users.map(u => ({ id: u.id, name: u.name, avatarUrl: getAvatarUrl(u.avatarId) })));
+});
+
 
 router.get("/:id", async (req, res) => {
 	const user = await getUserById(req.params.id);

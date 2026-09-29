@@ -41,6 +41,7 @@ model User {
   articles        Article[]
   reviews         Review[]
   comments        Comment[]
+  views           ArticleView[]
   apiKeys         ApiKey[]
   uploads         Upload[] @relation("UserUploads")
   avatar          Upload? @relation("UserAvatar", fields: [avatarId], references: [id]) 
@@ -59,13 +60,17 @@ model Article {
   author   User   @relation(fields: [authorId], references: [id])
 
   miniatureId String?
-  miniature   Upload? @relation(fields: [miniatureId], references: [id])
+  miniature   Upload? @relation("ArticleMiniature", fields: [miniatureId], references: [id])
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  documentId  String?
+  document    Upload? @relation("ArticleDocument", fields: [documentId], references: [id])
 
-  reviews  Review[]
-  comments Comment[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  reviews   Review[]
+  comments  Comment[]
+  views     ArticleView[]
 }
 
 
@@ -127,8 +132,21 @@ model Upload {
   ownerId       String
   owner         User @relation("UserUploads", fields: [ownerId], references: [id])
   avatarOf      User[] @relation("UserAvatar")
-  articles      Article[]
+  miniatureOf   Article[] @relation("ArticleMiniature")
+  documentOf    Article[] @relation("ArticleDocument")
 
   createdAt DateTime @default(now())
 }
 
+model ArticleView {
+  id        String @id @default(cuid())
+  userId    String
+  articleId String
+
+  user    User    @relation(fields: [userId], references: [id])
+  article Article @relation(fields: [articleId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, articleId])
+}
