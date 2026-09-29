@@ -3,11 +3,15 @@ import type { Server as HTTPServer } from "http";
 import { sessionMiddleware } from "../middleware/session";
 import { redisClient } from "./redis";
 
+// instance unique, créée au démarrage par initSocketServer, lue ensuite par les routes via getIO()
+let io: SocketIOServer | null = null;
+
 export function initSocketServer(httpServer: HTTPServer) {
-	const io = new SocketIOServer(httpServer, { cors: { origin: true, credentials: true } });
-	io.engine.use(sessionMiddleware);
+	const server = new SocketIOServer(httpServer, { cors: { origin: true, credentials: true } });
+	io = server;
+	server.engine.use(sessionMiddleware);
 	//s'execute une fois, à la connexion d'un user
-	io.on("connection", async (socket) => {
+	server.on("connection", async (socket) => {
 		const userId = (socket.request as any).session?.userId;
 		if (!userId) {
 			socket.disconnect();
@@ -15,13 +19,20 @@ export function initSocketServer(httpServer: HTTPServer) {
 		}
 		await redisClient.sAdd("online_users", userId);
 		//préviens tout le monde que cet user s'est connecté
-		io.emit("user:online", userId);
+		server.emit("user:online", userId);
 		//s'execute quand on perd la connexion avec l'user 
 		socket.on("disconnect", async () => { 
 			await redisClient.sRem("online_users", userId);
-			io.emit("user:offline", userId);
+			server.emit("user:offline", userId);
 		});
 	});
+	return server;
+}
+
+// à utiliser dans les routes pour émettre un événement (ex: nouveau message)
+export function getIO(): SocketIOServer {
+	if (!io)
+		throw new Error("Socket.IO not initialized: call initSocketServer first");
 	return io;
 }
 
