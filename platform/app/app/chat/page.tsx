@@ -127,9 +127,16 @@ export default function ChatPage() {
     <main className="mx-auto flex h-screen w-full max-w-4xl flex-col px-4 py-8">
       <header className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Chat</h1>
-        <Link href="/" className="hover:underline">
-          Home
-        </Link>
+        <div className="flex items-center gap-4">
+          {me && (
+            <p className="text-sm text-gray-600">
+              Connected as <span className="font-bold">{me.name}</span>
+            </p>
+          )}
+          <Link href="/" className="hover:underline">
+            Home
+          </Link>
+        </div>
       </header>
 
       <div className="mt-6 flex min-h-0 flex-1 border">
@@ -173,6 +180,7 @@ export default function ChatPage() {
                           isMine ? "bg-primary text-primary-foreground" : "bg-muted"
                         }`}
                       >
+                        <p className="text-xs font-bold opacity-70">{isMine ? "You" : selectedUser.name}</p>
                         <p className="break-words whitespace-pre-wrap">{message.content}</p>
                         <p className="mt-1 text-right text-xs opacity-70">
                           {new Date(message.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
