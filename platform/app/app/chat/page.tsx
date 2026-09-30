@@ -4,11 +4,15 @@ import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import Link from "next/link";
 import { apiClient } from "@/lib/apiClient";
+import { getSocket } from "@/lib/socket";
 import type { Message, User } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 const MAX_MESSAGE_LENGTH = 2000;
+
+// message reçu par la socket : le back ajoute le destinataire pour savoir de quelle conversation il s'agit
+type SocketMessage = Message & { recipientId: string };
 
 export default function ChatPage() {
   const [me, setMe] = useState<User | null>(null);
@@ -20,6 +24,8 @@ export default function ChatPage() {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
+  // copie de selectedUser lisible depuis le listener socket (sinon il garderait l'ancienne valeur)
+  const selectedUserRef = useRef<User | null>(null);
 
   // au chargement : qui est connecté + liste des autres utilisateurs
   useEffect(() => {
@@ -51,12 +57,40 @@ export default function ChatPage() {
     };
   }, [selectedUser]);
 
+  // temps réel : connexion socket une fois l'utilisateur connu, écoute des nouveaux messages
+  useEffect(() => {
+    if (!me) return;
+    const socket = getSocket();
+
+    function handleNewMessage(message: SocketMessage) {
+      const current = selectedUserRef.current;
+      // n'affiche que les messages de la conversation ouverte
+      if (!current || (message.senderId !== current.id && message.recipientId !== current.id)) return;
+      addMessage(message);
+    }
+
+    socket.on("message:new", handleNewMessage);
+    socket.connect();
+    return () => {
+      socket.off("message:new", handleNewMessage);
+      socket.disconnect();
+    };
+  }, [me]);
+
   // descend automatiquement au dernier message
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // le même message peut arriver deux fois (réponse du POST + socket) : on ne l'ajoute qu'une fois
+  function addMessage(message: Message) {
+    setMessages((previous) =>
+      previous.some((existing) => existing.id === message.id) ? previous : [...previous, message]
+    );
+  }
+
   function selectUser(user: User) {
+    selectedUserRef.current = user;
     setSelectedUser(user);
     setMessages([]);
     setError("");
@@ -70,7 +104,7 @@ export default function ChatPage() {
     setError("");
     const response = await apiClient.chat.sendMessage(selectedUser.id, content);
     if (response.success) {
-      setMessages((previous) => [...previous, response.data]);
+      addMessage(response.data);
       setContent("");
     } else {
       setError(response.error);
