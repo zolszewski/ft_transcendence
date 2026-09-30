@@ -22,6 +22,8 @@ export function initSocketServer(httpServer: HTTPServer) {
 		await redisClient.sAdd("online_users", userId);
 		//préviens tout le monde que cet user s'est connecté
 		server.emit("user:online", userId);
+		//envoie à ce nouvel onglet la liste de tous ceux qui sont déjà en ligne
+		socket.emit("users:online", await redisClient.sMembers("online_users"));
 		//s'execute quand on perd la connexion avec l'user 
 		socket.on("disconnect", async () => {
 			//l'user a peut-être encore d'autres onglets ouverts : il n'est hors ligne que si sa room est vide
