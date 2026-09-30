@@ -23,7 +23,11 @@ export function initSocketServer(httpServer: HTTPServer) {
 		//préviens tout le monde que cet user s'est connecté
 		server.emit("user:online", userId);
 		//s'execute quand on perd la connexion avec l'user 
-		socket.on("disconnect", async () => { 
+		socket.on("disconnect", async () => {
+			//l'user a peut-être encore d'autres onglets ouverts : il n'est hors ligne que si sa room est vide
+			const remainingSockets = await server.in(`user:${userId}`).fetchSockets();
+			if (remainingSockets.length > 0)
+				return;
 			await redisClient.sRem("online_users", userId);
 			server.emit("user:offline", userId);
 		});
