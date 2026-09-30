@@ -23,6 +23,8 @@ export default function ChatPage() {
   const [content, setContent] = useState("");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
+  // ids des utilisateurs connectés, tenus à jour par la socket
+  const [onlineUserIds, setOnlineUserIds] = useState<Set<string>>(new Set());
   const bottomRef = useRef<HTMLDivElement>(null);
   // copie de selectedUser lisible depuis le listener socket (sinon il garderait l'ancienne valeur)
   const selectedUserRef = useRef<User | null>(null);
@@ -69,10 +71,34 @@ export default function ChatPage() {
       addMessage(message);
     }
 
+    // à la connexion : la liste complète de ceux qui sont déjà en ligne
+    function handleOnlineList(userIds: string[]) {
+      setOnlineUserIds(new Set(userIds));
+    }
+
+    // ensuite : un user qui arrive ou qui part
+    function handleUserOnline(userId: string) {
+      setOnlineUserIds((previous) => new Set(previous).add(userId));
+    }
+
+    function handleUserOffline(userId: string) {
+      setOnlineUserIds((previous) => {
+        const next = new Set(previous);
+        next.delete(userId);
+        return next;
+      });
+    }
+
     socket.on("message:new", handleNewMessage);
+    socket.on("users:online", handleOnlineList);
+    socket.on("user:online", handleUserOnline);
+    socket.on("user:offline", handleUserOffline);
     socket.connect();
     return () => {
       socket.off("message:new", handleNewMessage);
+      socket.off("users:online", handleOnlineList);
+      socket.off("user:online", handleUserOnline);
+      socket.off("user:offline", handleUserOffline);
       socket.disconnect();
     };
   }, [me]);
@@ -148,10 +174,11 @@ export default function ChatPage() {
               <li key={user.id}>
                 <button
                   onClick={() => selectUser(user)}
-                  className={`w-full px-4 py-3 text-left hover:bg-muted ${
+                  className={`flex w-full items-center gap-2 px-4 py-3 text-left hover:bg-muted ${
                     selectedUser?.id === user.id ? "bg-muted font-bold" : ""
                   }`}
                 >
+                  <OnlineDot online={onlineUserIds.has(user.id)} />
                   {user.name}
                 </button>
               </li>
@@ -165,7 +192,13 @@ export default function ChatPage() {
             <p className="m-auto text-sm text-gray-600">Select a user to start chatting.</p>
           ) : (
             <>
-              <h2 className="border-b px-4 py-3 font-bold">{selectedUser.name}</h2>
+              <h2 className="flex items-center gap-2 border-b px-4 py-3 font-bold">
+                <OnlineDot online={onlineUserIds.has(selectedUser.id)} />
+                {selectedUser.name}
+                <span className="text-xs font-normal text-gray-600">
+                  {onlineUserIds.has(selectedUser.id) ? "online" : "offline"}
+                </span>
+              </h2>
 
               <div className="flex-1 space-y-2 overflow-y-auto p-4">
                 {messages.length === 0 && (
@@ -210,5 +243,15 @@ export default function ChatPage() {
         </section>
       </div>
     </main>
+  );
+}
+
+// pastille verte si en ligne, grise sinon
+function OnlineDot({ online }: { online: boolean }) {
+  return (
+    <span
+      className={`inline-block h-2.5 w-2.5 shrink-0 rounded-full ${online ? "bg-green-500" : "bg-gray-300"}`}
+      title={online ? "online" : "offline"}
+    />
   );
 }
