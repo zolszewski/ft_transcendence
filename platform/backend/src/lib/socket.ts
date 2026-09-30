@@ -17,6 +17,8 @@ export function initSocketServer(httpServer: HTTPServer) {
 			socket.disconnect();
 			return;
 		}
+		//room perso : regroupe tous les onglets de cet user, pour lui envoyer des events avec .to(`user:${userId}`)
+		socket.join(`user:${userId}`);
 		await redisClient.sAdd("online_users", userId);
 		//préviens tout le monde que cet user s'est connecté
 		server.emit("user:online", userId);
