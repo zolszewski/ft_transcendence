@@ -3,6 +3,7 @@ import { requireAuth } from "../middleware/auth";
 import { getUserById } from "../services/user.service";
 import { listMessages, sendMessage } from "../services/chat.service";
 import { isValidContent } from "../utils/validation";
+import { getIO } from "../lib/socket";
 
 const router = Router();
 const MAX_MESSAGE_LENGTH = 2000;
@@ -36,6 +37,12 @@ router.post("/:userId", requireAuth, async (req, res) => {
 		return res.status(404).json({ error: "User not found" });
 
 	const message = await sendMessage(currentUserId, otherUserId, content);
+	// temps réel : le destinataire + les autres onglets de l'expéditeur reçoivent le message
+	// recipientId permet au front de savoir à quelle conversation il appartient
+	getIO()
+		.to(`user:${otherUserId}`)
+		.to(`user:${currentUserId}`)
+		.emit("message:new", { ...message, recipientId: otherUserId });
 	res.status(201).json(message);
 });
 
