@@ -104,3 +104,20 @@ export async function getUserByOAuth(oauthProvider: string, oauthId : string) {
 		throw new Error("Could not fetch user");
 	}
 }
+
+
+export async function searchUsersByName(query: string, excludeUserId: string) {
+	try {
+		return await prisma.User.findMany({
+			where: {
+				name: { contains: query, mode: "insensitive" },
+				id: { not : excludeUserId },
+			},
+			take: 20,
+		});
+	}
+	catch (error) {
+		console.error("Failed to search users:", error);
+		throw new Error("Could not search users");
+	}
+}

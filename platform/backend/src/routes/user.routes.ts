@@ -7,7 +7,7 @@ import {
 	startTwoFactorSetup,
 	verifyTwoFactorCode,
 } from "../services/twoFactor.service";
-import { getAvatarUrl, getUserByEmail, getUserById, setUserAvatar, updateUser } from "../services/user.service";
+import { getAvatarUrl, getUserByEmail, getUserById, searchUsersByName, setUserAvatar, updateUser } from "../services/user.service";
 import { isValidEmail, isValidName, isValidTotpCode } from "../utils/validation";
 import { getUploadById, setUploadVisibility } from "../services/upload.service";
 import { isOwner } from "../utils/authorization";
@@ -41,6 +41,16 @@ router.get("/me", requireAuth, async (req, res) => {
 		createdAt: user.createdAt,
 	});
 });
+
+
+router.get("/search", requireAuth, async (req, res) => {
+	const { q } = req.query;
+	if (typeof q !== "string" || q.trim().length === 0)
+		return res.json([]);
+	const users = await searchUsersByName(q, req.session.userId!);
+	res.json(users.map(u => ({ id: u.id, name: u.name, avatarUrl: getAvatarUrl(u.avatarId) })));
+});
+
 
 router.get("/:id", async (req, res) => {
 	const user = await getUserById(req.params.id);

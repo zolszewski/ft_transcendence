@@ -6,6 +6,7 @@ type ApiResponse<T> =
   | { success: true; status?: number; data: T }
   | { success: false; status: number; error: string };
 
+
 function apiError<T>(error: string, status = 0): ApiResponse<T> {
   return { success: false, status, error };
 }
@@ -136,7 +137,22 @@ export const apiClient = {
       } catch {
         return apiError<ListResult<Article>>("Unable to connect to the server");
       }
-    }
+    },
+    stats: async () => {
+      try {
+        const response = await fetch("/api/dashboard", {
+          method: "GET",
+          credentials: "include",
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          return apiError<DashboardStats>(data.error || "Failed to load dashboard stats", response.status);
+        }
+        return apiSuccess<DashboardStats>(data, response.status);
+      } catch {
+        return apiError<DashboardStats>("Unable to connect to the server");
+      }
+    },
   },
   profile: {
     get: async (userId?: string) => {
@@ -206,6 +222,27 @@ export const apiClient = {
         return apiSuccess<User>(currentUser, patchResponse.status);
       } catch {
         return apiError<User>("Unable to connect to the server");
+      }
+    },
+  },
+  friends: {
+    search: async (query: string) => {
+      const queryParams = new URLSearchParams({ q: query });
+      try {
+        const response = await fetch(`/api/users/search?${queryParams.toString()}`, {
+          method: "GET",
+          credentials: "include",
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          return apiError<{ id: string; name: string; avatarUrl: string | null }[]>(
+            data.error || "Failed to search users",
+            response.status,
+          );
+        }
+        return apiSuccess<{ id: string; name: string; avatarUrl: string | null }[]>(data, response.status);
+      } catch {
+        return apiError<{ id: string; name: string; avatarUrl: string | null }[]>("Unable to connect to the server");
       }
     },
   },

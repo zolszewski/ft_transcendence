@@ -13,6 +13,14 @@ export enum ReviewStatus {
   REJECTED = "REJECTED",
 }
 
+export type DashboardStats = {
+  articleCounts: Record<string, number>;
+  reviewCounts: Record<string, number>;
+  approvalRate: number | null;
+  daysSinceJoined: number;
+};
+
+
 export interface User {
   id: string;
   name: string;

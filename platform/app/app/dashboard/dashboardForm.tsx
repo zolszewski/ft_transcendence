@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import LogoutButton from "@/components/LogoutButton";
-import { Article, User } from "@/lib/types";
+import { Article, User, DashboardStats } from "@/lib/types";
 import ArticleSection from "@/components/articleSection";
 import { apiClient } from "@/lib/apiClient";
 import ErrorPage from "@/components/ErrorPage";
@@ -11,9 +11,11 @@ import AppHeader from "@/components/AppHeader";
 import NavLink from "@/components/NavLink";
 import DashboardTabs, { type DashboardTab } from "@/components/DashboardTabs";
 import UserProfileSection from "@/components/UserProfileSection";
+import StatsSection from "@/components/StatsSection";
 
 export default function DashboardForm() {
   const [user, setUser] = useState<User | null>(null);
+  const [stats, setStats] = useState<DashboardStats | null>(null);
   const [drafts, setDrafts] = useState<Article[]>([]);
   const [submitted, setSubmitted] = useState<Article[]>([]);
   const [published, setPublished] = useState<Article[]>([]);
@@ -29,10 +31,10 @@ export default function DashboardForm() {
       setError("");
 
       try {
-        // Fetch current user details & articles concurrently
-        const [userResponse, dashboardResponse] = await Promise.all([
+        const [userResponse, dashboardResponse, statsResponse] = await Promise.all([
           apiClient.auth.me(),
           apiClient.dashboard.mine({}),
+          apiClient.dashboard.stats(),
         ]);
 
         if (!userResponse.success || !userResponse.data) {
@@ -47,7 +49,14 @@ export default function DashboardForm() {
           return;
         }
 
+        if (!statsResponse.success) {
+          setError(statsResponse.error || "Unable to load dashboard stats.");
+          setErrorStatus(statsResponse.status || null);
+          return;
+        }
+
         setUser(userResponse.data);
+        setStats(statsResponse.data);
 
         const articles = dashboardResponse.data.data;
         setDrafts(articles.filter((article) => article.status === "DRAFT"));
@@ -90,7 +99,6 @@ export default function DashboardForm() {
         />
       }
     >
-      {/* Top Profile Component */}
       {user ? (
         <UserProfileSection
           user={user}
@@ -101,7 +109,13 @@ export default function DashboardForm() {
 
       <DashboardTabs active={activeTab} onChange={setActiveTab} />
 
-      {activeTab === "information" ? <div /> : null}
+      {activeTab === "information" ? (
+        stats ? (
+          <StatsSection stats={stats} />
+        ) : (
+          <p className="p-4 text-sm text-gray-500">No statistics available.</p>
+        )
+      ) : null}
 
       {activeTab === "articles" ? (
         <>
