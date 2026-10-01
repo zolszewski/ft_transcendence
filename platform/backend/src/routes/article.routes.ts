@@ -1,19 +1,14 @@
 import { Router } from "express";
 import { ArticleStatus } from "@prisma/client";
-import { listArticles, getArticleById, createArticle, updateArticle, deleteArticle, updateArticleStatus, listSubmittedArticlesForReview, getMiniatureUrl, listMyArticles } from "../services/article.service";
+import { listArticles, getArticleById, createArticle, updateArticle, deleteArticle, updateArticleStatus, listSubmittedArticlesForReview, listMyArticles, articleWithMediaUrls } from "../services/article.service";
 import { isOwner } from "../utils/authorization"
 import { requireAuth } from "../middleware/auth";
-import { isValidContent, isValidTitle } from "../utils/validation";
+import { isValidContent, isValidTitle, parseMiniatureFocus } from "../utils/validation";
 import { createReview, getReviewByArticleAndReviewer, listReviewsForArticle } from "../services/review.service";
 import { createComment, listCommentsForArticle } from "../services/comment.service";
 import { getUploadById, setUploadVisibility } from "../services/upload.service";
 
 const router = Router();
-
-function withMiniatureUrl(article: any) {
-	return { ...article, miniatureUrl: getMiniatureUrl(article.miniatureId) };
-}
-
 
 router.get("/explore", async (req, res) => {
 	const { search, sort, page, limit } = req.query;
@@ -23,7 +18,7 @@ router.get("/explore", async (req, res) => {
 		page: Math.max(1, Number(page) || 1),
 		limit: Math.min(50, Math.max(1, Number(limit) || 10)),
 	});
-	res.json({ ...result, articles: result.articles.map(withMiniatureUrl) });
+	res.json({ ...result, articles: result.articles.map(articleWithMediaUrls) });
 })
 
 router.get("/submitted", requireAuth, async (req, res) => {
@@ -35,7 +30,7 @@ router.get("/submitted", requireAuth, async (req, res) => {
 		page: Math.max(1, Number(page) || 1),
 		limit: Math.min(50, Math.max(1, Number(limit) || 10)),
 	});
-	res.json({ ...result, articles: result.articles.map(withMiniatureUrl) });
+	res.json({ ...result, articles: result.articles.map(articleWithMediaUrls) });
 });
 
 router.get("/mine", requireAuth, async (req, res) => {
@@ -49,7 +44,7 @@ router.get("/mine", requireAuth, async (req, res) => {
 		page: Math.max(1, Number(page) || 1),
 		limit: Math.min(50, Math.max(1, Number(limit) || 10)),
 	});
-	res.json({ ...result, articles: result.articles.map(withMiniatureUrl) });
+	res.json({ ...result, articles: result.articles.map(articleWithMediaUrls) });
 });
 
 router.get("/:id", async (req, res) => {
@@ -57,21 +52,24 @@ router.get("/:id", async (req, res) => {
 	if (!article)
 		return res.status(404).json({ error: "Article not found" });
 	if (article.status === "PUBLISHED")
-		return res.json(withMiniatureUrl(article));
+		return res.json(articleWithMediaUrls(article));
 	const userId = req.session?.userId;
 	if (!userId)
 		return res.status(404).json({ error: "Article not found" });
 	if (isOwner(article.authorId, userId))
-		return res.json(withMiniatureUrl(article));
+		return res.json(articleWithMediaUrls(article));
 	if (article.status === "SUBMITTED")
-		return res.json(withMiniatureUrl(article));
+		return res.json(articleWithMediaUrls(article));
 	return res.status(404).json({ error: "Article not found" });
 });
 
 router.post("/", requireAuth, async (req, res) => {
-	const { title, content, abstract, miniatureId } = req.body;
+	const { title, content, abstract, miniatureId, pdfId } = req.body;
+	const focus = parseMiniatureFocus(req.body);
 	if(!isValidTitle(title) || !isValidContent(content))
 		return res.status(400).json({ error: "Invalid input" });
+	if (focus === null)
+		return res.status(400).json({ error: "Invalid miniature focus" });
 	if (miniatureId) {
 		const upload = await getUploadById(miniatureId);
 		if (!upload)
@@ -82,8 +80,27 @@ router.post("/", requireAuth, async (req, res) => {
 			return res.status(400).json({ error: "Not an image" });
 		await setUploadVisibility(miniatureId, "PUBLIC");
 	}
-	const article = await createArticle(req.session.userId!, title, content, abstract, miniatureId);
-	res.status(201).json(withMiniatureUrl(article));
+	if (pdfId) {
+        const upload = await getUploadById(pdfId);
+        if (!upload)
+            return res.status(404).json({ error: "Upload not found" });
+        if (!isOwner(upload.ownerId, req.session.userId!))
+            return res.status(403).json({ error: "Forbidden" });
+        if (upload.mimeType !== "application/pdf")
+            return res.status(400).json({ error: "Not a PDF" });
+        await setUploadVisibility(pdfId, "PUBLIC");
+    }
+	const article = await createArticle(
+		req.session.userId!,
+		title,
+		content,
+		abstract,
+		miniatureId,
+		pdfId,
+		focus?.miniatureFocusX ?? 50,
+		focus?.miniatureFocusY ?? 50,
+	);
+	res.status(201).json(articleWithMediaUrls(article));
 });
 
 router.put("/:id", requireAuth, async (req, res) => {
@@ -92,9 +109,12 @@ router.put("/:id", requireAuth, async (req, res) => {
 		return res.status(404).json({ error: "Article not found" });
 	if (!isOwner(article.authorId, req.session.userId!))
 		return res.status(403).json({ error: "Forbidden" });
-	const { title, content, abstract, miniatureId } = req.body;
+	const { title, content, abstract, miniatureId, pdfId } = req.body;
+	const focus = parseMiniatureFocus(req.body);
 	if (!isValidTitle(title) || !isValidContent(content))
 		return res.status(400).json({ error: "Invalid input" });
+	if (focus === null)
+		return res.status(400).json({ error: "Invalid miniature focus" });
 	if (miniatureId) {
 		const upload = await getUploadById(miniatureId);
 		if (!upload)
@@ -105,8 +125,25 @@ router.put("/:id", requireAuth, async (req, res) => {
 			return res.status(400).json({ error: "Not an image" });
 		await setUploadVisibility(miniatureId, "PUBLIC");
 	}
-	const updated = await updateArticle(req.params.id, { title, content, abstract, miniatureId });
-	res.json(withMiniatureUrl(updated));
+	if (pdfId) {
+        const upload = await getUploadById(pdfId);
+        if (!upload)
+            return res.status(404).json({ error: "Upload not found" });
+        if (!isOwner(upload.ownerId, req.session.userId!))
+            return res.status(403).json({ error: "Forbidden" });
+        if (upload.mimeType !== "application/pdf")
+            return res.status(400).json({ error: "Not a PDF" });
+        await setUploadVisibility(pdfId, "PUBLIC");
+    }
+	const updated = await updateArticle(req.params.id, {
+		title,
+		content,
+		abstract,
+		miniatureId,
+		pdfId,
+		...(focus ?? {}),
+	});
+	res.json(articleWithMediaUrls(updated));
 })
 
 router.delete("/:id", requireAuth, async (req, res) => {

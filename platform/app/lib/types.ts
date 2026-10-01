@@ -13,10 +13,29 @@ export enum ReviewStatus {
   REJECTED = "REJECTED",
 }
 
+export type DashboardStats = {
+  articleCounts: Record<string, number>;
+  reviewCounts: Record<string, number>;
+  approvalRate: number | null;
+  daysSinceJoined: number;
+};
+
+
 export interface User {
   id: string;
   name: string;
   email: string;
+  faculty: string;
+  specialization: string;
+  createdAt?: string;
+  avatarId?: string | null;
+  avatarUrl?: string | null; // <-- Computed URL returned by backend (/api/users/me, /api/users/:id)
+  avatar?: {
+    id: string;
+    url: string;
+  } | null;
+  
+
 }
 
 export interface Article {
@@ -25,6 +44,9 @@ export interface Article {
   content: string;
   abstract: string | null;
   miniature: string | null;
+  pdfUrl: string | null;
+  miniatureFocusX?: number;
+  miniatureFocusY?: number;
   authorId: string;
   author: User;
   createdAt: string;
@@ -86,3 +108,5 @@ export interface ListResult<T> {
   hasNext: boolean;
   hasPrev: boolean;
 }
+
+export type FriendRelationStatus = "none" | "friends" | "pending_outgoing" | "pending_incoming";

@@ -3,6 +3,9 @@
 import type { RefObject } from "react";
 import { useRef, useState, type ChangeEvent } from "react";
 import { ImagePlus, Link as LinkIcon } from "lucide-react";
+import { validateUpload } from "@/lib/validateUpload";
+
+
 
 type MenuProps = {
   editorRef: RefObject<HTMLDivElement | null>;
@@ -14,7 +17,7 @@ const headingOptions = ["H1", "H2", "H3"] as const;
 export default function Menu({ editorRef, onImageUpload }: MenuProps) {
   const imageInputRef = useRef<HTMLInputElement>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
-
+  const [uploadError, setUploadError] = useState("");
   function applyFormat(command: string, value?: string) {
     editorRef.current?.focus();
     document.execCommand(command, false, value);
@@ -25,24 +28,34 @@ export default function Menu({ editorRef, onImageUpload }: MenuProps) {
     if (url?.trim()) applyFormat("createLink", url.trim());
   }
 
+  
   async function handleImageChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     event.target.value = "";
     if (!file) return;
 
-    setUploadingImage(true);
-    const imageUrl = await onImageUpload(file);
-    if (imageUrl) applyFormat("insertImage", imageUrl);
-    setUploadingImage(false);
-  }
+    const error = await validateUpload(file, "image");
+    if (error) {
+      setUploadError(error);
+      return;
+    }
+    setUploadError("");
 
+    setUploadingImage(true);
+    try {
+      const imageUrl = await onImageUpload(file);
+      if (imageUrl) applyFormat("insertImage", imageUrl);
+    } finally {
+      setUploadingImage(false); // also fixes the "stuck disabled" case noted earlier
+    }
+  }
   return (
-    <div className="flex flex-wrap items-center gap-2 border border-b-0 bg-gray-50 p-3">
+    <div className="editor-toolbar">
       <button
         type="button"
         onMouseDown={(event) => event.preventDefault()}
         onClick={() => applyFormat("bold")}
-        className="border px-3 py-2 font-bold hover:bg-white"
+        className="editor-toolbar-btn font-bold"
         aria-label="Bold"
       >
         B
@@ -51,7 +64,7 @@ export default function Menu({ editorRef, onImageUpload }: MenuProps) {
         type="button"
         onMouseDown={(event) => event.preventDefault()}
         onClick={() => applyFormat("italic")}
-        className="border px-3 py-2 italic hover:bg-white"
+        className="editor-toolbar-btn italic"
         aria-label="Italic"
       >
         I
@@ -60,7 +73,7 @@ export default function Menu({ editorRef, onImageUpload }: MenuProps) {
         type="button"
         onMouseDown={(event) => event.preventDefault()}
         onClick={addLink}
-        className="border p-2 hover:bg-white"
+        className="editor-toolbar-btn"
         aria-label="Add link"
         title="Add link"
       >
@@ -70,7 +83,7 @@ export default function Menu({ editorRef, onImageUpload }: MenuProps) {
         type="button"
         onMouseDown={(event) => event.preventDefault()}
         onClick={() => imageInputRef.current?.click()}
-        className="border p-2 hover:bg-white"
+        className="editor-toolbar-btn"
         aria-label="Add image"
         title="Add image"
         disabled={uploadingImage}
@@ -84,14 +97,21 @@ export default function Menu({ editorRef, onImageUpload }: MenuProps) {
         onChange={handleImageChange}
         className="hidden"
       />
+      {uploadError ? (
+        <p role="alert" className="w-full text-sm text-red-600">{uploadError}</p>
+      ) : null}
       {headingOptions.map((heading) => (
         <button
           key={heading}
           type="button"
           onMouseDown={(event) => event.preventDefault()}
           onClick={() => applyFormat("formatBlock", heading)}
-          className={`border px-3 py-2 hover:bg-white ${
-            heading === "H1" ? "text-lg font-bold" : heading === "H2" ? "font-bold" : "italic"
+          className={`editor-toolbar-btn ${
+            heading === "H1"
+              ? "text-lg font-bold"
+              : heading === "H2"
+                ? "font-bold"
+                : "italic"
           }`}
           aria-label={`Heading ${heading.slice(1)}`}
         >

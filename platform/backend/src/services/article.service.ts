@@ -156,19 +156,38 @@ export async function getArticleById(id: string) {
 	}
 }
 
-export async function createArticle(authorId: string, title: string, content: string, abstract?: string, miniatureId?: string) {
-	try {
-		await bumpArticlesCacheVersion();
-		return await prisma.Article.create({
-			data: { title, content, abstract, authorId, miniatureId },
-			include: { author: { select: { id: true, name: true } } },
-		});
-	}
-	catch (error) {
-		console.error("Failed to create article:", error);
-		throw new Error("Could not create article");
-	}
+
+export async function createArticle(
+  authorId: string,
+  title: string,
+  content: string,
+  abstract?: string,
+  miniatureId?: string,
+  pdfId?: string,
+  miniatureFocusX = 50,
+  miniatureFocusY = 50,
+) {
+  try {
+    await bumpArticlesCacheVersion();
+    return await prisma.Article.create({
+      data: {
+        title,
+        content,
+        abstract,
+        authorId,
+        miniatureId,
+        pdfId,
+        miniatureFocusX,
+        miniatureFocusY,
+      },
+      include: { author: { select: { id: true, name: true } } },
+    });
+  } catch (error) {
+    console.error("Failed to create article:", error);
+    throw new Error("Could not create article");
+  }
 }
+
 
 export function getMiniatureUrl(miniatureId: string | null): string {
 	if (miniatureId)
@@ -176,19 +195,45 @@ export function getMiniatureUrl(miniatureId: string | null): string {
 	return "/default-article-thumbnail.jpg";
 }
 
-export async function updateArticle(id: string, data: { title?: string, content?: string, abstract?: string, miniatureId?: string }) {
-	try {
-		await bumpArticlesCacheVersion();
-		return await prisma.Article.update({
-			where: { id },
-			data,
-			include: { author: { select: { id: true, name: true } } },
-		});
-	}
-	catch (error) {
-		console.error("Failed to update article:", error);
-		throw new Error("Could not update article");
-	}
+export function articleWithMediaUrls<T extends { miniatureId?: string | null; pdfId?: string | null }>(
+	article: T,
+) {
+	return {
+		...article,
+		miniatureUrl: getMiniatureUrl(article.miniatureId ?? null),
+		pdfUrl: article.pdfId ? `/api/uploads/${article.pdfId}` : null,
+	};
+}
+
+export async function updateArticle(
+  id: string,
+  data: {
+    title?: string;
+    content?: string;
+    abstract?: string;
+    miniatureId?: string | null;
+    pdfId?: string | null;
+    miniatureFocusX?: number;
+    miniatureFocusY?: number;
+  }
+) {
+  try {
+    await bumpArticlesCacheVersion();
+    const { miniatureId, pdfId, ...rest } = data;
+    const updateData = {
+      ...rest,
+      ...(miniatureId !== undefined ? { miniatureId } : {}),
+      ...(pdfId !== undefined ? { pdfId } : {}),
+    };
+    return await prisma.Article.update({
+      where: { id },
+      data: updateData,
+      include: { author: { select: { id: true, name: true } } },
+    });
+  } catch (error) {
+    console.error("Failed to update article:", error);
+    throw new Error("Could not update article");
+  }
 }
 
 export async function deleteArticle(id: string) {

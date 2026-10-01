@@ -171,3 +171,165 @@
   height: auto;
   max-width: 100%;
 }
+
+@layer components {
+  .page-shell-centered {
+    @apply relative flex min-h-screen flex-col items-center overflow-hidden;
+  }
+
+  .page-shell-dashboard {
+    @apply min-h-screen;
+  }
+
+  .page-shell-auth {
+    @apply flex min-h-screen items-center justify-center;
+  }
+
+  .page-container {
+    @apply w-full;
+  }
+
+  .page-container--narrow {
+    @apply max-w-2xl;
+  }
+
+  .page-container--default {
+    @apply max-w-3xl;
+  }
+
+  .page-container--wide {
+    @apply max-w-4xl;
+  }
+
+  .page-container-offset-sm {
+    @apply mt-20;
+  }
+
+  .page-container-offset-lg {
+    @apply mt-32;
+  }
+
+  .app-header-floating {
+    @apply absolute left-0 right-0 top-0 flex items-center justify-between p-4;
+  }
+
+  .app-header-bordered {
+    @apply flex items-center justify-between border-b p-4;
+  }
+
+  .btn-nav {
+  @apply inline-flex items-center rounded-none border-2 border-border bg-white px-4 py-2 text-sm transition-colors hover:bg-muted hover:underline disabled:opacity-50;
+  }
+
+  .btn-nav-sm {
+    @apply inline-flex items-center rounded-none border border-border bg-background px-3 py-1 text-sm transition-colors hover:bg-muted hover:underline;
+  }
+
+  .btn-action-full {
+    @apply w-full rounded-none border border-border bg-background py-2 text-sm font-medium transition-colors hover:bg-muted hover:underline disabled:opacity-50;
+  }
+
+  .article-miniature-thumb {
+    @apply h-40 w-full object-cover;
+  }
+
+  .article-miniature-hero {
+    @apply h-64 w-full rounded-none object-cover;
+  }
+
+  .article-title {
+    @apply mt-6 rounded-none border p-4 text-3xl font-bold;
+  }
+
+  .article-byline {
+    @apply mt-1 text-sm text-muted-foreground;
+  }
+
+  .article-abstract {
+    @apply mt-4 text-sm italic text-muted-foreground;
+  }
+
+  .article-body {
+    @apply mt-6 text-sm leading-relaxed;
+  }
+
+  .article-meta-footer {
+    @apply mt-8 border-t pt-4 text-sm text-muted-foreground;
+  }
+
+  .section-divider {
+    @apply mt-8 border-t pt-6;
+  }
+
+  .section-divider-spaced {
+    @apply mt-10 border-t pt-6;
+  }
+
+  .comment-card {
+    @apply rounded-none border p-4;
+  }
+
+  .field-input {
+    @apply w-full rounded-none border border-input bg-background p-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50;
+  }
+
+  .field-textarea {
+    @apply mt-2 w-full rounded-none border border-input bg-background p-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50;
+  }
+
+  .form-error {
+    @apply text-sm text-destructive;
+  }
+
+  .alert-banner-error {
+    @apply mb-6 rounded-none border border-destructive/30 p-3 text-destructive;
+  }
+
+  .alert-banner-success {
+    @apply mb-6 rounded-none border border-green-600/30 p-3 text-green-700 dark:text-green-400;
+  }
+
+  .editor-panel {
+    @apply overflow-hidden rounded-none border border-border bg-card;
+  }
+
+  .editor-miniature-zone {
+    @apply relative flex aspect-square min-h-32 flex-1 cursor-pointer items-center justify-center overflow-hidden border border-dashed border-border bg-muted/30 p-4 text-center text-sm text-muted-foreground transition-colors hover:bg-muted/50;
+  }
+
+  .editor-miniature-zone--preview {
+    @apply aspect-auto h-40 cursor-grab border-solid p-0 active:cursor-grabbing;
+  }
+
+  .editor-field-label {
+    @apply mb-2 block text-sm font-semibold;
+  }
+
+  .editor-title-input {
+    @apply w-full resize-none rounded-none border border-input bg-background px-4 py-3 text-base font-medium outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50;
+  }
+
+  .editor-toolbar {
+    @apply flex flex-wrap items-center gap-2 border-y border-border bg-muted/50 p-3;
+  }
+
+  .editor-toolbar-btn {
+    @apply inline-flex items-center rounded-none border border-border bg-background px-3 py-1 text-sm transition-colors hover:bg-muted;
+  }
+
+  .editor-surface {
+    @apply min-h-96 border-0 bg-background p-6 text-left outline-none empty:before:text-muted-foreground empty:before:content-[attr(data-placeholder)];
+  }
+
+  .article-list-meta {
+    @apply mt-1 text-sm text-muted-foreground;
+  }
+
+  .article-list-abstract {
+    @apply mt-2 text-sm text-foreground;
+  }
+
+  .article-detail {
+    @apply w-full;
+  }
+}

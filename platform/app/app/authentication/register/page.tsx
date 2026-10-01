@@ -6,6 +6,7 @@ import type { FormEvent } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams  } from "next/navigation";
 import { apiClient } from "@/lib/apiClient";
+import PageShell from "@/components/PageShell";
 
 
 export default function RegisterPage() {
@@ -42,14 +43,12 @@ export default function RegisterPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center">
-      <div className="w-full max-w-sm px-6">
-
+    <PageShell variant="auth">
         <h1 className="text-3xl font-bold">
           Create your account
         </h1>
 
-        <p className="mt-2 text-gray-600">
+        <p className="mt-2 text-muted-foreground">
           Join OpenScholar.
         </p>
 
@@ -71,7 +70,7 @@ export default function RegisterPage() {
               autoComplete="name"
               value={name}
               onChange={(event) => setName(event.target.value)}
-              className="border p-2"
+              className="field-input"
             />
           </div>
 
@@ -88,7 +87,7 @@ export default function RegisterPage() {
               autoComplete="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              className="border p-2"
+              className="field-input"
             />
           </div>
 
@@ -106,31 +105,31 @@ export default function RegisterPage() {
               autoComplete="new-password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              className="border p-2"
+              className="field-input"
             />
           </div>
 
-          {error && (
-            <p className="text-sm text-red-600">
+          {error ? (
+            <p className="form-error">
               {error}
             </p>
-          )}
+          ) : null}
 
           <button
             type="submit"
             disabled={loading}
-            className="border p-2 disabled:opacity-50"
+            className="btn-nav w-full justify-center disabled:opacity-50"
           >
             {loading ? "Creating account..." : "Register"}
           </button>
 
         </form>
 
-        <p className="mt-6 text-sm text-gray-600">
+        <p className="mt-6 text-sm text-muted-foreground">
           Already have an account?{" "}
           <Link
             href="/authentication/login"
-            className="font-medium text-black hover:underline"
+            className="font-medium text-foreground hover:underline"
           >
             Login
           </Link>
@@ -139,13 +138,11 @@ export default function RegisterPage() {
         <p className="mt-3 text-sm">
           <Link
             href="/"
-            className="text-gray-600 hover:underline"
+            className="text-muted-foreground hover:underline"
           >
             Back to OpenScholar
           </Link>
         </p>
-
-      </div>
-    </main>
+    </PageShell>
   );
 }

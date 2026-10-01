@@ -262,6 +262,20 @@ Auth required, owner only. Deletes your own comment.
 
 ---
 
+## Dashboard
+
+### `GET /dashboard`
+Auth required. Returns activity stats for the authenticated user.
+
+| Code | Case |
+|---|---|
+| 200 | `{ articleCounts: { DRAFT, SUBMITTED, REJECTED, PUBLISHED }, reviewCounts: { PENDING, APPROVED, REJECTED }, approvalRate, daysSinceJoined }` |
+| 401 | Not authenticated |
+
+`articleCounts`/`reviewCounts` always include all their keys, defaulting to `0` rather than being omitted. `approvalRate` is a rounded percentage (`published / (published + rejected)` among the user's own decided articles), or `null` if none have been decided yet.
+
+---
+
 ## Health
 
 ### `GET /health`
