@@ -137,7 +137,7 @@ export default function UserProfileSection({
 
       if (avatarFile) {
         const uploadRes = await apiClient.uploads.image(avatarFile, "PUBLIC");
-        if (!uploadRes.success || !uploadRes.data?.id) {
+        if (!uploadRes.success) {
           throw new Error(uploadRes.error || "Failed to upload avatar image");
         }
         newAvatarId = uploadRes.data.id;

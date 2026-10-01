@@ -1,4 +1,4 @@
-import type { User, Article, Comment, Review, ArticleDetail, ListResult } from "./types";
+import type { User, Article, Comment, Review, ArticleDetail, ListResult, DashboardStats } from "./types";
 import { uploadFileWithProgress } from "./progressUpload";
 import { validateUpload, validateFile } from "./validateUpload";
 

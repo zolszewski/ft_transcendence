@@ -37,7 +37,7 @@ export default function DashboardForm() {
           apiClient.dashboard.stats(),
         ]);
 
-        if (!userResponse.success || !userResponse.data) {
+        if (!userResponse.success) {
           setError(userResponse.error || "Unable to load user profile.");
           setErrorStatus(userResponse.status || null);
           return;

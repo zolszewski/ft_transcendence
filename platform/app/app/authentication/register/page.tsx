@@ -1,7 +1,7 @@
 "use client";
 
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import type { FormEvent } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams  } from "next/navigation";
@@ -9,7 +9,7 @@ import { apiClient } from "@/lib/apiClient";
 import PageShell from "@/components/PageShell";
 
 
-export default function RegisterPage() {
+function RegisterForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -144,5 +144,13 @@ export default function RegisterPage() {
           </Link>
         </p>
     </PageShell>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={<p className="p-8">Loading...</p>}>
+      <RegisterForm />
+    </Suspense>
   );
 }
