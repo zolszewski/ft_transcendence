@@ -7,7 +7,7 @@ import {
 	startTwoFactorSetup,
 	verifyTwoFactorCode,
 } from "../services/twoFactor.service";
-import { getAvatarUrl, getUserByEmail, getUserById, getOtherUsers, searchUsersByName, setUserAvatar, updateUser } from "../services/user.service";
+import { getAvatarUrl, getOtherUsers, getUserByEmail, getUserById, searchUsersByName, setUserAvatar, updateUser } from "../services/user.service";
 import { isValidEmail, isValidName, isValidTotpCode } from "../utils/validation";
 import { getUploadById, setUploadVisibility } from "../services/upload.service";
 import { isOwner } from "../utils/authorization";

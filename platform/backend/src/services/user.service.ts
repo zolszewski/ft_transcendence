@@ -58,7 +58,6 @@ export async function getOtherUsers(currentUserId: string) {
 	}
 }
 
-
 export async function updateUser(
 	id: string,
 	data: {

@@ -579,20 +579,20 @@ export const apiClient = {
       try {
         const response = await fetch("/api/users", { credentials: "include" });
         const data = await response.json();
-        if (!response.ok) return { success: false, error: data.error || "Failed to load users" } as ApiResponse<User[]>;
-        return { success: true, data } as ApiResponse<User[]>;
+        if (!response.ok) return apiError<User[]>(data.error || "Failed to load users", response.status);
+        return apiSuccess<User[]>(data, response.status);
       } catch {
-        return { success: false, error: "Unable to connect to the server" } as ApiResponse<User[]>;
+        return apiError<User[]>("Unable to connect to the server");
       }
     },
     getMessages: async (userId: string) => {
       try {
         const response = await fetch(`/api/chat/${userId}`, { credentials: "include" });
         const data = await response.json();
-        if (!response.ok) return { success: false, error: data.error || "Failed to load messages" } as ApiResponse<Message[]>;
-        return { success: true, data } as ApiResponse<Message[]>;
+        if (!response.ok) return apiError<Message[]>(data.error || "Failed to load messages", response.status);
+        return apiSuccess<Message[]>(data, response.status);
       } catch {
-        return { success: false, error: "Unable to connect to the server" } as ApiResponse<Message[]>;
+        return apiError<Message[]>("Unable to connect to the server");
       }
     },
     sendMessage: async (userId: string, content: string) => {
@@ -604,10 +604,10 @@ export const apiClient = {
           credentials: "include",
         });
         const data = await response.json();
-        if (!response.ok) return { success: false, error: data.error || "Failed to send message" } as ApiResponse<Message>;
-        return { success: true, data } as ApiResponse<Message>;
+        if (!response.ok) return apiError<Message>(data.error || "Failed to send message", response.status);
+        return apiSuccess<Message>(data, response.status);
       } catch {
-        return { success: false, error: "Unable to connect to the server" } as ApiResponse<Message>;
+        return apiError<Message>("Unable to connect to the server");
       }
     },
   },
