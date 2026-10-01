@@ -10,6 +10,10 @@ export function initSocketServer(httpServer: HTTPServer) {
 	const server = new SocketIOServer(httpServer, { cors: { origin: true, credentials: true } });
 	io = server;
 	server.engine.use(sessionMiddleware);
+	// au démarrage personne n'est connecté : on vide la liste laissée par un ancien backend
+	// (crash ou redémarrage = les disconnect n'ont pas été traités, et redis garde ses données)
+	// passe avant tout sAdd car redis exécute les commandes dans l'ordre
+	redisClient.del("online_users").catch((error) => console.error("Failed to reset online users", error));
 	//s'execute une fois, à la connexion d'un user
 	server.on("connection", async (socket) => {
 		const userId = (socket.request as any).session?.userId;
