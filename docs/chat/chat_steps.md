@@ -58,4 +58,4 @@ La cause est la même que pour socket.io-client : le node_modules du backend est
 docker exec backend npx prisma generate   # régénère le client Prisma à partir du schema.prisma actuel
 docker restart backend
 
-Test username git config v3
+Test username git config v4
