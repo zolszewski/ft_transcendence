@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import type { FormEvent } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { apiClient } from "@/lib/apiClient";
+import PageShell from "@/components/PageShell";
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
@@ -41,15 +42,14 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center">
-      <div className="w-full max-w-sm px-6">
-
+    <PageShell variant="auth">
         <h1 className="text-3xl font-bold">
           Login
         </h1>
 
         <form
           onSubmit={handleSubmit}
+          className="mt-8 flex flex-col gap-4"
         >
 
           <div className="flex flex-col gap-2">
@@ -65,7 +65,7 @@ export default function LoginPage() {
               autoComplete="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              className="border p-2"
+              className="field-input"
             />
           </div>
 
@@ -82,31 +82,31 @@ export default function LoginPage() {
               autoComplete="current-password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              className="border p-2"
+              className="field-input"
             />
           </div>
 
-          {error && (
-            <p className="text-sm text-red-600">
+          {error ? (
+            <p className="form-error">
               {error}
             </p>
-          )}
+          ) : null}
 
           <button
             type="submit"
             disabled={loading}
-            className="border p-2 disabled:opacity-50"
+            className="btn-nav w-full justify-center disabled:opacity-50"
           >
             {loading ? "Logging in..." : "Login"}
           </button>
 
         </form>
 
-        <p className="mt-6 text-sm text-gray-600">
+        <p className="mt-6 text-sm text-muted-foreground">
           Don't have an account?{" "}
           <Link
             href="/authentication/register"
-            className="font-medium text-black hover:underline"
+            className="font-medium text-foreground hover:underline"
           >
             Register
           </Link>
@@ -115,13 +115,19 @@ export default function LoginPage() {
         <p className="mt-3 text-sm">
           <Link
             href="/"
-            className="text-gray-600 hover:underline"
+            className="text-muted-foreground hover:underline"
           >
             Back to OpenScholar
           </Link>
         </p>
+    </PageShell>
+  );
+}
 
-      </div>
-    </main>
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<p className="p-8">Loading...</p>}>
+      <LoginForm />
+    </Suspense>
   );
 }

@@ -13,14 +13,19 @@ import { rateLimit } from "express-rate-limit";
 import { resolveApiKey } from "./middleware/auth";
 import uploadRoutes from "./routes/upload.routes"
 import userRoutes from "./routes/user.routes"
+import dashboardRoutes from "./routes/dashboard.routes"
 
 const app = express();
+app.set("trust proxy", 1);
+
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  limit: 100,
-  standardHeaders: 'draft-8',
+  limit: process.env.NODE_ENV === "production" ? 300 : 2000,
+  standardHeaders: "draft-8",
   legacyHeaders: false,
   ipv6Subnet: 56,
+  skip: (req) =>
+    req.method === "GET" && /^\/api\/uploads\/[^/]+$/.test(req.path),
 });
 
 app.use(helmet());
@@ -30,12 +35,12 @@ app.use(sessionMiddleware);
 app.use(resolveApiKey);
 app.use("/api/auth", authRoutes);
 app.use("/api/articles", articleRoutes);
-app.use("/uploads", express.static("/app/public/uploads"));
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/comments", commentRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/uploads", uploadRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/dashboard", dashboardRoutes);
 
 
 app.get("/health", (_req, res) => {

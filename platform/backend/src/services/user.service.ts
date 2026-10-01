@@ -58,7 +58,16 @@ export async function getOtherUsers(currentUserId: string) {
 	}
 }
 
-export async function updateUser(id: string, data: { name?: string, email?: string }) {
+
+export async function updateUser(
+	id: string,
+	data: {
+		name?: string;
+		email?: string;
+		faculty?: string | null;
+		specialization?: string | null;
+	},
+) {
 	try {
 		return await prisma.User.update({
 			where: { id },
@@ -89,4 +98,45 @@ export function getAvatarUrl(avatarId: string | null): string {
 	if (avatarId)
 		return `/api/uploads/${avatarId}`;
 	return "/default-avatar.jpg";
+}
+
+export async function createOAuthUser(email: string, name: string, oauthProvider: string, oauthId: string) {
+	try {
+		return await prisma.User.create({
+			data: { email, name, oauthProvider, oauthId },
+		});
+	}
+	catch (error) {
+		console.error("Failed to create OAuth user:", error);
+		throw new Error("Could not create user");
+	}
+}
+
+export async function getUserByOAuth(oauthProvider: string, oauthId : string) {
+	try {
+		return await prisma.User.findUnique({
+			where: { oauthProvider_oauthId: { oauthProvider, oauthId }}
+		});
+	}
+	catch (error) {
+		console.error("Failed to fetch user by oauth:", error);
+		throw new Error("Could not fetch user");
+	}
+}
+
+
+export async function searchUsersByName(query: string, excludeUserId: string) {
+	try {
+		return await prisma.User.findMany({
+			where: {
+				name: { contains: query, mode: "insensitive" },
+				id: { not : excludeUserId },
+			},
+			take: 20,
+		});
+	}
+	catch (error) {
+		console.error("Failed to search users:", error);
+		throw new Error("Could not search users");
+	}
 }

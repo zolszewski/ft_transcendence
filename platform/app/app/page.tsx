@@ -1,6 +1,7 @@
 import Link from "next/link";
 import ConnectedGallery from "@/components/ConnectedGallery";
 import LogoutButton from "@/components/LogoutButton";
+import MyDashboardButton from "@/components/MyDashboardButton";
 import { getCurrentUser } from "@/lib/auth";
  
 export default async function Home() {
@@ -11,7 +12,8 @@ export default async function Home() {
     <main className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden">
       <div>
         {user && (
-          <div className="fixed top-4 right-4">
+          <div className="fixed top-4 right-4 flex items-center">
+            <MyDashboardButton />
             <LogoutButton />
           </div>
         )}
