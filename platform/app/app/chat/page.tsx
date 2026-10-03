@@ -5,6 +5,7 @@ import type { FormEvent } from "react";
 import Link from "next/link";
 import { apiClient } from "@/lib/apiClient";
 import { getSocket } from "@/lib/socket";
+import { useOnlineUsers } from "@/components/chat/ChatProvider";
 import type { Message, User } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,8 +24,8 @@ export default function ChatPage() {
   const [content, setContent] = useState("");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
-  // ids des utilisateurs connectés, tenus à jour par la socket
-  const [onlineUserIds, setOnlineUserIds] = useState<Set<string>>(new Set());
+  // ids des utilisateurs connectés, tenus à jour par le ChatProvider (layout)
+  const onlineUserIds = useOnlineUsers();
   const bottomRef = useRef<HTMLDivElement>(null);
   // copie de selectedUser lisible depuis le listener socket (sinon il garderait l'ancienne valeur)
   const selectedUserRef = useRef<User | null>(null);
@@ -59,7 +60,7 @@ export default function ChatPage() {
     };
   }, [selectedUser]);
 
-  // temps réel : connexion socket une fois l'utilisateur connu, écoute des nouveaux messages
+  // temps réel : écoute des nouveaux messages sur la socket ouverte par le ChatProvider
   useEffect(() => {
     if (!me) return;
     const socket = getSocket();
@@ -71,35 +72,10 @@ export default function ChatPage() {
       addMessage(message);
     }
 
-    // à la connexion : la liste complète de ceux qui sont déjà en ligne
-    function handleOnlineList(userIds: string[]) {
-      setOnlineUserIds(new Set(userIds));
-    }
-
-    // ensuite : un user qui arrive ou qui part
-    function handleUserOnline(userId: string) {
-      setOnlineUserIds((previous) => new Set(previous).add(userId));
-    }
-
-    function handleUserOffline(userId: string) {
-      setOnlineUserIds((previous) => {
-        const next = new Set(previous);
-        next.delete(userId);
-        return next;
-      });
-    }
-
+    // pas de connect/disconnect ici : la connexion appartient au ChatProvider
     socket.on("message:new", handleNewMessage);
-    socket.on("users:online", handleOnlineList);
-    socket.on("user:online", handleUserOnline);
-    socket.on("user:offline", handleUserOffline);
-    socket.connect();
     return () => {
       socket.off("message:new", handleNewMessage);
-      socket.off("users:online", handleOnlineList);
-      socket.off("user:online", handleUserOnline);
-      socket.off("user:offline", handleUserOffline);
-      socket.disconnect();
     };
   }, [me]);
 
