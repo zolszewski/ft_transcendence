@@ -1,10 +1,17 @@
 "use client";
 
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 import type { User } from "@/lib/types";
 import { useChat } from "@/components/chat/ChatProvider";
 import ChatWindow from "@/components/chat/ChatWindow";
 import ConversationList from "@/components/chat/ConversationList";
+
+// pages où le dock ne s'affiche pas :
+// /chat a déjà le chat en plein écran (sinon doublon), /authentication/* sert à se connecter
+function isHiddenOn(pathname: string) {
+  return pathname === "/chat" || pathname.startsWith("/chat/") || pathname.startsWith("/authentication");
+}
 
 // le chat présent sur toutes les pages (placé dans le layout), comme celui de Facebook :
 // en bas à droite, une barre "Chat" qui ouvre la liste des contacts,
@@ -12,9 +19,11 @@ import ConversationList from "@/components/chat/ConversationList";
 export default function ChatDock() {
   const { myId, onlineUserIds, contacts, activeContact, unreadCounts, openChatWith } = useChat();
   const [contactsOpen, setContactsOpen] = useState(false);
+  const pathname = usePathname();
 
-  // pas connecté : pas de chat
-  if (!myId) return null;
+  // pas connecté, ou page où le chat n'a pas sa place : pas de dock
+  // (la socket reste ouverte dans le ChatProvider : on reste "en ligne" et les non-lus continuent de compter)
+  if (!myId || isHiddenOn(pathname)) return null;
 
   const onlineCount = contacts.filter((contact) => onlineUserIds.has(contact.id)).length;
   const totalUnread = Object.values(unreadCounts).reduce((sum, count) => sum + count, 0);
