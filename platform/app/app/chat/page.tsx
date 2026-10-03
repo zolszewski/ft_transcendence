@@ -1,118 +1,28 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import type { FormEvent } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { apiClient } from "@/lib/apiClient";
-import { getSocket } from "@/lib/socket";
-import { useOnlineUsers } from "@/components/chat/ChatProvider";
-import type { Message, User } from "@/lib/types";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { useChat } from "@/components/chat/ChatProvider";
+import ConversationList from "@/components/chat/ConversationList";
+import MessageList from "@/components/chat/MessageList";
+import MessageInput from "@/components/chat/MessageInput";
+import OnlineDot from "@/components/chat/OnlineDot";
+import type { User } from "@/lib/types";
 
-const MAX_MESSAGE_LENGTH = 2000;
-
-// message reçu par la socket : le back ajoute le destinataire pour savoir de quelle conversation il s'agit
-type SocketMessage = Message & { recipientId: string };
-
+// version plein écran du chat : tout l'état (contacts, messages, socket) vient du ChatProvider (layout)
 export default function ChatPage() {
   const [me, setMe] = useState<User | null>(null);
   const [notLoggedIn, setNotLoggedIn] = useState(false);
-  const [users, setUsers] = useState<User[]>([]);
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [content, setContent] = useState("");
-  const [sending, setSending] = useState(false);
-  const [error, setError] = useState("");
-  // ids des utilisateurs connectés, tenus à jour par le ChatProvider (layout)
-  const onlineUserIds = useOnlineUsers();
-  const bottomRef = useRef<HTMLDivElement>(null);
-  // copie de selectedUser lisible depuis le listener socket (sinon il garderait l'ancienne valeur)
-  const selectedUserRef = useRef<User | null>(null);
+  const { onlineUserIds, contacts, activeContact, messages, error, openChatWith, sendMessage } = useChat();
 
-  // au chargement : qui est connecté + liste des autres utilisateurs
+  // au chargement : qui est connecté (pour afficher son nom)
   useEffect(() => {
     apiClient.auth.me().then((response) => {
-      if (!response.success) {
-        setNotLoggedIn(true);
-        return;
-      }
-      setMe(response.data);
-      apiClient.chat.listUsers().then((usersResponse) => {
-        if (usersResponse.success) setUsers(usersResponse.data);
-        else setError(usersResponse.error);
-      });
+      if (response.success) setMe(response.data);
+      else setNotLoggedIn(true);
     });
   }, []);
-
-  // à chaque changement de destinataire : charger la conversation
-  useEffect(() => {
-    if (!selectedUser) return;
-    // ignore la réponse si on a changé de destinataire entre-temps
-    let cancelled = false;
-    apiClient.chat.getMessages(selectedUser.id).then((response) => {
-      if (cancelled) return;
-      if (response.success) setMessages(response.data);
-      else setError(response.error);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [selectedUser]);
-
-  // temps réel : écoute des nouveaux messages sur la socket ouverte par le ChatProvider
-  useEffect(() => {
-    if (!me) return;
-    const socket = getSocket();
-
-    function handleNewMessage(message: SocketMessage) {
-      const current = selectedUserRef.current;
-      // n'affiche que les messages de la conversation ouverte
-      if (!current || (message.senderId !== current.id && message.recipientId !== current.id)) return;
-      addMessage(message);
-    }
-
-    // pas de connect/disconnect ici : la connexion appartient au ChatProvider
-    socket.on("message:new", handleNewMessage);
-    return () => {
-      socket.off("message:new", handleNewMessage);
-    };
-  }, [me]);
-
-  // descend automatiquement au dernier message
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
-
-  // le même message peut arriver deux fois (réponse du POST + socket) : on ne l'ajoute qu'une fois
-  function addMessage(message: Message) {
-    setMessages((previous) =>
-      previous.some((existing) => existing.id === message.id) ? previous : [...previous, message]
-    );
-  }
-
-  function selectUser(user: User) {
-    selectedUserRef.current = user;
-    setSelectedUser(user);
-    setMessages([]);
-    setError("");
-  }
-
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!selectedUser || !content.trim() || sending) return;
-
-    setSending(true);
-    setError("");
-    const response = await apiClient.chat.sendMessage(selectedUser.id, content);
-    if (response.success) {
-      addMessage(response.data);
-      setContent("");
-    } else {
-      setError(response.error);
-    }
-    setSending(false);
-  }
 
   if (notLoggedIn) {
     return (
@@ -144,90 +54,32 @@ export default function ChatPage() {
       <div className="mt-6 flex min-h-0 flex-1 border">
         {/* liste des utilisateurs */}
         <aside className="w-56 shrink-0 overflow-y-auto border-r">
-          {users.length === 0 && <p className="p-4 text-sm text-gray-600">No other users yet.</p>}
-          <ul>
-            {users.map((user) => (
-              <li key={user.id}>
-                <button
-                  onClick={() => selectUser(user)}
-                  className={`flex w-full items-center gap-2 px-4 py-3 text-left hover:bg-muted ${
-                    selectedUser?.id === user.id ? "bg-muted font-bold" : ""
-                  }`}
-                >
-                  <OnlineDot online={onlineUserIds.has(user.id)} />
-                  {user.name}
-                </button>
-              </li>
-            ))}
-          </ul>
+          <ConversationList users={contacts} selectedUserId={activeContact?.id ?? null} onSelect={openChatWith} />
         </aside>
 
         {/* conversation */}
         <section className="flex min-w-0 flex-1 flex-col">
-          {!selectedUser ? (
+          {!activeContact ? (
             <p className="m-auto text-sm text-gray-600">Select a user to start chatting.</p>
           ) : (
             <>
               <h2 className="flex items-center gap-2 border-b px-4 py-3 font-bold">
-                <OnlineDot online={onlineUserIds.has(selectedUser.id)} />
-                {selectedUser.name}
+                <OnlineDot online={onlineUserIds.has(activeContact.id)} />
+                {activeContact.name}
                 <span className="text-xs font-normal text-gray-600">
-                  {onlineUserIds.has(selectedUser.id) ? "online" : "offline"}
+                  {onlineUserIds.has(activeContact.id) ? "online" : "offline"}
                 </span>
               </h2>
 
-              <div className="flex-1 space-y-2 overflow-y-auto p-4">
-                {messages.length === 0 && (
-                  <p className="text-sm text-gray-600">No messages yet. Say hello!</p>
-                )}
-                {messages.map((message) => {
-                  const isMine = message.senderId === me?.id;
-                  return (
-                    <div key={message.id} className={`flex ${isMine ? "justify-end" : "justify-start"}`}>
-                      <div
-                        className={`max-w-[70%] rounded-lg px-3 py-2 ${
-                          isMine ? "bg-primary text-primary-foreground" : "bg-muted"
-                        }`}
-                      >
-                        <p className="text-xs font-bold opacity-70">{isMine ? "You" : selectedUser.name}</p>
-                        <p className="break-words whitespace-pre-wrap">{message.content}</p>
-                        <p className="mt-1 text-right text-xs opacity-70">
-                          {new Date(message.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                        </p>
-                      </div>
-                    </div>
-                  );
-                })}
-                <div ref={bottomRef} />
-              </div>
+              <MessageList messages={messages} myId={me?.id ?? null} otherUserName={activeContact.name} />
 
               {error && <p className="px-4 text-sm text-red-600">{error}</p>}
 
-              <form onSubmit={handleSubmit} className="flex gap-2 border-t p-4">
-                <Input
-                  value={content}
-                  onChange={(event) => setContent(event.target.value)}
-                  placeholder={`Message ${selectedUser.name}`}
-                  maxLength={MAX_MESSAGE_LENGTH}
-                />
-                <Button type="submit" disabled={sending || !content.trim()}>
-                  Send
-                </Button>
-              </form>
+              <MessageInput placeholder={`Message ${activeContact.name}`} onSend={sendMessage} />
             </>
           )}
         </section>
       </div>
     </main>
-  );
-}
-
-// pastille verte si en ligne, grise sinon
-function OnlineDot({ online }: { online: boolean }) {
-  return (
-    <span
-      className={`inline-block h-2.5 w-2.5 shrink-0 rounded-full ${online ? "bg-green-500" : "bg-gray-300"}`}
-      title={online ? "online" : "offline"}
-    />
   );
 }
