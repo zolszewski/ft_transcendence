@@ -1,7 +1,7 @@
 "use client";
 
 import type { User } from "@/lib/types";
-import { useOnlineUsers } from "@/components/chat/ChatProvider";
+import { useChat } from "@/components/chat/ChatProvider";
 import OnlineDot from "@/components/chat/OnlineDot";
 
 type ConversationListProps = {
@@ -10,9 +10,9 @@ type ConversationListProps = {
   onSelect: (user: User) => void;
 };
 
-// liste des contacts avec leur pastille en ligne ; un clic ouvre la conversation
+// liste des contacts avec leur pastille en ligne et leurs non-lus ; un clic ouvre la conversation
 export default function ConversationList({ users, selectedUserId, onSelect }: ConversationListProps) {
-  const onlineUserIds = useOnlineUsers();
+  const { onlineUserIds, unreadCounts } = useChat();
 
   if (users.length === 0)
     return <p className="p-4 text-sm text-gray-600">No other users yet.</p>;
@@ -28,7 +28,15 @@ export default function ConversationList({ users, selectedUserId, onSelect }: Co
             }`}
           >
             <OnlineDot online={onlineUserIds.has(user.id)} />
-            {user.name}
+            <span className="min-w-0 flex-1 truncate">{user.name}</span>
+            {unreadCounts[user.id] > 0 && (
+              <span
+                className="rounded-full bg-red-600 px-2 text-xs font-bold text-white"
+                aria-label={`${unreadCounts[user.id]} unread messages`}
+              >
+                {unreadCounts[user.id]}
+              </span>
+            )}
           </button>
         </li>
       ))}
