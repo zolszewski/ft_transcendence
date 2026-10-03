@@ -19,7 +19,8 @@ export default function MessageList({ messages, myId, otherUserName }: MessageLi
   }, [messages]);
 
   return (
-    <div className="flex-1 space-y-2 overflow-y-auto p-4">
+    // role="log" + aria-live : les lecteurs d'écran annoncent les nouveaux messages
+    <div className="flex-1 space-y-2 overflow-y-auto p-4" role="log" aria-live="polite" aria-label="Messages">
       {messages.length === 0 && <p className="text-sm text-gray-600">No messages yet. Say hello!</p>}
       {messages.map((message) => {
         const isMine = message.senderId === myId;
