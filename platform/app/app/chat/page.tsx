@@ -65,7 +65,9 @@ export default function ChatPage() {
             <>
               <h2 className="flex items-center gap-2 border-b px-4 py-3 font-bold">
                 <OnlineDot online={onlineUserIds.has(activeContact.id)} />
-                {activeContact.name}
+                <Link href={`/users/${activeContact.id}`} className="hover:underline">
+                  {activeContact.name}
+                </Link>
                 <span className="text-xs font-normal text-gray-600">
                   {onlineUserIds.has(activeContact.id) ? "online" : "offline"}
                 </span>

@@ -1,6 +1,8 @@
 "use client";
 
 import { useRef, useState } from "react";
+import Link from "next/link";
+import { User as UserIcon } from "lucide-react";
 import type { KeyboardEvent } from "react";
 import { useChat } from "@/components/chat/ChatProvider";
 import MessageList from "@/components/chat/MessageList";
@@ -72,6 +74,15 @@ export default function ChatWindow() {
         <button onClick={toggleMinimized} className="px-2 py-1 hover:opacity-70" aria-hidden="true" tabIndex={-1}>
           {minimized ? "▲" : "_"}
         </button>
+        {/* accès au profil depuis le chat */}
+        <Link
+          href={`/users/${activeContact.id}`}
+          className={`px-2 py-1 hover:opacity-70 ${buttonFocus}`}
+          aria-label={`View ${activeContact.name}'s profile`}
+          title="Profile"
+        >
+          <UserIcon size={16} aria-hidden="true" />
+        </Link>
         <button onClick={closeChat} className={`px-2 py-1 hover:opacity-70 ${buttonFocus}`} aria-label="Close chat">
           ✕
         </button>

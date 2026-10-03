@@ -67,6 +67,7 @@ router.get("/:id", async (req, res) => {
 		faculty: user.faculty,
 		specialization: user.specialization,
 		avatarUrl: getAvatarUrl(user.avatarId),
+		createdAt: user.createdAt,
 	});
 });
 
