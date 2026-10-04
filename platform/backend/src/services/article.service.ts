@@ -161,6 +161,22 @@ export function withComputedUrls(article: any, userId?: string) {
 	};
 }
 
+export async function presentArticles(articles: any[], userId?: string) {
+	const withUrls = articles.map((a) => withComputedUrls(a, userId));
+	if (withUrls.length === 0)
+		return withUrls;
+	const ids = withUrls.map((a) => a.id);
+	const [counts, mine] = await Promise.all([
+		prisma.ArticleLike.groupBy({ by: ["articleId"], where: { articleId: { in: ids } }, _count: { _all: true } }),
+		userId
+			? prisma.ArticleLike.findMany({ where: { userId, articleId: { in: ids } }, select: { articleId: true } })
+			: Promise.resolve([]),
+	]);
+	const countById = new Map(counts.map((c) => [c.articleId, c._count._all]));
+	const likedIds = new Set(mine.map((m) => m.articleId));
+	return withUrls.map((a) => ({ ...a, likeCount: countById.get(a.id) ?? 0, likedByMe: likedIds.has(a.id) }));
+}
+
 export async function getArticleById(id: string) {
 	try {
 		return await prisma.Article.findUnique({

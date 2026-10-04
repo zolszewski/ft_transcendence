@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { ArticleStatus } from "@prisma/client";
-import { listArticles, getArticleById, createArticle, updateArticle, deleteArticle, updateArticleStatus, listSubmittedArticlesForReview, listMyArticles, canViewArticle, recordArticleView, withComputedUrls, likeArticle, unlikeArticle } from "../services/article.service";
+import { listArticles, getArticleById, createArticle, updateArticle, deleteArticle, updateArticleStatus, listSubmittedArticlesForReview, listMyArticles, canViewArticle, recordArticleView, withComputedUrls, likeArticle, unlikeArticle, presentArticles } from "../services/article.service";
 import { isOwner } from "../utils/authorization"
 import { requireAuth } from "../middleware/auth";
 import { isValidContent, isValidTitle } from "../utils/validation";
@@ -18,7 +18,7 @@ router.get("/explore", async (req, res) => {
 		page: Math.max(1, Number(page) || 1),
 		limit: Math.min(50, Math.max(1, Number(limit) || 10)),
 	});
-	res.json({ ...result, articles: result.articles.map(a => withComputedUrls(a, req.session?.userId)) });
+	res.json({ ...result, articles: await presentArticles(result.articles, req.session?.userId) });
 })
 
 router.get("/submitted", requireAuth, async (req, res) => {
@@ -30,7 +30,7 @@ router.get("/submitted", requireAuth, async (req, res) => {
 		page: Math.max(1, Number(page) || 1),
 		limit: Math.min(50, Math.max(1, Number(limit) || 10)),
 	});
-	res.json({ ...result, articles: result.articles.map(a => withComputedUrls(a, req.session?.userId)) });
+	res.json({ ...result, articles: await presentArticles(result.articles, req.session?.userId) });
 });
 
 router.get("/mine", requireAuth, async (req, res) => {
@@ -44,7 +44,7 @@ router.get("/mine", requireAuth, async (req, res) => {
 		page: Math.max(1, Number(page) || 1),
 		limit: Math.min(50, Math.max(1, Number(limit) || 10)),
 	});
-	res.json({ ...result, articles: result.articles.map(a => withComputedUrls(a, req.session?.userId)) });
+	res.json({ ...result, articles: await presentArticles(result.articles, req.session?.userId) });
 });
 
 router.get("/:id", async (req, res) => {
@@ -53,7 +53,8 @@ router.get("/:id", async (req, res) => {
 		return res.status(404).json({ error: "Article not found" });
 	if (article.status === "PUBLISHED" && req.session?.userId)
 		await recordArticleView(req.session.userId, article.id);
-	res.json(withComputedUrls(article, req.session?.userId));
+	const [presented] = await presentArticles([article], req.session?.userId);
+	res.json(presented);
 });
 
 router.post("/", requireAuth, async (req, res) => {
@@ -80,7 +81,8 @@ router.post("/", requireAuth, async (req, res) => {
 			return res.status(400).json({ error: "Not a PDF" });
 	}
 	const article = await createArticle(req.session.userId!, title, content, abstract, miniatureId, documentId);
-	res.status(201).json(withComputedUrls(article, req.session?.userId));
+	const [presented] = await presentArticles([article], req.session?.userId);
+	res.status(201).json(presented);
 });
 
 router.put("/:id", requireAuth, async (req, res) => {
@@ -113,7 +115,8 @@ router.put("/:id", requireAuth, async (req, res) => {
 	}
 
 	const updated = await updateArticle(req.params.id, { title, content, abstract, miniatureId, documentId });
-	res.json(withComputedUrls(updated, req.session?.userId));
+	const [presented] = await presentArticles([updated], req.session?.userId);
+	res.json(presented);
 })
 
 router.delete("/:id", requireAuth, async (req, res) => {
