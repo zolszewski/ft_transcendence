@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { ArticleStatus } from "@prisma/client";
-import { listArticles, getArticleById, createArticle, updateArticle, deleteArticle, updateArticleStatus, listSubmittedArticlesForReview, getMiniatureUrl, listMyArticles, canViewArticle, recordArticleView } from "../services/article.service";
+import { listArticles, getArticleById, createArticle, updateArticle, deleteArticle, updateArticleStatus, listSubmittedArticlesForReview, listMyArticles, canViewArticle, recordArticleView, withComputedUrls, likeArticle, unlikeArticle } from "../services/article.service";
 import { isOwner } from "../utils/authorization"
 import { requireAuth } from "../middleware/auth";
 import { isValidContent, isValidTitle } from "../utils/validation";
@@ -9,17 +9,6 @@ import { createComment, listCommentsForArticle } from "../services/comment.servi
 import { getUploadById, setUploadVisibility } from "../services/upload.service";
 
 const router = Router();
-
-function withComputedUrls(article: any, userId?: string) {
-	return {
-		...article,
-		miniatureUrl: getMiniatureUrl(article.miniatureId),
-		documentUrl: article.documentId && canViewArticle(article, userId)
-			? `/api/articles/${article.id}/document`
-			: null,
-	};
-}
-
 
 router.get("/explore", async (req, res) => {
 	const { search, sort, page, limit } = req.query;
@@ -202,6 +191,23 @@ router.get("/:id/document", async (req, res) => {
 	res.sendFile(`/app/uploads/${document.filename}`);
 });
 
+router.post("/:id/like", requireAuth, async (req, res) => {
+	const article = await getArticleById(req.params.id);
+	if (!article || !canViewArticle(article, req.session?.userId))
+		return res.status(404).json({ error: "Article not found" });
+	if (isOwner(article.authorId, req.session.userId!))
+		return res.status(403).json({ error: "You cannot like your own article" });
+	await likeArticle(req.session.userId!, article.id);
+	res.status(204).send();
+});
+
+router.delete("/:id/like", requireAuth, async (req, res) => {
+	const article = await getArticleById(req.params.id);
+	if (!article)
+		return res.status(404).json({ error: "Article not found" });
+	await unlikeArticle(req.session.userId!, article.id);
+	res.status(204).send();
+});
 
 
 export default router;

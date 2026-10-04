@@ -42,6 +42,7 @@ model User {
   reviews         Review[]
   comments        Comment[]
   views           ArticleView[]
+  likes           ArticleLike[]
   apiKeys         ApiKey[]
   uploads         Upload[] @relation("UserUploads")
   avatar          Upload? @relation("UserAvatar", fields: [avatarId], references: [id]) 
@@ -50,11 +51,12 @@ model User {
 }
 
 model Article {
-  id       String        @id @default(cuid())
-  title    String
-  abstract String?
-  content  String
-  status   ArticleStatus @default(DRAFT)
+  id        String        @id @default(cuid())
+  title     String
+  abstract  String?
+  content   String
+  status    ArticleStatus @default(DRAFT)
+  embedding Float[] @default([])
 
   authorId String
   author   User   @relation(fields: [authorId], references: [id])
@@ -71,6 +73,7 @@ model Article {
   reviews   Review[]
   comments  Comment[]
   views     ArticleView[]
+  likes     ArticleLike[]
 }
 
 
@@ -147,6 +150,19 @@ model ArticleView {
   article Article @relation(fields: [articleId], references: [id])
 
   createdAt DateTime @default(now())
+
+  @@unique([userId, articleId])
+}
+
+model ArticleLike {
+  id        String @id @default(cuid())
+  userId    String
+  articleId String
+
+  user    User    @relation(fields: [userId], references: [id])
+  article Article @relation(fields: [articleId], references: [id])
+
+  createdAt DateTime  @default(now())
 
   @@unique([userId, articleId])
 }

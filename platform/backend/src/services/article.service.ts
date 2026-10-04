@@ -1,5 +1,6 @@
 import { setCached, getCached, getArticlesCacheVersion, bumpArticlesCacheVersion } from "../lib/cache";
 import { prisma } from "../lib/prisma";
+import { computeEmbedding } from "../lib/embeddings";
 import { ArticleStatus } from "@prisma/client";
 import { isOwner } from "../utils/authorization";
 
@@ -150,6 +151,16 @@ export function canViewArticle(article: { status: ArticleStatus; authorId: strin
 	return article.status === "SUBMITTED";
 }
 
+export function withComputedUrls(article: any, userId?: string) {
+	return {
+		...article,
+		miniatureUrl: getMiniatureUrl(article.miniatureId),
+		documentUrl: article.documentId && canViewArticle(article, userId)
+			? `/api/articles/${article.id}/document`
+			: null,
+	};
+}
+
 export async function getArticleById(id: string) {
 	try {
 		return await prisma.Article.findUnique({
@@ -170,8 +181,9 @@ export async function getArticleById(id: string) {
 export async function createArticle(authorId: string, title: string, content: string, abstract?: string, miniatureId?: string, documentId?: string) {
 	try {
 		await bumpArticlesCacheVersion();
+		const embedding = await computeEmbedding(`${title}\n${abstract ?? ""}\n${content}`);
 		return await prisma.Article.create({
-			data: { title, content, abstract, authorId, miniatureId, documentId },
+			data: { title, content, abstract, authorId, miniatureId, documentId, embedding },
 			include: { author: { select: { id: true, name: true } } },
 		});
 	}
@@ -190,9 +202,12 @@ export function getMiniatureUrl(miniatureId: string | null): string {
 export async function updateArticle(id: string, data: { title?: string, content?: string, abstract?: string, miniatureId?: string, documentId?: string }) {
 	try {
 		await bumpArticlesCacheVersion();
+		let embedding: number[] | undefined;
+		if (data.title && data.content)
+			embedding = await computeEmbedding(`${data.title}\n${data.abstract ?? ""}\n${data.content}`);
 		return await prisma.Article.update({
 			where: { id },
-			data,
+			data: embedding ? { ...data, embedding } : data,
 			include: { author: { select: { id: true, name: true } } },
 		});
 	}
@@ -242,3 +257,26 @@ export async function recordArticleView(userId: string, articleId: string) {
 	}
 }
 
+export async function likeArticle(userId: string, articleId: string) {
+	try {
+		await prisma.ArticleLike.upsert({
+			where: { userId_articleId: { userId, articleId } },
+			create: { userId, articleId },
+			update: {},
+		});
+	}
+	catch (error) {
+		console.error("Failed to like article:", error);
+		throw new Error("Could not like article");
+	}
+}
+
+export async function unlikeArticle(userId: string, articleId: string) {
+	try {
+		await prisma.ArticleLike.deleteMany({ where: { userId, articleId } });
+	}
+	catch (error) {
+		console.error("Failed to unlike article:", error);
+		throw new Error("Could not unlike article");
+	}
+}

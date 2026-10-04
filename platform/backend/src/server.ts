@@ -10,9 +10,10 @@ import { errorHandler } from "./middleware/errorHandler";
 import helmet from "helmet";
 import { rateLimit } from "express-rate-limit";
 import { resolveApiKey } from "./middleware/auth";
-import uploadRoutes from "./routes/upload.routes"
-import userRoutes from "./routes/user.routes"
-import dashboardRoutes from "./routes/dashboard.routes"
+import uploadRoutes from "./routes/upload.routes";
+import userRoutes from "./routes/user.routes";
+import dashboardRoutes from "./routes/dashboard.routes";
+import recommendationRoutes from "./routes/recommendation.routes";
 
 const app = express();
 const apiLimiter = rateLimit({
@@ -35,6 +36,7 @@ app.use("/api/comments", commentRoutes);
 app.use("/api/uploads", uploadRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/recommendations", recommendationRoutes);
 
 app.get("/health", (_req, res) => {
   res.json({
