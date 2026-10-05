@@ -2,17 +2,27 @@ import { Server as SocketIOServer } from "socket.io";
 import type { Server as HTTPServer } from "http";
 import { sessionMiddleware } from "../middleware/session";
 import { redisClient } from "./redis";
+//import des outils
+//midelware de session pour savoir qui se connecte
 
-// instance unique, créée au démarrage par initSocketServer, lue ensuite par les routes via getIO()
+// on prépare une varibale pour le serveur socket.io
 let io: SocketIOServer | null = null;
 
-export function initSocketServer(httpServer: HTTPServer) {
+//cette fct reçoit le serveur HTTP
+//ici qu on crée le serveur Socket.IO
+//on ajoute le middleware de session (quand un client se connecte, Socket.IO peut accéder à sa session)
+//"server.on.." : dans cette fct on attend qu u nclient se conecte
+//"const userID =" : on récupère l id du client
+// "socket.join" : on crée une room pour cet user
+//await redisClient.sAdd("online_users", userId); : on dit à Redis que l'utilisateur est en ligne
+//"server.emit" : on prévient tous les autres users qui s'est connecté
+//"socket.emit" : on previent tous les autres users qui est en ligne
+//... getIO() : la focntion qui permet de récupérer socket.IO deuis les routes pour émettre un event (ex. créer un message)
+
+  export function initSocketServer(httpServer: HTTPServer) {
 	const server = new SocketIOServer(httpServer, { cors: { origin: true, credentials: true } });
 	io = server;
 	server.engine.use(sessionMiddleware);
-	// au démarrage personne n'est connecté : on vide la liste laissée par un ancien backend
-	// (crash ou redémarrage = les disconnect n'ont pas été traités, et redis garde ses données)
-	// passe avant tout sAdd car redis exécute les commandes dans l'ordre
 	redisClient.del("online_users").catch((error) => console.error("Failed to reset online users", error));
 	//s'execute une fois, à la connexion d'un user
 	server.on("connection", async (socket) => {
@@ -21,10 +31,10 @@ export function initSocketServer(httpServer: HTTPServer) {
 			socket.disconnect();
 			return;
 		}
-		//room perso : regroupe tous les onglets de cet user, pour lui envoyer des events avec .to(`user:${userId}`)
+		//room
 		socket.join(`user:${userId}`);
 		await redisClient.sAdd("online_users", userId);
-		//préviens tout le monde que cet user s'est connecté
+		//préviens tout le monde que cet user s' est connecté
 		server.emit("user:online", userId);
 		//envoie à ce nouvel onglet la liste de tous ceux qui sont déjà en ligne
 		socket.emit("users:online", await redisClient.sMembers("online_users"));
@@ -41,10 +51,11 @@ export function initSocketServer(httpServer: HTTPServer) {
 	return server;
 }
 
-// à utiliser dans les routes pour émettre un événement (ex: nouveau message)
+
 export function getIO(): SocketIOServer {
 	if (!io)
-		throw new Error("Socket.IO not initialized: call initSocketServer first");
+		throw new 
+	("Socket.IO not initialized: call initSocketServer first");
 	return io;
 }
 

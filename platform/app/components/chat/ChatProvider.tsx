@@ -1,16 +1,25 @@
 "use client";
 
+//coté navigateur. ca doit etre en temps réel pour mettre a jour l interface
+
+//le fichier layout permet de garder la structure du chat partout sur toutes les pages et le fichiers providerchat contient tout l etat du chat 
+// (les contactes; les messages, le conversionation) il gere aussi le temps réel etc.
+
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { apiClient } from "@/lib/apiClient";
 import { getSocket } from "@/lib/socket";
 import type { Message, User } from "@/lib/types";
 
+//import les outils react
+
 // message reçu par la socket : le back ajoute le destinataire pour savoir de quelle conversation il s'agit
 type SocketMessage = Message & { recipientId: string };
 
-// le minimum pour ouvrir une conversation (un User complet convient aussi)
+//le minimum pour ouvrir une conversation (un User complet convient aussi)
 export type ChatContact = Pick<User, "id" | "name">;
 
+
+//décris tout le système du chat
 type ChatContextValue = {
   // l'utilisateur connecté (null si personne)
   myId: string | null;
@@ -44,6 +53,9 @@ function appendOnce(messages: Message[], message: Message) {
   return messages.some((existing) => existing.id === message.id) ? messages : [...messages, message];
 }
 
+
+//useState : pour stocker les infos du chat (contacts, messages, etc)
+// et qauns ca change REact peut les modifier
 // placé dans le layout : une seule connexion socket pour tout le site,
 // qui reste ouverte quand on change de page (le layout ne se recharge pas)
 export function ChatProvider({ userId, children }: ChatProviderProps) {
@@ -57,6 +69,9 @@ export function ChatProvider({ userId, children }: ChatProviderProps) {
   const activeContactRef = useRef<ChatContact | null>(null);
   const activeContactId = activeContact?.id ?? null;
 
+
+  //Websocket permet le temps réel
+  //useEffect: quand un user met à jour le chat
   // se (re)connecte quand l'utilisateur change : login, logout, changement de compte
   useEffect(() => {
     if (!userId) return;
@@ -204,3 +219,5 @@ export function useChat(): ChatContextValue {
 export function useOnlineUsers(): Set<string> {
   return useChat().onlineUserIds;
 }
+
+// 

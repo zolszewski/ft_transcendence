@@ -4,6 +4,11 @@ import "./globals.css";
 import { getCurrentUser } from "@/lib/auth";
 import { ChatProvider } from "@/components/chat/ChatProvider";
 import ChatDock from "@/components/chat/ChatDock";
+//Metadata : récupére le titre et la description de la page de next.js
+//next/font/google : on importe les fonts de Google
+
+//ce fichier installe le chatProvider (qui contient toutes les indos du chat)
+
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -25,7 +30,7 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // relu à chaque router.refresh() (login / logout) : le provider sait qui est connecté
+  // recuper l id du user connecté
   const user = await getCurrentUser();
 
   return (
