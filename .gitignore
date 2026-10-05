@@ -1,7 +1,9 @@
 node_modules/
 .env
-platform/backups/
 
 # uploaded files: never committed, only the directory itself is kept
 platform/backend/uploads/*
 !platform/backend/uploads/.gitkeep
+
+platform/backups/*
+!platform/backups/.gitkeep
