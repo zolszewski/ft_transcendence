@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { redisClient } from "../lib/redis";
 import { createUser, getUserByEmail, getUserById } from "../services/user.service";
 import { hashPassword, verifyPassword } from "../services/auth.service";
 import { isValidEmail, isValidPassword, isValidName, isValidTotpCode } from "../utils/validation";
@@ -67,7 +68,10 @@ router.post("/login/2fa", authLimiter, async (req, res) => {
 });
 
 
-router.post("/logout", (req, res) => {
+router.post("/logout", async (req, res) => {
+	const userId = req.session.userId;
+	if (userId)
+		await redisClient.sRem("online_users", userId);
 	req.session.destroy((err) => {
 		if (err)
 			return res.status(500).json({ error: "Could not log out" });
