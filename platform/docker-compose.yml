@@ -80,6 +80,27 @@ services:
     networks:
       - platform_network 
 
+  backup:
+    build:
+      context: ./requirements/backup
+    container_name: backup
+    user: "1000:1000"
+    env_file:
+      - .env
+    environment:
+      PGHOST: postgresql
+      PGUSER: ${POSTGRES_USER}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      PGDATABASE: ${POSTGRES_DB}
+    volumes:
+      - ./backups:/backups
+    depends_on:
+      postgresql:
+        condition: service_healthy
+    restart: always
+    networks:
+      - platform_network
+
 volumes:
   postgresql_data:
   redis_data:
