@@ -124,7 +124,7 @@ router.get("/oauth/github/callback", async (req, res) => {
 	if (user.twoFactorEnabled) {
 		req.session.pending2faUserId = user.id;
 		req.session.pending2faAt = Date.now();
-		return res.redirect("/login?pending2fa=1");
+		return res.redirect("/authentication/login?pending2fa=1");
 	}
 	req.session.userId = user.id;
 	res.redirect("/");
