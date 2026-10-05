@@ -12,6 +12,7 @@ import LogoutButton from "@/components/LogoutButton";
 import NavLink from "@/components/NavLink";
 import PageShell from "@/components/PageShell";
 import UserProfileSection from "@/components/UserProfileSection";
+import FriendActions from "@/components/FriendActions";
 
 // profil public d'un autre utilisateur : ses infos (lecture seule), son statut en ligne,
 // et un bouton pour lui écrire (ouvre la fenêtre du chat en bas de l'écran)
@@ -84,12 +85,14 @@ export default function UserProfilePage() {
               <span aria-hidden="true">{online ? "Online" : "Offline"}</span>
             </p>
             {/* le chat n'existe que pour un utilisateur connecté */}
-            {myId && (
-              <button type="button" className="btn-nav" onClick={() => openChatWith(user)}>
-                Message
-              </button>
-            )}
-            {/* emplacement prévu pour le bouton d'ami (système d'amis, branche friends) */}
+            {myId ? (
+              <>
+                <button type="button" className="btn-nav" onClick={() => openChatWith(user)}>
+                  Message
+                </button>
+                <FriendActions targetUserId={user.id} currentUserId={myId} />
+              </>
+            ) : null}
           </div>
         </>
       )}

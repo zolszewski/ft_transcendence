@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import type { FriendRelationStatus } from "@/lib/types";
 import {
-  addFriend,
-  getRelationStatus,
-  removeFriend,
+  acceptFriendRequest,
+  fetchRelationStatus,
+  removeFriendship,
+  sendFriendRequest,
   subscribeFriendsChange,
 } from "@/lib/front/friends";
 
@@ -17,46 +19,102 @@ export default function FriendActions({
   targetUserId,
   currentUserId,
 }: FriendActionsProps) {
-  const [status, setStatus] = useState(() =>
-    getRelationStatus(targetUserId, currentUserId),
-  );
+  const [status, setStatus] = useState<FriendRelationStatus>("none");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+
+  const reload = useCallback(async () => {
+    if (!currentUserId || targetUserId === currentUserId) return;
+    setStatus(await fetchRelationStatus(targetUserId));
+  }, [currentUserId, targetUserId]);
 
   useEffect(() => {
-    setStatus(getRelationStatus(targetUserId, currentUserId));
+    void reload();
     return subscribeFriendsChange(() => {
-      setStatus(getRelationStatus(targetUserId, currentUserId));
+      void reload();
     });
-  }, [targetUserId, currentUserId]);
+  }, [reload]);
 
   if (!currentUserId || targetUserId === currentUserId) {
     return null;
   }
 
+  async function run(action: () => Promise<{ success: boolean; error?: string }>) {
+    setBusy(true);
+    setError("");
+    const result = await action();
+    if (!result.success) setError(result.error || "Something went wrong");
+    else await reload();
+    setBusy(false);
+  }
+
   if (status === "friends") {
     return (
-      <button
-        type="button"
-        className="btn-nav-sm"
-        onClick={() => {
-          removeFriend(targetUserId);
-          setStatus("none");
-        }}
-      >
-        Remove friend
-      </button>
+      <div className="flex flex-col items-end gap-1">
+        {error ? <p className="text-xs text-destructive">{error}</p> : null}
+        <button
+          type="button"
+          className="btn-nav-sm"
+          disabled={busy}
+          onClick={() => run(() => removeFriendship(targetUserId))}
+        >
+          Remove friend
+        </button>
+      </div>
+    );
+  }
+
+  if (status === "pending_incoming") {
+    return (
+      <div className="flex flex-wrap items-center gap-2">
+        {error ? <p className="w-full text-xs text-destructive">{error}</p> : null}
+        <button
+          type="button"
+          className="btn-nav"
+          disabled={busy}
+          onClick={() => run(() => acceptFriendRequest(targetUserId))}
+        >
+          Accept
+        </button>
+        <button
+          type="button"
+          className="btn-nav-sm"
+          disabled={busy}
+          onClick={() => run(() => removeFriendship(targetUserId))}
+        >
+          Reject
+        </button>
+      </div>
+    );
+  }
+
+  if (status === "pending_outgoing") {
+    return (
+      <div className="flex flex-col items-end gap-1">
+        {error ? <p className="text-xs text-destructive">{error}</p> : null}
+        <button
+          type="button"
+          className="btn-nav-sm"
+          disabled={busy}
+          onClick={() => run(() => removeFriendship(targetUserId))}
+        >
+          Cancel request
+        </button>
+      </div>
     );
   }
 
   return (
-    <button
-      type="button"
-      className="btn-nav"
-      onClick={() => {
-        addFriend(targetUserId);
-        setStatus("friends");
-      }}
-    >
-      Add friend
-    </button>
+    <div className="flex flex-col items-end gap-1">
+      {error ? <p className="text-xs text-destructive">{error}</p> : null}
+      <button
+        type="button"
+        className="btn-nav"
+        disabled={busy}
+        onClick={() => run(() => sendFriendRequest(targetUserId))}
+      >
+        Add friend
+      </button>
+    </div>
   );
 }

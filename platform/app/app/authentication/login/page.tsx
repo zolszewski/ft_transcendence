@@ -6,34 +6,43 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { apiClient } from "@/lib/apiClient";
 import PageShell from "@/components/PageShell";
+import GithubLoginButton from "@/components/GithubLoginButton";
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const pendingFromGithub = searchParams.get("pending2fa") === "1";
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
+  const [code, setCode] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [needsCode, setNeedsCode] = useState(pendingFromGithub);
+
+  function redirectAfterLogin() {
+    const redirectTo = searchParams.get("redirect") || "/";
+    router.push(redirectTo);
+    router.refresh();
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    
     setError("");
     setLoading(true);
 
     try {
-      const authResponse = await apiClient.auth.login(email, password);
-      if (!authResponse.success) {
-        setError(
-          authResponse.error ?? "Invalid email or password."
-        );
+      const response = await apiClient.auth.login(email, password);
+
+      if ("requires2fa" in response && response.requires2fa) {
+        setNeedsCode(true);
         return;
       }
-      const redirectTo = searchParams.get("redirect") || "/";
-      router.push(redirectTo);
-      router.refresh();
-
+      if (!response.success) {
+        setError(response.error ?? "Unable to log in.");
+        return;
+      }
+      redirectAfterLogin();
     } catch {
       setError("Unable to connect to the server.");
     } finally {
@@ -41,85 +50,119 @@ function LoginForm() {
     }
   }
 
-  return (
-    <PageShell variant="auth">
-        <h1 className="text-3xl font-bold">
-          Login
-        </h1>
+  async function handleVerifyCode(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError("");
+    setLoading(true);
 
-        <form
-          onSubmit={handleSubmit}
-          className="mt-8 flex flex-col gap-4"
-        >
+    try {
+      const response = await apiClient.twoFactor.verifyLogin(code);
+      if (!response.success) {
+        // "No pending login" = la fenêtre de 5 minutes a expiré : on renvoie
+        // au formulaire email/mot de passe plutôt que de laisser retaper un code mort.
+        if (response.error === "No pending login") {
+          setNeedsCode(false);
+          setCode("");
+          setError("Your session expired. Please log in again.");
+          return;
+        }
+        setError(response.error ?? "Invalid code.");
+        return;
+      }
+      redirectAfterLogin();
+    } catch {
+      setError("Unable to connect to the server.");
+    } finally {
+      setLoading(false);
+    }
+  }
 
-          <div className="flex flex-col gap-2">
-            <label htmlFor="email">
-              Email
-            </label>
+  if (needsCode) {
+    return (
+      <PageShell variant="auth">
+        <h1 className="text-3xl font-bold">Two-factor authentication</h1>
+        <p className="mt-2 text-muted-foreground">
+          Enter the 6-digit code from your authenticator app.
+        </p>
 
-            <input
-              type="email"
-              id="email"
-              name="email"
-              required
-              autoComplete="email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              className="field-input"
-            />
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <label htmlFor="password">
-              Password
-            </label>
-
-            <input
-              type="password"
-              id="password"
-              name="password"
-              required
-              autoComplete="current-password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              className="field-input"
-            />
-          </div>
-
-          {error ? (
-            <p className="form-error">
-              {error}
-            </p>
-          ) : null}
-
+        <form onSubmit={handleVerifyCode} className="mt-8 flex flex-col gap-4">
+          <input
+            type="text"
+            inputMode="numeric"
+            maxLength={6}
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+            placeholder="123456"
+            required
+            className="field-input"
+            autoFocus
+          />
+          {error ? <p className="form-error">{error}</p> : null}
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || code.length !== 6}
             className="btn-nav w-full justify-center disabled:opacity-50"
           >
-            {loading ? "Logging in..." : "Login"}
+            {loading ? "Verifying..." : "Verify"}
           </button>
-
         </form>
+      </PageShell>
+    );
+  }
 
-        <p className="mt-6 text-sm text-muted-foreground">
-          Don't have an account?{" "}
-          <Link
-            href="/authentication/register"
-            className="font-medium text-foreground hover:underline"
-          >
-            Register
-          </Link>
-        </p>
+  return (
+    <PageShell variant="auth">
+      <h1 className="text-3xl font-bold">Welcome back</h1>
+      <p className="mt-2 text-muted-foreground">Log in to OpenScholar.</p>
 
-        <p className="mt-3 text-sm">
-          <Link
-            href="/"
-            className="text-muted-foreground hover:underline"
-          >
-            Back to OpenScholar
-          </Link>
-        </p>
+      <form onSubmit={handleSubmit} className="mt-8 flex flex-col gap-4">
+        <div className="flex flex-col gap-2">
+          <label htmlFor="email">Email</label>
+          <input
+            id="email"
+            type="email"
+            required
+            autoComplete="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="field-input"
+          />
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <label htmlFor="password">Password</label>
+          <input
+            id="password"
+            type="password"
+            required
+            autoComplete="current-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="field-input"
+          />
+        </div>
+
+        {error ? <p className="form-error">{error}</p> : null}
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="btn-nav w-full justify-center disabled:opacity-50"
+        >
+          {loading ? "Logging in..." : "Login"}
+        </button>
+      </form>
+
+      <div className="mt-6">
+        <GithubLoginButton redirectTo={searchParams.get("redirect") || undefined} />
+      </div>
+
+      <p className="mt-6 text-sm text-muted-foreground">
+        Don't have an account?{" "}
+        <Link href="/authentication/register" className="font-medium text-foreground hover:underline">
+          Register
+        </Link>
+      </p>
     </PageShell>
   );
 }

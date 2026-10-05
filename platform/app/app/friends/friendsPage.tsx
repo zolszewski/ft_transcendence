@@ -10,7 +10,7 @@ import NavLink from "@/components/NavLink";
 import LogoutButton from "@/components/LogoutButton";
 import FriendsManager from "@/components/FriendsManager";
 
-export default function FriendsPageClient() {
+export default function FriendsPage() {
   const [user, setUser] = useState<User | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);

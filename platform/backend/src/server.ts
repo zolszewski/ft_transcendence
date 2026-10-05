@@ -14,6 +14,7 @@ import { resolveApiKey } from "./middleware/auth";
 import uploadRoutes from "./routes/upload.routes"
 import userRoutes from "./routes/user.routes"
 import dashboardRoutes from "./routes/dashboard.routes"
+import friendRoutes from "./routes/friend.routes"
 
 const app = express();
 app.set("trust proxy", 1);
@@ -41,6 +42,7 @@ app.use("/api/chat", chatRoutes);
 app.use("/api/uploads", uploadRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/friends", friendRoutes);
 
 
 app.get("/health", (_req, res) => {

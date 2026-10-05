@@ -110,3 +110,16 @@ export interface ListResult<T> {
 }
 
 export type FriendRelationStatus = "none" | "friends" | "pending_outgoing" | "pending_incoming";
+
+export type FriendSummary = {
+  id: string;
+  name: string;
+  faculty: string | null;
+  avatarUrl: string | null;
+};
+
+export type FriendRequestItem = {
+  id: string;
+  createdAt: string;
+  from: FriendSummary;
+};
