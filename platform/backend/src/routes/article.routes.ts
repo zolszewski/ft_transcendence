@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { ArticleStatus } from "@prisma/client";
-import { listArticles, getArticleById, createArticle, updateArticle, deleteArticle, updateArticleStatus, listSubmittedArticlesForReview, listMyArticles, articleWithMediaUrls } from "../services/article.service";
+import { listArticles, getArticleById, createArticle, updateArticle, deleteArticle, updateArticleStatus, listSubmittedArticlesForReview, listMyArticles, canViewArticle, recordArticleView, withComputedUrls, likeArticle, unlikeArticle, presentArticles } from "../services/article.service";
 import { isOwner } from "../utils/authorization"
 import { requireAuth } from "../middleware/auth";
 import { isValidContent, isValidTitle, parseMiniatureFocus } from "../utils/validation";
@@ -18,7 +18,7 @@ router.get("/explore", async (req, res) => {
 		page: Math.max(1, Number(page) || 1),
 		limit: Math.min(50, Math.max(1, Number(limit) || 10)),
 	});
-	res.json({ ...result, articles: result.articles.map(articleWithMediaUrls) });
+	res.json({ ...result, articles: await presentArticles(result.articles, req.session?.userId) });
 })
 
 router.get("/submitted", requireAuth, async (req, res) => {
@@ -30,7 +30,7 @@ router.get("/submitted", requireAuth, async (req, res) => {
 		page: Math.max(1, Number(page) || 1),
 		limit: Math.min(50, Math.max(1, Number(limit) || 10)),
 	});
-	res.json({ ...result, articles: result.articles.map(articleWithMediaUrls) });
+	res.json({ ...result, articles: await presentArticles(result.articles, req.session?.userId) });
 });
 
 router.get("/mine", requireAuth, async (req, res) => {
@@ -44,30 +44,24 @@ router.get("/mine", requireAuth, async (req, res) => {
 		page: Math.max(1, Number(page) || 1),
 		limit: Math.min(50, Math.max(1, Number(limit) || 10)),
 	});
-	res.json({ ...result, articles: result.articles.map(articleWithMediaUrls) });
+	res.json({ ...result, articles: await presentArticles(result.articles, req.session?.userId) });
 });
 
 router.get("/:id", async (req, res) => {
 	const article = await getArticleById(req.params.id);
-	if (!article)
+	if (!article || !canViewArticle(article, req.session?.userId))
 		return res.status(404).json({ error: "Article not found" });
-	if (article.status === "PUBLISHED")
-		return res.json(articleWithMediaUrls(article));
-	const userId = req.session?.userId;
-	if (!userId)
-		return res.status(404).json({ error: "Article not found" });
-	if (isOwner(article.authorId, userId))
-		return res.json(articleWithMediaUrls(article));
-	if (article.status === "SUBMITTED")
-		return res.json(articleWithMediaUrls(article));
-	return res.status(404).json({ error: "Article not found" });
+	if (article.status === "PUBLISHED" && req.session?.userId)
+		await recordArticleView(req.session.userId, article.id);
+	const [presented] = await presentArticles([article], req.session?.userId);
+	res.json(presented);
 });
 
 router.post("/", requireAuth, async (req, res) => {
-	const { title, content, abstract, miniatureId, pdfId } = req.body;
-	const focus = parseMiniatureFocus(req.body);
+	const { title, content, abstract, miniatureId, documentId } = req.body;
 	if(!isValidTitle(title) || !isValidContent(content))
 		return res.status(400).json({ error: "Invalid input" });
+	const focus = parseMiniatureFocus(req.body);
 	if (focus === null)
 		return res.status(400).json({ error: "Invalid miniature focus" });
 	if (miniatureId) {
@@ -80,27 +74,18 @@ router.post("/", requireAuth, async (req, res) => {
 			return res.status(400).json({ error: "Not an image" });
 		await setUploadVisibility(miniatureId, "PUBLIC");
 	}
-	if (pdfId) {
-        const upload = await getUploadById(pdfId);
-        if (!upload)
-            return res.status(404).json({ error: "Upload not found" });
-        if (!isOwner(upload.ownerId, req.session.userId!))
-            return res.status(403).json({ error: "Forbidden" });
-        if (upload.mimeType !== "application/pdf")
-            return res.status(400).json({ error: "Not a PDF" });
-        await setUploadVisibility(pdfId, "PUBLIC");
-    }
-	const article = await createArticle(
-		req.session.userId!,
-		title,
-		content,
-		abstract,
-		miniatureId,
-		pdfId,
-		focus?.miniatureFocusX ?? 50,
-		focus?.miniatureFocusY ?? 50,
-	);
-	res.status(201).json(articleWithMediaUrls(article));
+	if (documentId) {
+		const document = await getUploadById(documentId);
+		if (!document)
+			return res.status(404).json({ error: "Upload not found" });
+		if (!isOwner(document.ownerId, req.session.userId!))
+			return res.status(403).json({ error: "Forbidden" });
+		if (document.mimeType !== "application/pdf")
+			return res.status(400).json({ error: "Not a PDF" });
+	}
+	const article = await createArticle(req.session.userId!, title, content, abstract, miniatureId, documentId, focus?.miniatureFocusX ?? 50, focus?.miniatureFocusY ?? 50);
+	const [presented] = await presentArticles([article], req.session?.userId);
+	res.status(201).json(presented);
 });
 
 router.put("/:id", requireAuth, async (req, res) => {
@@ -109,7 +94,7 @@ router.put("/:id", requireAuth, async (req, res) => {
 		return res.status(404).json({ error: "Article not found" });
 	if (!isOwner(article.authorId, req.session.userId!))
 		return res.status(403).json({ error: "Forbidden" });
-	const { title, content, abstract, miniatureId, pdfId } = req.body;
+	const { title, content, abstract, miniatureId, documentId } = req.body;
 	const focus = parseMiniatureFocus(req.body);
 	if (!isValidTitle(title) || !isValidContent(content))
 		return res.status(400).json({ error: "Invalid input" });
@@ -125,25 +110,19 @@ router.put("/:id", requireAuth, async (req, res) => {
 			return res.status(400).json({ error: "Not an image" });
 		await setUploadVisibility(miniatureId, "PUBLIC");
 	}
-	if (pdfId) {
-        const upload = await getUploadById(pdfId);
-        if (!upload)
-            return res.status(404).json({ error: "Upload not found" });
-        if (!isOwner(upload.ownerId, req.session.userId!))
-            return res.status(403).json({ error: "Forbidden" });
-        if (upload.mimeType !== "application/pdf")
-            return res.status(400).json({ error: "Not a PDF" });
-        await setUploadVisibility(pdfId, "PUBLIC");
-    }
-	const updated = await updateArticle(req.params.id, {
-		title,
-		content,
-		abstract,
-		miniatureId,
-		pdfId,
-		...(focus ?? {}),
-	});
-	res.json(articleWithMediaUrls(updated));
+	if (documentId) {
+		const document = await getUploadById(documentId);
+		if (!document)
+			return res.status(404).json({ error: "Upload not found" });
+		if (!isOwner(document.ownerId, req.session.userId!))
+			return res.status(403).json({ error: "Forbidden" });
+		if (document.mimeType !== "application/pdf")
+			return res.status(400).json({ error: "Not a PDF" });
+	}
+
+	const updated = await updateArticle(req.params.id, { title, content, abstract, miniatureId, documentId, ...(focus ?? {}) });
+	const [presented] = await presentArticles([updated], req.session?.userId);
+	res.json(presented);
 })
 
 router.delete("/:id", requireAuth, async (req, res) => {
@@ -210,5 +189,34 @@ router.get("/:id/comments", async (req, res) => {
 	const comments = await listCommentsForArticle(req.params.id);
 	res.json(comments);
 });
+
+router.get("/:id/document", async (req, res) => {
+	const article = await getArticleById(req.params.id);
+	if (!article || !article.documentId || !canViewArticle(article, req.session?.userId))
+		return res.status(404).json({ error: "Document not found" });
+	const document = await getUploadById(article.documentId);
+	if (!document)
+		return res.status(404).json({ error: "Document not found" });
+	res.sendFile(`/app/uploads/${document.filename}`);
+});
+
+router.post("/:id/like", requireAuth, async (req, res) => {
+	const article = await getArticleById(req.params.id);
+	if (!article || !canViewArticle(article, req.session?.userId))
+		return res.status(404).json({ error: "Article not found" });
+	if (isOwner(article.authorId, req.session.userId!))
+		return res.status(403).json({ error: "You cannot like your own article" });
+	await likeArticle(req.session.userId!, article.id);
+	res.status(204).send();
+});
+
+router.delete("/:id/like", requireAuth, async (req, res) => {
+	const article = await getArticleById(req.params.id);
+	if (!article)
+		return res.status(404).json({ error: "Article not found" });
+	await unlikeArticle(req.session.userId!, article.id);
+	res.status(204).send();
+});
+
 
 export default router;

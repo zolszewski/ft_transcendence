@@ -1,8 +1,14 @@
 COMPOSE = docker compose -f platform/docker-compose.yml
+ENV_FILE = platform/.env
 
 all: up
 
-up:
+$(ENV_FILE):
+	cp platform/.env.example $(ENV_FILE)
+	@echo "platform/.env cree a partir de .env.example : remplis les valeurs puis relance make"
+	@exit 1
+
+up: $(ENV_FILE)
 	$(COMPOSE) up --build -d
 
 down:

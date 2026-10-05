@@ -47,7 +47,6 @@ router.get("/me", requireAuth, async (req, res) => {
 	});
 });
 
-
 router.get("/search", requireAuth, async (req, res) => {
 	const { q } = req.query;
 	if (typeof q !== "string" || q.trim().length === 0)

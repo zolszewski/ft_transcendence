@@ -1,6 +1,8 @@
 import { setCached, getCached, getArticlesCacheVersion, bumpArticlesCacheVersion } from "../lib/cache";
 import { prisma } from "../lib/prisma";
+import { computeEmbedding } from "../lib/embeddings";
 import { ArticleStatus } from "@prisma/client";
+import { isOwner } from "../utils/authorization";
 
 type ListArticlesOptions = {
 	search?: string;
@@ -139,6 +141,42 @@ export async function listMyArticles(options: ListMyArticlesOptions) {
 	}
 }
 
+export function canViewArticle(article: { status: ArticleStatus; authorId: string }, userId?: string): boolean {
+	if (article.status === "PUBLISHED")
+		return true;
+	if (!userId)
+		return false;
+	if (isOwner(article.authorId, userId))
+		return true;
+	return article.status === "SUBMITTED";
+}
+
+export function withComputedUrls(article: any, userId?: string) {
+	return {
+		...article,
+		miniatureUrl: getMiniatureUrl(article.miniatureId),
+		documentUrl: article.documentId && canViewArticle(article, userId)
+			? `/api/articles/${article.id}/document`
+			: null,
+	};
+}
+
+export async function presentArticles(articles: any[], userId?: string) {
+	const withUrls = articles.map((a) => withComputedUrls(a, userId));
+	if (withUrls.length === 0)
+		return withUrls;
+	const ids = withUrls.map((a) => a.id);
+	const [counts, mine] = await Promise.all([
+		prisma.ArticleLike.groupBy({ by: ["articleId"], where: { articleId: { in: ids } }, _count: { _all: true } }),
+		userId
+			? prisma.ArticleLike.findMany({ where: { userId, articleId: { in: ids } }, select: { articleId: true } })
+			: Promise.resolve([]),
+	]);
+	const countById = new Map(counts.map((c) => [c.articleId, c._count._all]));
+	const likedIds = new Set(mine.map((m) => m.articleId));
+	return withUrls.map((a) => ({ ...a, likeCount: countById.get(a.id) ?? 0, likedByMe: likedIds.has(a.id) }));
+}
+
 export async function getArticleById(id: string) {
 	try {
 		return await prisma.Article.findUnique({
@@ -156,36 +194,21 @@ export async function getArticleById(id: string) {
 	}
 }
 
-
-export async function createArticle(
-  authorId: string,
-  title: string,
-  content: string,
-  abstract?: string,
-  miniatureId?: string,
-  pdfId?: string,
-  miniatureFocusX = 50,
-  miniatureFocusY = 50,
-) {
-  try {
-    await bumpArticlesCacheVersion();
-    return await prisma.Article.create({
-      data: {
-        title,
-        content,
-        abstract,
-        authorId,
-        miniatureId,
-        pdfId,
-        miniatureFocusX,
-        miniatureFocusY,
-      },
-      include: { author: { select: { id: true, name: true } } },
-    });
-  } catch (error) {
-    console.error("Failed to create article:", error);
-    throw new Error("Could not create article");
-  }
+export async function createArticle(authorId: string, title: string, content: string, abstract?: string, miniatureId?: string, documentId?: string,
+	miniatureFocusX = 50,
+  	miniatureFocusY = 50,) {
+	try {
+		await bumpArticlesCacheVersion();
+		const embedding = await computeEmbedding(`${title}\n${abstract ?? ""}\n${content}`);
+		return await prisma.Article.create({
+			data: { title, content, abstract, authorId, miniatureId, documentId, miniatureFocusX, miniatureFocusY, embedding },
+			include: { author: { select: { id: true, name: true } } },
+		});
+	}
+	catch (error) {
+		console.error("Failed to create article:", error);
+		throw new Error("Could not create article");
+	}
 }
 
 
@@ -195,45 +218,29 @@ export function getMiniatureUrl(miniatureId: string | null): string {
 	return "/default-article-thumbnail.jpg";
 }
 
-export function articleWithMediaUrls<T extends { miniatureId?: string | null; pdfId?: string | null }>(
-	article: T,
-) {
-	return {
-		...article,
-		miniatureUrl: getMiniatureUrl(article.miniatureId ?? null),
-		pdfUrl: article.pdfId ? `/api/uploads/${article.pdfId}` : null,
-	};
-}
-
-export async function updateArticle(
-  id: string,
-  data: {
-    title?: string;
-    content?: string;
-    abstract?: string;
-    miniatureId?: string | null;
-    pdfId?: string | null;
-    miniatureFocusX?: number;
-    miniatureFocusY?: number;
-  }
-) {
-  try {
-    await bumpArticlesCacheVersion();
-    const { miniatureId, pdfId, ...rest } = data;
-    const updateData = {
+export async function updateArticle(id: string, data: { title?: string, content?: string, abstract?: string, miniatureId?: string, documentId?: string, miniatureFocusX?: number;
+    miniatureFocusY?: number; }) {
+	try {
+		await bumpArticlesCacheVersion();
+		const { miniatureId, documentId, ...rest } = data;
+    	const updateData = {
       ...rest,
       ...(miniatureId !== undefined ? { miniatureId } : {}),
-      ...(pdfId !== undefined ? { pdfId } : {}),
+      ...(documentId !== undefined ? { documentId } : {}),
     };
-    return await prisma.Article.update({
-      where: { id },
-      data: updateData,
-      include: { author: { select: { id: true, name: true } } },
-    });
-  } catch (error) {
-    console.error("Failed to update article:", error);
-    throw new Error("Could not update article");
-  }
+		let embedding: number[] | undefined;
+		if (data.title && data.content)
+			embedding = await computeEmbedding(`${data.title}\n${data.abstract ?? ""}\n${data.content}`);
+		return await prisma.Article.update({
+			where: { id },
+			data: embedding ? { ...data, embedding } : data,
+			include: { author: { select: { id: true, name: true } } },
+		});
+	}
+	catch (error) {
+		console.error("Failed to update article:", error);
+		throw new Error("Could not update article");
+	}
 }
 
 export async function deleteArticle(id: string) {
@@ -259,5 +266,43 @@ export async function updateArticleStatus(id: string,status: ArticleStatus) {
 	catch (error) {
 		console.error("Failed to update article status:", error);
 		throw new Error("Could not update article status");
+	}
+}
+
+export async function recordArticleView(userId: string, articleId: string) {
+	try {
+		await prisma.ArticleView.upsert({
+			where: { userId_articleId: { userId, articleId } },
+			create: { userId, articleId },
+			update: {},
+		});
+	}
+	catch (error) {
+		console.error("Failed to record article view:", error);
+		throw new Error("Could not record article view");
+	}
+}
+
+export async function likeArticle(userId: string, articleId: string) {
+	try {
+		await prisma.ArticleLike.upsert({
+			where: { userId_articleId: { userId, articleId } },
+			create: { userId, articleId },
+			update: {},
+		});
+	}
+	catch (error) {
+		console.error("Failed to like article:", error);
+		throw new Error("Could not like article");
+	}
+}
+
+export async function unlikeArticle(userId: string, articleId: string) {
+	try {
+		await prisma.ArticleLike.deleteMany({ where: { userId, articleId } });
+	}
+	catch (error) {
+		console.error("Failed to unlike article:", error);
+		throw new Error("Could not unlike article");
 	}
 }

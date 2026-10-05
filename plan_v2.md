@@ -238,7 +238,6 @@ Targeted by Plan 2.0:
 - File upload (Minor, +1) — Day 19
 - User Management (Major, +2) — Days 20+21
 - OAuth (Minor, +1) + 2FA (Minor, +1) — Day 25
-- i18n (Minor, +1) + RTL (Minor, +1) — Day 26
 - Health check/status page (Minor, +1) — Day 28
 - WAF/Vault (Major, +2) — Day 32
 - GDPR (Minor, +1) — Day 34
@@ -246,7 +245,7 @@ Targeted by Plan 2.0:
 - Recommendation Sys (Major, +2) — Days 23-24
 - Framework (Major, +2) — already largely in place
 
-TOTAL TARGETED: 24 points (14 required + 10 margin)
+TOTAL TARGETED: 22 points (14 required + 10 margin)
 
 
 IF TIME RUNS SHORT, CUT THESE FIRST (no domino effect):

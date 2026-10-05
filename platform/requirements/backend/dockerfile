@@ -14,4 +14,4 @@ COPY backend/ ./
 
 EXPOSE 4000
 
-CMD ["sh", "-c", "npx prisma migrate deploy && npx prisma generate && npm run dev"]
+CMD ["sh", "-c", "node scripts/with-vault.js npx prisma migrate deploy && node scripts/with-vault.js npm run dev"]

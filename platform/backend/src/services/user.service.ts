@@ -123,7 +123,6 @@ export async function getUserByOAuth(oauthProvider: string, oauthId : string) {
 	}
 }
 
-
 export async function searchUsersByName(query: string, excludeUserId: string) {
 	try {
 		return await prisma.User.findMany({

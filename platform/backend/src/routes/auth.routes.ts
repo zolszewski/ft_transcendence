@@ -7,6 +7,7 @@ import {
 	getUserById,
 	getUserByOAuth,
 } from "../services/user.service";
+import { redisClient } from "../lib/redis";
 import { hashPassword, verifyPassword } from "../services/auth.service";
 import { isValidEmail, isValidPassword, isValidName, isValidTotpCode } from "../utils/validation";
 import { authLimiter, requireAuth } from "../middleware/auth";
@@ -76,8 +77,11 @@ router.post("/login/2fa", authLimiter, async (req, res) => {
 
 router.post("/logout", async (req, res) => {
 	// avant de détruire la session : couper ses sockets (sinon elles restent connectées avec l'ancienne identité)
-	if (req.session.userId)
+	const userId = req.session.userId;
+	if (userId) {
+		await redisClient.sRem("online_users", userId);
 		await disconnectSessionSockets(req.session.userId, req.sessionID);
+	}
 	req.session.destroy((err) => {
 		if (err)
 			return res.status(500).json({ error: "Could not log out" });
@@ -139,7 +143,7 @@ router.get("/oauth/github/callback", async (req, res) => {
 	if (user.twoFactorEnabled) {
 		req.session.pending2faUserId = user.id;
 		req.session.pending2faAt = Date.now();
-		return res.redirect("/login?pending2fa=1");
+		return res.redirect("/authentication/login?pending2fa=1");
 	}
 	req.session.userId = user.id;
 	res.redirect("/");

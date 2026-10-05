@@ -1326,3 +1326,257 @@ POST {{baseUrl}}/api/auth/logout
 
 ###
 POST {{baseUrl}}/api/users/me/2fa/setup
+
+
+### ==========================================================
+### ARTICLE DOCUMENT (PDF) : le PDF reste PRIVATE en base en permanence, 
+### l'acces est calcule dynamiquement via canViewArticle 
+### meme regle que la visibilite de l'article lui-meme :
+### PUBLISHED -> tout le monde, sinon auteur ou n'importe quel
+### utilisateur connecte si SUBMITTED, sinon personne
+###
+### curl -c cA.txt -X POST http://localhost:4000/api/auth/register \
+###   -H "Content-Type: application/json" \
+###   -d '{"email":"docauthor@example.com","name":"author","password":"motdepasse123"}'
+###
+### curl -b cA.txt -X POST http://localhost:4000/api/uploads \
+###   -F "file=@monfichier.pdf;type=application/pdf"
+### -> 201 { id, ... } : c'est le DOC_ID
+###
+### curl -b cA.txt -X POST http://localhost:4000/api/articles \
+###   -H "Content-Type: application/json" \
+###   -d '{"title":"Test doc","content":"contenu","documentId":"DOC_ID"}'
+### -> 201 { id, ... } : c'est l'ART_ID a remplacer ci-dessous
+###
+### ==========================================================
+
+### L'auteur voit documentUrl meme en DRAFT (le PDF est a lui)
+GET {{baseUrl}}/api/articles/REMPLACER_PAR_ART_ID
+
+### L'auteur telecharge son propre document en DRAFT (200 attendu)
+GET {{baseUrl}}/api/articles/REMPLACER_PAR_ART_ID/document
+
+### Créer un deuxieme compte "tiers" (remplace le cookie actuel)
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "doctiers@example.com",
+  "name": "tiers",
+  "password": "motdepasse123"
+}
+
+### Le tiers ne voit pas l'article DRAFT (404 attendu)
+GET {{baseUrl}}/api/articles/REMPLACER_PAR_ART_ID
+
+### Le tiers ne peut pas telecharger le document d'un DRAFT (404 attendu)
+GET {{baseUrl}}/api/articles/REMPLACER_PAR_ART_ID/document
+
+### Se reconnecter en tant qu'auteur pour soumettre l'article
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "docauthor@example.com",
+  "password": "motdepasse123"
+}
+
+###
+POST {{baseUrl}}/api/articles/REMPLACER_PAR_ART_ID/submit
+
+### Se reconnecter en tant que tiers (devient reviewer potentiel maintenant que c'est SUBMITTED)
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "doctiers@example.com",
+  "password": "motdepasse123"
+}
+
+### Le tiers voit maintenant documentUrl (article SUBMITTED)
+GET {{baseUrl}}/api/articles/REMPLACER_PAR_ART_ID
+
+### Le tiers telecharge le document en SUBMITTED (200 attendu)
+GET {{baseUrl}}/api/articles/REMPLACER_PAR_ART_ID/document
+
+### Se déconnecter : verifier qu'un anonyme ne voit ni ne telecharge un SUBMITTED
+POST {{baseUrl}}/api/auth/logout
+
+### Anonyme, article SUBMITTED (404 attendu)
+GET {{baseUrl}}/api/articles/REMPLACER_PAR_ART_ID
+
+### Anonyme, telechargement d'un SUBMITTED (404 attendu)
+GET {{baseUrl}}/api/articles/REMPLACER_PAR_ART_ID/document
+
+### Se reconnecter en tant que tiers pour reviewer et approuver
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "doctiers@example.com",
+  "password": "motdepasse123"
+}
+
+### @name docReview
+POST {{baseUrl}}/api/articles/REMPLACER_PAR_ART_ID/reviews
+Content-Type: application/json
+
+{
+  "comment": "ok"
+}
+
+###
+PATCH {{baseUrl}}/api/reviews/{{docReview.response.body.$.id}}
+Content-Type: application/json
+
+{
+  "decision": "APPROVED"
+}
+
+### Se déconnecter : l'article est PUBLISHED, le PDF doit etre public
+POST {{baseUrl}}/api/auth/logout
+
+### Anonyme telecharge le document d'un article PUBLISHED (200 attendu)
+GET {{baseUrl}}/api/articles/REMPLACER_PAR_ART_ID/document
+
+
+### ==========================================================
+### GET /users/search : recherche par nom
+### Insensible a la casse, recherche partielle, exclut l'utilisateur courant des resultats.
+### ==========================================================
+
+### Créer le compte qui cherche
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "searcher@example.com",
+  "name": "Alice Searcher",
+  "password": "motdepasse123"
+}
+
+### Créer deux comptes cibles + un sans rapport (remplace le cookie a chaque fois,
+### sans importance ici puisqu'on ne s'en sert pas)
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "target1@example.com",
+  "name": "Bob Target",
+  "password": "motdepasse123"
+}
+
+###
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "target2@example.com",
+  "name": "Bobby Targetson",
+  "password": "motdepasse123"
+}
+
+### Se reconnecter en tant que chercheuse (le cookie pointe sur le dernier compte cree)
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "searcher@example.com",
+  "password": "motdepasse123"
+}
+
+### Recherche partielle, insensible a la casse : les deux "Bob..." attendus
+GET {{baseUrl}}/api/users/search?q=bob
+
+### Recherche de son propre nom : liste vide attendue (exclusion de soi-meme)
+GET {{baseUrl}}/api/users/search?q=alice
+
+### q absent : [] attendu (et non un 500 - c'etait le bug du "==!" corrige)
+GET {{baseUrl}}/api/users/search
+
+### q vide : [] attendu
+GET {{baseUrl}}/api/users/search?q=
+
+### Sans authentification (401 attendu)
+POST {{baseUrl}}/api/auth/logout
+
+###
+GET {{baseUrl}}/api/users/search?q=bob
+
+
+### ==========================================================
+### ARTICLE VIEW TRACKING : fondation du suivi de comportement
+### pour les recommandations (ArticleView). Une vue = 1 ligne par
+### (utilisateur, article), jamais dupliquee (upsert), et seulement
+### pour un utilisateur connecte sur un article PUBLISHED.
+###
+### Aucune route n'expose les ArticleView (pas fait pour etre lu
+### par le client) : on ne peut donc verifier ici que le comportement
+### HTTP (pas d'erreur, statut inchange). Pour verifier reellement
+### qu'une ligne est creee / pas dupliquee / absente pour un anonyme,
+### passer par la base :
+###
+### docker compose -f platform/docker-compose.yml exec postgresql \
+###   psql -U academic -d academic -c 'SELECT * FROM "ArticleView";'
+### ==========================================================
+
+### Créer l'auteur et son article
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "viewauthor@example.com",
+  "name": "author",
+  "password": "motdepasse123"
+}
+
+### @name viewArticle
+POST {{baseUrl}}/api/articles
+Content-Type: application/json
+
+{
+  "title": "Vue test",
+  "content": "contenu"
+}
+
+###
+POST {{baseUrl}}/api/articles/{{viewArticle.response.body.$.id}}/submit
+
+### Créer le lecteur (remplace le cookie), qui va aussi reviewer pour publier l'article
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "viewreader@example.com",
+  "name": "reader",
+  "password": "motdepasse123"
+}
+
+### @name viewReview
+POST {{baseUrl}}/api/articles/{{viewArticle.response.body.$.id}}/reviews
+Content-Type: application/json
+
+{}
+
+###
+PATCH {{baseUrl}}/api/reviews/{{viewReview.response.body.$.id}}
+Content-Type: application/json
+
+{
+  "decision": "APPROVED"
+}
+
+### Le lecteur consulte l'article publie (200 attendu, une vue enregistree en base)
+GET {{baseUrl}}/api/articles/{{viewArticle.response.body.$.id}}
+
+### Rechargement x2 : toujours 200, mais aucune nouvelle ligne en base (upsert)
+GET {{baseUrl}}/api/articles/{{viewArticle.response.body.$.id}}
+
+###
+GET {{baseUrl}}/api/articles/{{viewArticle.response.body.$.id}}
+
+### Anonyme consulte le meme article (200 attendu, mais aucune vue enregistree - pas de session)
+POST {{baseUrl}}/api/auth/logout
+
+###
+GET {{baseUrl}}/api/articles/{{viewArticle.response.body.$.id}}

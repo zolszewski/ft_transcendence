@@ -15,6 +15,8 @@ import uploadRoutes from "./routes/upload.routes"
 import userRoutes from "./routes/user.routes"
 import dashboardRoutes from "./routes/dashboard.routes"
 import friendRoutes from "./routes/friend.routes"
+import recommendationRoutes from "./routes/recommendation.routes";
+import healthRoutes from "./routes/health.routes";
 
 const app = express();
 app.set("trust proxy", 1);
@@ -43,15 +45,8 @@ app.use("/api/uploads", uploadRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/friends", friendRoutes);
-
-
-app.get("/health", (_req, res) => {
-  res.json({
-    status: "ok",
-    service: "backend",
-  });
-});
-
+app.use("/api/recommendations", recommendationRoutes);
+app.use(healthRoutes);
 app.use(errorHandler); // laisser en dernier, ne surtout pas placer de routes après cette commande
 const httpServer = http.createServer(app);
 initSocketServer(httpServer);
