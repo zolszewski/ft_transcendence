@@ -33,6 +33,8 @@ let io: SocketIOServer | null = null;
 		}
 		//room
 		socket.join(`user:${userId}`);
+		// gardé pour pouvoir couper les sockets de cette session au logout
+		socket.data.sessionId = (socket.request as any).sessionID;
 		await redisClient.sAdd("online_users", userId);
 		//préviens tout le monde que cet user s' est connecté
 		server.emit("user:online", userId);
@@ -54,9 +56,20 @@ let io: SocketIOServer | null = null;
 
 export function getIO(): SocketIOServer {
 	if (!io)
-		throw new 
-	("Socket.IO not initialized: call initSocketServer first");
+		throw new Error("Socket.IO not initialized: call initSocketServer first");
 	return io;
+}
+
+// au logout : ferme les sockets ouvertes avec cette session (les autres sessions du même user restent connectées)
+// sinon elles gardent l'identité de l'ancien utilisateur et il reste "en ligne"
+// le handler "disconnect" ci-dessus met ensuite à jour online_users
+export async function disconnectSessionSockets(userId: string, sessionId: string) {
+	if (!io)
+		return;
+	const sockets = await io.in(`user:${userId}`).fetchSockets();
+	for (const socket of sockets)
+		if (socket.data.sessionId === sessionId)
+			socket.disconnect(true);
 }
 
 export async function isUserOnline(userId: string): Promise<boolean> {

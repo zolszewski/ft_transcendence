@@ -4,13 +4,12 @@
 import { Suspense, useState } from "react";
 import type { FormEvent } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams  } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { apiClient } from "@/lib/apiClient";
 import PageShell from "@/components/PageShell";
-
+import GithubLoginButton from "@/components/GithubLoginButton";
 
 function RegisterForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
 
   const [name, setName] = useState("");
@@ -33,8 +32,8 @@ function RegisterForm() {
         return;
       }
       const redirectTo = searchParams.get("redirect") || "/";
-      router.push(redirectTo);
-      router.refresh();
+      // rechargement complet : le layout relit la session et le chat repart avec le bon utilisateur
+      window.location.assign(redirectTo);
     } catch {
       setError("Unable to connect to the server.");
     } finally {

@@ -3,13 +3,12 @@
 import { Suspense, useState } from "react";
 import type { FormEvent } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { apiClient } from "@/lib/apiClient";
 import PageShell from "@/components/PageShell";
 import GithubLoginButton from "@/components/GithubLoginButton";
 
 function LoginForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const pendingFromGithub = searchParams.get("pending2fa") === "1";
 
@@ -22,8 +21,8 @@ function LoginForm() {
 
   function redirectAfterLogin() {
     const redirectTo = searchParams.get("redirect") || "/";
-    router.push(redirectTo);
-    router.refresh();
+    // rechargement complet : le layout relit la session et le chat repart avec le bon utilisateur
+    window.location.assign(redirectTo);
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {

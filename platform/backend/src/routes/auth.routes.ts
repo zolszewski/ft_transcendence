@@ -14,6 +14,7 @@ import { createApiKey } from "../services/apiKey.service";
 import { verifyTwoFactorCode } from "../services/twoFactor.service";
 import crypto from "crypto";
 import { getGithubAuthorizeUrl, exchangeGithubCode, fetchGithubProfile } from "../services/github.service";
+import { disconnectSessionSockets } from "../lib/socket";
 
 
 
@@ -73,7 +74,10 @@ router.post("/login/2fa", authLimiter, async (req, res) => {
 });
 
 
-router.post("/logout", (req, res) => {
+router.post("/logout", async (req, res) => {
+	// avant de détruire la session : couper ses sockets (sinon elles restent connectées avec l'ancienne identité)
+	if (req.session.userId)
+		await disconnectSessionSockets(req.session.userId, req.sessionID);
 	req.session.destroy((err) => {
 		if (err)
 			return res.status(500).json({ error: "Could not log out" });
