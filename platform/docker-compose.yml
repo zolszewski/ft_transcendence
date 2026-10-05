@@ -41,11 +41,17 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
+      vault-init:
+        condition: service_completed_successfully
     networks:
       - platform_network
+    environment:
+      VAULT_ADDR: http://vault:8200
+      VAULT_TOKEN_FILE: /vault-token/backend.token
     volumes:
-    - ./backend:/app
-    - backend_node_modules:/app/node_modules
+      - ./backend:/app
+      - backend_node_modules:/app/node_modules
+      - vault_token:/vault-token:ro
     ports:
     - "4000:4000"
     - "51212:51212"
@@ -101,12 +107,42 @@ services:
     networks:
       - platform_network
 
+  vault:
+    build:
+      context: ./requirements/vault
+    container_name: vault
+    command: ["vault", "server", "-config=/vault/config"]
+    volumes:
+      - vault_data:/vault/file
+    networks:
+      - platform_network
+    restart: always
+
+
+  vault-init:
+    build:
+      context: ./requirements/vault
+    container_name: vault-init
+    command: ["sh", "/bootstrap.sh"]
+    env_file:
+      - .env
+    volumes:
+      - vault_keys:/keys
+      - vault_token:/shared
+    depends_on:
+      - vault
+    networks:
+      - platform_network
+    restart: "no"
+
 volumes:
   postgresql_data:
   redis_data:
   nextjs_node_modules:
   backend_node_modules:
+  vault_data:
+  vault_keys:
+  vault_token:
   
-
 networks:
   platform_network:

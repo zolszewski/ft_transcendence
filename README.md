@@ -136,3 +136,42 @@ Ces exclusions ne concernent que le champ `content`. Le backend passe par Prisma
 
 - Un XSS envoyé dans un autre champ du corps JSON n'est pas détecté par le WAF dans cette configuration.
 - L'accès par adresse IP (`https://127.0.0.1:8443`) est bloqué par la règle 920350 (en-tête `Host` numérique). L'accès normal par `localhost` ne l'est pas.
+
+## Secrets avec Vault
+
+Les secrets de l'application (secret de session, identifiants GitHub, `DATABASE_URL`) sont stockés dans HashiCorp Vault, et le backend les récupère au démarrage. Ils ne sont pas lus depuis le `.env` par l'application.
+
+Composants :
+- `vault` : serveur Vault, stockage fichier dans le volume `platform_vault_data`. Vault chiffre lui-même ses données avant écriture. Il n'est pas exposé à l'extérieur : seuls les services internes y accèdent.
+- `vault-init` : bootstrap, lancé à chaque `make`. Il est idempotent : il initialise Vault une seule fois, le déverrouille s'il est scellé, crée le moteur de secrets `secret/`, la politique `backend` (lecture seule sur `secret/app`), et le token du backend. Il ne réécrit jamais les secrets déjà présents.
+- `backend/scripts/with-vault.js` : lance le backend (migrations puis serveur) avec les secrets récupérés depuis Vault.
+
+Stockage des éléments sensibles :
+- clé de déverrouillage et token racine : volume `platform_vault_keys`, jamais dans git ;
+- token du backend : volume `platform_vault_token`, monté en lecture seule dans le backend ;
+- secrets applicatifs : chiffrés dans `platform_vault_data`.
+
+### Premier lancement (clone frais)
+
+1. Lance `make` une fois : il crée `platform/.env` à partir de `platform/.env.example`, puis s'arrête.
+2. Remplis les valeurs de `platform/.env` (identifiants GitHub, secret de session, `DATABASE_URL`, mot de passe PostgreSQL).
+3. Relance `make`.
+
+Le `.env` contient aussi les valeurs que le bootstrap utilise pour remplir Vault la première fois. Si Vault est réinitialisé, il faut donc que ces valeurs soient toujours présentes.
+
+### Redémarrage
+
+Après un redémarrage de Vault, Vault est scellé. Relancer `make` le déverrouille automatiquement via le bootstrap. Sans ce passage, le backend ne peut pas récupérer ses secrets.
+
+Vérification :
+
+```bash
+docker compose -f platform/docker-compose.yml exec -T vault sh -c 'VAULT_ADDR=http://127.0.0.1:8200 vault status'
+docker compose -f platform/docker-compose.yml logs vault-init
+```
+
+### Limites connues
+
+- Le mot de passe superutilisateur de PostgreSQL reste dans le `.env`, car le conteneur PostgreSQL en a besoin à son initialisation, avant que Vault soit prêt.
+- Une seule clé de déverrouillage est utilisée, et elle est stockée sur la même machine que Vault. C'est plus simple à automatiser, mais ça ne protège pas contre un accès à la machine.
+- Le token racine est conservé dans le volume `platform_vault_keys`. En production, il faudrait le révoquer après le bootstrap.
