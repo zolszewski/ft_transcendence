@@ -1,4 +1,16 @@
-import type { User, Article, Comment, Review, ArticleDetail, ListResult, DashboardStats, Message } from "./types";
+import type {
+  User,
+  Article,
+  Comment,
+  Review,
+  ArticleDetail,
+  ListResult,
+  DashboardStats,
+  Message,
+  FriendSummary,
+  FriendRequestItem,
+  FriendRelationStatus,
+} from "./types";
 import { uploadFileWithProgress } from "./progressUpload";
 import { validateUpload, validateFile } from "./validateUpload";
 
@@ -6,6 +18,10 @@ type ApiResponse<T> =
   | { success: true; status?: number; data: T }
   | { success: false; status: number; error: string };
 
+type LoginResult =
+  | { success: true; status?: number; data: User }
+  | { success: false; status: number; error: string }
+  | { requires2fa: true; status?: number };
 
 function apiError<T>(error: string, status = 0): ApiResponse<T> {
   return { success: false, status, error };
@@ -42,7 +58,7 @@ async function uploadRawFile(file: File, visibility: "PUBLIC" | "PRIVATE" = "PRI
 
 export const apiClient = {
   auth: {
-    login: async (email: string, password: string) => {
+    login: async (email: string, password: string) : Promise<LoginResult> => {
       try {
         const response = await fetch("/api/auth/login", {
           method: "POST",
@@ -51,7 +67,10 @@ export const apiClient = {
           headers: { "Content-Type": "application/json" },
         });
         const data = await response.json();
-        if (!response.ok) return apiError<User>(data.error || "Failed to login", response.status);
+        if (!response.ok) 
+          return apiError<User>(data.error || "Failed to login", response.status);
+        if (data.requires2fa)
+          return { requires2fa: true, status: response.status };
         return apiSuccess<User>(data, response.status);
       } catch {
         return apiError<User>("Unable to connect to the server");
@@ -94,6 +113,66 @@ export const apiClient = {
         });
         const data = await response.json();
         if (!response.ok) return apiError<User>(data.error || "Failed to register", response.status);
+        return apiSuccess<User>(data, response.status);
+      } catch {
+        return apiError<User>("Unable to connect to the server");
+      }
+    },
+  },
+  twoFactor: {
+    setup: async () => {
+      try {
+        const response = await fetch("/api/auth/me/2fa/setup", {
+          method: "POST",
+          credentials: "include",
+        });
+        const data = await response.json();
+        if (!response.ok) return apiError<{ otpauthUrl: string; qrCode: string }>(data.error || "Failed to start 2FA setup", response.status);
+        return apiSuccess<{ otpauthUrl: string; qrCode: string }>(data, response.status);
+      } catch {
+        return apiError<{ otpauthUrl: string; qrCode: string }>("Unable to connect to the server");
+      }
+    },
+    enable: async (code: string) => {
+      try {
+        const response = await fetch("/api/auth/me/2fa/enable", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ code }),
+        });
+        const data = await response.json();
+        if (!response.ok) return apiError<{ twoFactorEnabled: boolean }>(data.error || "Failed to enable 2FA", response.status);
+        return apiSuccess<{ twoFactorEnabled: boolean }>(data, response.status);
+      } catch {
+        return apiError<{ twoFactorEnabled: boolean }>("Unable to connect to the server");
+      }
+    },
+    disable: async (password: string, code: string) => {
+      try {
+        const response = await fetch("/api/auth/me/2fa/disable", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ password, code }),
+        });
+        const data = await response.json();
+        if (!response.ok) return apiError<{ twoFactorEnabled: boolean }>(data.error || "Failed to disable 2FA", response.status);
+        return apiSuccess<{ twoFactorEnabled: boolean }>(data, response.status);
+      } catch {
+        return apiError<{ twoFactorEnabled: boolean }>("Unable to connect to the server");
+      }
+    },
+    verifyLogin: async (code: string) => {
+      try {
+        const response = await fetch("/api/auth/login/2fa", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ code }),
+        });
+        const data = await response.json();
+        if (!response.ok) return apiError<User>(data.error || "Invalid code", response.status);
         return apiSuccess<User>(data, response.status);
       } catch {
         return apiError<User>("Unable to connect to the server");
@@ -226,6 +305,96 @@ export const apiClient = {
     },
   },
   friends: {
+    list: async () => {
+      try {
+        const response = await fetch("/api/friends", { method: "GET", credentials: "include" });
+        const data = await response.json();
+        if (!response.ok) {
+          return apiError<FriendSummary[]>(
+            data.error || "Failed to load friends",
+            response.status,
+          );
+        }
+        return apiSuccess<FriendSummary[]>(data, response.status);
+      } catch {
+        return apiError<FriendSummary[]>("Unable to connect to the server");
+      }
+    },
+    listRequests: async () => {
+      try {
+        const response = await fetch("/api/friends/requests", { method: "GET", credentials: "include" });
+        const data = await response.json();
+        if (!response.ok) {
+          return apiError<FriendRequestItem[]>(
+            data.error || "Failed to load friend requests",
+            response.status,
+          );
+        }
+        return apiSuccess<FriendRequestItem[]>(data, response.status);
+      } catch {
+        return apiError<FriendRequestItem[]>("Unable to connect to the server");
+      }
+    },
+    getStatus: async (userId: string) => {
+      try {
+        const response = await fetch(`/api/friends/status/${userId}`, {
+          method: "GET",
+          credentials: "include",
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          return apiError<FriendRelationStatus>(
+            data.error || "Failed to load friend status",
+            response.status,
+          );
+        }
+        return apiSuccess<FriendRelationStatus>(data.status, response.status);
+      } catch {
+        return apiError<FriendRelationStatus>("Unable to connect to the server");
+      }
+    },
+    request: async (userId: string) => {
+      try {
+        const response = await fetch(`/api/friends/${userId}`, { method: "POST", credentials: "include" });
+        const data = await response.json();
+        if (!response.ok) {
+          return apiError<FriendRelationStatus>(
+            data.error || "Failed to send friend request",
+            response.status,
+          );
+        }
+        return apiSuccess<FriendRelationStatus>(data.status, response.status);
+      } catch {
+        return apiError<FriendRelationStatus>("Unable to connect to the server");
+      }
+    },
+    accept: async (userId: string) => {
+      try {
+        const response = await fetch(`/api/friends/${userId}`, { method: "PUT", credentials: "include" });
+        const data = await response.json();
+        if (!response.ok) {
+          return apiError<FriendRelationStatus>(
+            data.error || "Failed to accept friend request",
+            response.status,
+          );
+        }
+        return apiSuccess<FriendRelationStatus>("friends", response.status);
+      } catch {
+        return apiError<FriendRelationStatus>("Unable to connect to the server");
+      }
+    },
+    remove: async (userId: string) => {
+      try {
+        const response = await fetch(`/api/friends/${userId}`, { method: "DELETE", credentials: "include" });
+        if (response.status === 204) {
+          return apiSuccess<null>(null, response.status);
+        }
+        const data = await response.json();
+        return apiError<null>(data.error || "Failed to remove friend", response.status);
+      } catch {
+        return apiError<null>("Unable to connect to the server");
+      }
+    },
     search: async (query: string) => {
       const queryParams = new URLSearchParams({ q: query });
       try {

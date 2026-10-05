@@ -124,7 +124,7 @@ function RegisterForm() {
           </button>
 
         </form>
-
+        <GithubLoginButton redirectTo={searchParams.get("redirect") || undefined} />
         <p className="mt-6 text-sm text-muted-foreground">
           Already have an account?{" "}
           <Link
@@ -134,7 +134,7 @@ function RegisterForm() {
             Login
           </Link>
         </p>
-
+        
         <p className="mt-3 text-sm">
           <Link
             href="/"
