@@ -2,8 +2,12 @@ FROM debian:bookworm
 
 RUN apt-get update && apt-get install -y nginx \
                             openssl \
-                            curl
+                            curl \
+                            libnginx-mod-http-modsecurity \
+                            modsecurity-crs
 
+RUN sed -i 's/SecDefaultAction "phase:\([12]\),log,auditlog,pass"/SecDefaultAction "phase:\1,log,auditlog,deny,status:403"/' /etc/modsecurity/crs/crs-setup.conf
+COPY modsec /etc/nginx/modsec
 COPY nginx.conf /etc/nginx/nginx.conf
 
 RUN mkdir -p /etc/nginx/certs && \
