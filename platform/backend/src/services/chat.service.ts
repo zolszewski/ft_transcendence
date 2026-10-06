@@ -1,6 +1,6 @@
 import { prisma } from "../lib/prisma";
 
-// même clé quel que soit l'ordre des deux users (A:B == B:A)
+// Same key whatever the order of the two users (A:B == B:A)
 function getDirectKey(userId: string, otherUserId: string) {
 	return [userId, otherUserId].sort().join(":");
 }
@@ -24,7 +24,7 @@ async function createMessage(userId: string, otherUserId: string, content: strin
 	const directKey = getDirectKey(userId, otherUserId);
 
 	return prisma.$transaction(async (transaction) => {
-		// crée la conversation si elle n'existe pas, sinon met à jour updatedAt
+		// creates the conversation if it does not exist, otherwise updates updatedAt
 		const conversation = await transaction.conversation.upsert({
 			where: { directKey },
 			update: { updatedAt: new Date() },
@@ -54,7 +54,7 @@ export async function sendMessage(userId: string, otherUserId: string, content: 
 		return await createMessage(userId, otherUserId, content);
 	}
 	catch (error: any) {
-		// P2002 : l'autre user a créé la conversation au même moment, elle existe maintenant
+		// P2002: the other user created the conversation at the same time, so it exists now
 		if (error?.code === "P2002")
 			return createMessage(userId, otherUserId, content);
 		throw error;

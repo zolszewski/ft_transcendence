@@ -2,29 +2,29 @@ import { Server as SocketIOServer } from "socket.io";
 import type { Server as HTTPServer } from "http";
 import { sessionMiddleware } from "../middleware/session";
 import { redisClient } from "./redis";
-//import des outils
-//midelware de session pour savoir qui se connecte
+// Imports
+// Session middleware: tells us which user is connecting
 
-// on prépare une varibale pour le serveur socket.io
+// Prepare a variable for the socket.io server
 let io: SocketIOServer | null = null;
 
-//cette fct reçoit le serveur HTTP
-//ici qu on crée le serveur Socket.IO
-//on ajoute le middleware de session (quand un client se connecte, Socket.IO peut accéder à sa session)
-//"server.on.." : dans cette fct on attend qu u nclient se conecte
-//"const userID =" : on récupère l id du client
-// "socket.join" : on crée une room pour cet user
-//await redisClient.sAdd("online_users", userId); : on dit à Redis que l'utilisateur est en ligne
-//"server.emit" : on prévient tous les autres users qui s'est connecté
-//"socket.emit" : on previent tous les autres users qui est en ligne
-//... getIO() : la focntion qui permet de récupérer socket.IO deuis les routes pour émettre un event (ex. créer un message)
+// This function receives the HTTP server.
+// The Socket.IO server is created here.
+// The session middleware is added (when a client connects, Socket.IO can access its session).
+// "server.on..": this function waits for a client to connect.
+// "const userID =": we get the client's id.
+// "socket.join": we create a room for this user.
+// await redisClient.sAdd("online_users", userId); : we tell Redis that the user is online.
+// "server.emit": we notify all users that this user connected.
+// "socket.emit": we tell the new tab who is already online.
+// ... getIO(): the function that gives the routes access to Socket.IO, to emit an event (e.g. to notify a user).
 
   export function initSocketServer(httpServer: HTTPServer) {
 	const server = new SocketIOServer(httpServer, { cors: { origin: true, credentials: true } });
 	io = server;
 	server.engine.use(sessionMiddleware);
 	redisClient.del("online_users").catch((error) => console.error("Failed to reset online users", error));
-	//s'execute une fois, à la connexion d'un user
+	// runs once, when a user connects
 	server.on("connection", async (socket) => {
 		const userId = (socket.request as any).session?.userId;
 		if (!userId) {
@@ -33,16 +33,16 @@ let io: SocketIOServer | null = null;
 		}
 		//room
 		socket.join(`user:${userId}`);
-		// gardé pour pouvoir couper les sockets de cette session au logout
+		// kept so the sockets of this session can be closed on logout
 		socket.data.sessionId = (socket.request as any).sessionID;
 		await redisClient.sAdd("online_users", userId);
-		//préviens tout le monde que cet user s' est connecté
+		// tell everyone that this user has connected
 		server.emit("user:online", userId);
-		//envoie à ce nouvel onglet la liste de tous ceux qui sont déjà en ligne
+		// send this new tab the list of users already online
 		socket.emit("users:online", await redisClient.sMembers("online_users"));
-		//s'execute quand on perd la connexion avec l'user 
+		// runs when the connection with the user is lost
 		socket.on("disconnect", async () => {
-			//l'user a peut-être encore d'autres onglets ouverts : il n'est hors ligne que si sa room est vide
+			// the user may still have other tabs open: they are offline only when their room is empty
 			const remainingSockets = await server.in(`user:${userId}`).fetchSockets();
 			if (remainingSockets.length > 0)
 				return;
@@ -60,9 +60,9 @@ export function getIO(): SocketIOServer {
 	return io;
 }
 
-// au logout : ferme les sockets ouvertes avec cette session (les autres sessions du même user restent connectées)
-// sinon elles gardent l'identité de l'ancien utilisateur et il reste "en ligne"
-// le handler "disconnect" ci-dessus met ensuite à jour online_users
+// On logout: closes the sockets opened with this session (other sessions of the same user stay connected).
+// Otherwise they keep the previous user's identity, and that user would still appear online.
+// The "disconnect" handler above then updates online_users.
 export async function disconnectSessionSockets(userId: string, sessionId: string) {
 	if (!io)
 		return;

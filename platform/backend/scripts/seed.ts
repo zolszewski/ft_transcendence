@@ -62,7 +62,7 @@ En relisant Herodote sur ce point, j'ai surtout retenu le portrait d'un monde gr
 
 async function main() {
 	if (await prisma.User.findUnique({ where: { email: `auteur@${DOMAIN}` } })) {
-		console.log("donnees de demo deja presentes");
+		console.log("demo data already present");
 		return;
 	}
 
@@ -109,12 +109,12 @@ async function main() {
 	await prisma.ArticleLike.create({ data: { articleId: articles.revolte.id, userId: users.lecteur.id } });
 	await prisma.ArticleView.create({ data: { articleId: articles.revolte.id, userId: users.lecteur.id } });
 
-	console.log("donnees de demo creees");
+	console.log("demo data created");
 }
 
 main()
 	.catch((error) => {
-		console.error("echec du seed:", error);
+		console.error("seed failed:", error);
 		process.exitCode = 1;
 	})
 	.finally(() => prisma.$disconnect());
