@@ -9,12 +9,18 @@ export function uploadFileWithProgress(
     xhr.withCredentials = true;
 
     xhr.upload.onprogress = (event) => {
-      if (event.lengthComputable) {
+      if (event.lengthComputable && event.total > 0) {
         onProgress(Math.round((event.loaded / event.total) * 100));
+      } else if (event.loaded > 0) {
+        onProgress(1);
       }
     };
 
+    onProgress(0);
     xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        onProgress(100);
+      }
       let data: any = {};
       try {
         data = JSON.parse(xhr.responseText);

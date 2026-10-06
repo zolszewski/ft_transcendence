@@ -34,7 +34,7 @@ export interface User {
     id: string;
     url: string;
   } | null;
-  
+  twoFactorEnabled: boolean;
 
 }
 
@@ -52,6 +52,8 @@ export interface Article {
   createdAt: string;
   updatedAt: string;
   status: ArticleStatus;
+  likeCount?: number;
+  likedByMe?: boolean;
 }
 
 export interface ArticleDetail extends Article {

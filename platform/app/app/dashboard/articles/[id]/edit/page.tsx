@@ -92,8 +92,9 @@ export default function EditArticlePage() {
       if (!data.title.trim()) throw new Error("Title is required.");
       if (!data.content.trim()) throw new Error("Article content is required.");
 
-      if (editorRef.current.image) 
+      if (editorRef.current.image || editorRef.current.pdf) {
         setUploadProgress(0);
+      }
       const updateResponse = await apiClient.articles.update(
         articleId,
         data.title,
@@ -103,6 +104,7 @@ export default function EditArticlePage() {
         editorRef.current.pdf,
         editorRef.current.pdfRemoved,
         editorRef.current.getMiniatureFocus(),
+        setUploadProgress,
       );
       if (!updateResponse.success) {
         throw new Error(updateResponse.error || "Failed to update article");
