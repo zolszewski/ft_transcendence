@@ -679,6 +679,32 @@ export const apiClient = {
         return apiError<ArticleDetail>("Unable to connect to the server");
       }
     },
+    like: async (articleId: string) => {
+      try {
+        const response = await fetch(`/api/articles/${articleId}/like`, {
+          method: "POST",
+          credentials: "include",
+        });
+        if (response.status === 204) return apiSuccess<null>(null, response.status);
+        const data = await response.json();
+        return apiError<null>(data.error || "Failed to like article", response.status);
+      } catch {
+        return apiError<null>("Unable to connect to the server");
+      }
+    },
+    unlike: async (articleId: string) => {
+      try {
+        const response = await fetch(`/api/articles/${articleId}/like`, {
+          method: "DELETE",
+          credentials: "include",
+        });
+        if (response.status === 204) return apiSuccess<null>(null, response.status);
+        const data = await response.json();
+        return apiError<null>(data.error || "Failed to unlike article", response.status);
+      } catch {
+        return apiError<null>("Unable to connect to the server");
+      }
+    },
     //comments
     getComments: async (articleId: string) => {
       try {
