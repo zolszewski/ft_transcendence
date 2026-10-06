@@ -699,7 +699,7 @@ Authorization: Bearer cleinventeequinexistepas
 GET {{baseUrl}}/api/auth/me
 
 ### ==========================================================
-### BUG ZOE
+### ZOE BUG
 ### ==========================================================
 
 POST {{baseUrl}}/api/auth/register

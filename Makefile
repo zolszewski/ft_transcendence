@@ -5,7 +5,7 @@ all: up
 
 $(ENV_FILE):
 	cp platform/.env.example $(ENV_FILE)
-	@echo "platform/.env cree a partir de .env.example : remplis les valeurs puis relance make"
+	@echo "platform/.env created from .env.example: fill in the values, then run make again"
 	@exit 1
 
 up: $(ENV_FILE)

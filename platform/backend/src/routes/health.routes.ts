@@ -14,11 +14,11 @@ router.get("/status", async (_req, res) => {
 		.map(([name, s]) => `<tr><td>${name}</td><td class="${s.status}">${s.status}</td><td>${s.latencyMs} ms</td></tr>`)
 		.join("");
 	res.status(report.status === "ok" ? 200 : 503).type("html").send(`<!doctype html>
-<html lang="fr"><head><meta charset="utf-8"><meta http-equiv="refresh" content="30"><title>Statut</title>
+<html lang="en"><head><meta charset="utf-8"><meta http-equiv="refresh" content="30"><title>Status</title>
 <style>body{font-family:sans-serif;margin:2rem}.ok{color:green}.down{color:red}</style></head>
-<body><h1>Statut : ${report.status}</h1>
-<table border="1" cellpadding="6"><tr><th>Service</th><th>État</th><th>Latence</th></tr>${rows}</table>
-<p>Vérifié à ${report.checkedAt}</p></body></html>`);
+<body><h1>Status: ${report.status}</h1>
+<table border="1" cellpadding="6"><tr><th>Service</th><th>State</th><th>Latency</th></tr>${rows}</table>
+<p>Checked at ${report.checkedAt}</p></body></html>`);
 });
 
 export default router;

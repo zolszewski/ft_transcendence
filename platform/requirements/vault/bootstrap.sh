@@ -43,10 +43,10 @@ fi
 
 if ! vault kv get secret/app > /dev/null 2>&1; then
 	vault kv put secret/app \
-		SESSION_SECRET="${SESSION_SECRET:?SESSION_SECRET manquant dans .env}" \
-		GITHUB_CLIENT_ID="${GITHUB_CLIENT_ID:?GITHUB_CLIENT_ID manquant dans .env}" \
-		GITHUB_CLIENT_SECRET="${GITHUB_CLIENT_SECRET:?GITHUB_CLIENT_SECRET manquant dans .env}" \
-		DATABASE_URL="${DATABASE_URL:?DATABASE_URL manquant dans .env}" > /dev/null
+		SESSION_SECRET="${SESSION_SECRET:?SESSION_SECRET is missing from .env}" \
+		GITHUB_CLIENT_ID="${GITHUB_CLIENT_ID:?GITHUB_CLIENT_ID is missing from .env}" \
+		GITHUB_CLIENT_SECRET="${GITHUB_CLIENT_SECRET:?GITHUB_CLIENT_SECRET is missing from .env}" \
+		DATABASE_URL="${DATABASE_URL:?DATABASE_URL is missing from .env}" > /dev/null
 	echo "secrets put in the vault"
 fi
 
