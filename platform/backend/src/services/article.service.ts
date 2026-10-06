@@ -31,14 +31,14 @@ export async function listArticles(options: ListArticlesOptions = {}) {
 	};
 	try {
 		const [articles, total] = await Promise.all([
-			prisma.Article.findMany({
+			prisma.article.findMany({
 				where,
 				include: { author: { select: { id: true, name: true } } },
 				orderBy: { createdAt: sort === "oldest" ? "asc" : "desc" },
 				skip: (page - 1) * limit,
 				take: limit,
 			}),
-			prisma.Article.count({ where }),
+			prisma.article.count({ where }),
 		]);
 		const result = { articles, total, page, totalPages: Math.ceil(total / limit) };
 		await setCached(cacheKey, result, 60);
@@ -80,14 +80,14 @@ export async function listSubmittedArticlesForReview(options: ListSubmittedArtic
 	};
 	try {
 		const [articles, total] = await Promise.all([
-			prisma.Article.findMany({
+			prisma.article.findMany({
 				where,
 				include: { author: { select: { id: true, name: true } } },
 				orderBy: { createdAt: sort === "oldest" ? "asc" : "desc" },
 				skip: (page - 1) * limit,
 				take: limit,
 			}),
-			prisma.Article.count({ where }),
+			prisma.article.count({ where }),
 		]);
 		const result = { articles, total, page, totalPages: Math.ceil(total / limit) };
 		await setCached(cacheKey, result, 60);
@@ -128,8 +128,8 @@ export async function listMyArticles(options: ListMyArticlesOptions) {
 	};
 	try {
 		const [articles, total] = await Promise.all([
-			prisma.Article.findMany({ where, include: { author: { select: { id: true, name: true } } }, orderBy: { createdAt: sort === "oldest" ? "asc" : "desc" }, skip: (page - 1) * limit, take: limit }),
-			prisma.Article.count({ where }),
+			prisma.article.findMany({ where, include: { author: { select: { id: true, name: true } } }, orderBy: { createdAt: sort === "oldest" ? "asc" : "desc" }, skip: (page - 1) * limit, take: limit }),
+			prisma.article.count({ where }),
 		]);
 		const result = { articles, total, page, totalPages: Math.ceil(total / limit) };
 		await setCached(cacheKey, result, 60);
@@ -167,9 +167,9 @@ export async function presentArticles(articles: any[], userId?: string) {
 		return withUrls;
 	const ids = withUrls.map((a) => a.id);
 	const [counts, mine] = await Promise.all([
-		prisma.ArticleLike.groupBy({ by: ["articleId"], where: { articleId: { in: ids } }, _count: { _all: true } }),
+		prisma.articleLike.groupBy({ by: ["articleId"], where: { articleId: { in: ids } }, _count: { _all: true } }),
 		userId
-			? prisma.ArticleLike.findMany({ where: { userId, articleId: { in: ids } }, select: { articleId: true } })
+			? prisma.articleLike.findMany({ where: { userId, articleId: { in: ids } }, select: { articleId: true } })
 			: Promise.resolve([]),
 	]);
 	const countById = new Map(counts.map((c) => [c.articleId, c._count._all]));
@@ -179,7 +179,7 @@ export async function presentArticles(articles: any[], userId?: string) {
 
 export async function getArticleById(id: string) {
 	try {
-		return await prisma.Article.findUnique({
+		return await prisma.article.findUnique({
 			where: { id },
 			include: {
 				author: {
@@ -200,7 +200,7 @@ export async function createArticle(authorId: string, title: string, content: st
 	try {
 		await bumpArticlesCacheVersion();
 		const embedding = await computeEmbedding(`${title}\n${abstract ?? ""}\n${content}`);
-		return await prisma.Article.create({
+		return await prisma.article.create({
 			data: { title, content, abstract, authorId, miniatureId, documentId, miniatureFocusX, miniatureFocusY, embedding },
 			include: { author: { select: { id: true, name: true } } },
 		});
@@ -218,7 +218,7 @@ export function getMiniatureUrl(miniatureId: string | null): string {
 	return "/default-article-thumbnail.jpg";
 }
 
-export async function updateArticle(id: string, data: { title?: string, content?: string, abstract?: string, miniatureId?: string, documentId?: string, miniatureFocusX?: number;
+export async function updateArticle(id: string, data: { title?: string, content?: string, abstract?: string, miniatureId?: string | null, documentId?: string | null, miniatureFocusX?: number;
     miniatureFocusY?: number; }) {
 	try {
 		await bumpArticlesCacheVersion();
@@ -231,9 +231,9 @@ export async function updateArticle(id: string, data: { title?: string, content?
 		let embedding: number[] | undefined;
 		if (data.title && data.content)
 			embedding = await computeEmbedding(`${data.title}\n${data.abstract ?? ""}\n${data.content}`);
-		return await prisma.Article.update({
+		return await prisma.article.update({
 			where: { id },
-			data: embedding ? { ...data, embedding } : data,
+			data: embedding ? { ...updateData, embedding } : updateData,
 			include: { author: { select: { id: true, name: true } } },
 		});
 	}
@@ -246,7 +246,7 @@ export async function updateArticle(id: string, data: { title?: string, content?
 export async function deleteArticle(id: string) {
 	try {
 		await bumpArticlesCacheVersion();
-		await prisma.Article.delete({ where: { id } });
+		await prisma.article.delete({ where: { id } });
 	}
 	catch (error) {
 		console.error("Failed to delete article:", error);
@@ -257,7 +257,7 @@ export async function deleteArticle(id: string) {
 export async function updateArticleStatus(id: string,status: ArticleStatus) {
 	try {
 		await bumpArticlesCacheVersion();
-		return await prisma.Article.update({
+		return await prisma.article.update({
 			where: { id },
 			data: { status },
 			include: { author: { select: { id: true, name: true } } },
@@ -271,7 +271,7 @@ export async function updateArticleStatus(id: string,status: ArticleStatus) {
 
 export async function recordArticleView(userId: string, articleId: string) {
 	try {
-		await prisma.ArticleView.upsert({
+		await prisma.articleView.upsert({
 			where: { userId_articleId: { userId, articleId } },
 			create: { userId, articleId },
 			update: {},
@@ -285,7 +285,7 @@ export async function recordArticleView(userId: string, articleId: string) {
 
 export async function likeArticle(userId: string, articleId: string) {
 	try {
-		await prisma.ArticleLike.upsert({
+		await prisma.articleLike.upsert({
 			where: { userId_articleId: { userId, articleId } },
 			create: { userId, articleId },
 			update: {},
@@ -299,7 +299,7 @@ export async function likeArticle(userId: string, articleId: string) {
 
 export async function unlikeArticle(userId: string, articleId: string) {
 	try {
-		await prisma.ArticleLike.deleteMany({ where: { userId, articleId } });
+		await prisma.articleLike.deleteMany({ where: { userId, articleId } });
 	}
 	catch (error) {
 		console.error("Failed to unlike article:", error);

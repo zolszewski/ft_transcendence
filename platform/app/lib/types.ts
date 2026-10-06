@@ -44,7 +44,7 @@ export interface Article {
   content: string;
   abstract: string | null;
   miniature: string | null;
-  pdfUrl: string | null;
+  documentUrl: string | null;
   miniatureFocusX?: number;
   miniatureFocusY?: number;
   authorId: string;

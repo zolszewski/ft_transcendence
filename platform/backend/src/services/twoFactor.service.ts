@@ -7,7 +7,7 @@ authenticator.options = { window: 1 };
 export async function startTwoFactorSetup(userId: string, email: string) {
 	try {
 		const secret = authenticator.generateSecret();
-		await prisma.User.update({ where: { id: userId }, data: { twoFactorSecret: secret } });
+		await prisma.user.update({ where: { id: userId }, data: { twoFactorSecret: secret } });
 		const otpauthUrl = authenticator.keyuri(email, "Transcendence", secret);
 		const qrCode = await QRCode.toDataURL(otpauthUrl);
 		return { otpauthUrl, qrCode };
@@ -24,7 +24,7 @@ export function verifyTwoFactorCode(secret: string, code: string): boolean {
 
 export async function enableTwoFactor(userId: string) {
 	try {
-		await prisma.User.update({ where: { id: userId }, data: { twoFactorEnabled: true } });
+		await prisma.user.update({ where: { id: userId }, data: { twoFactorEnabled: true } });
 	}
 	catch (error) {
 		console.error("Failed to enable 2FA:", error);
@@ -34,7 +34,7 @@ export async function enableTwoFactor(userId: string) {
 
 export async function disableTwoFactor(userId: string) {
 	try {
-		await prisma.User.update({
+		await prisma.user.update({
 			where: { id: userId },
 			data: { twoFactorEnabled: false, twoFactorSecret: null },
 		});

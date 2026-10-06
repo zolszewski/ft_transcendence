@@ -459,7 +459,7 @@ export const apiClient = {
     ) => {
       try {
         let miniatureId: string | undefined;
-        let pdfId: string | undefined;
+        let documentId: string | undefined;
 
         if (miniature) {
           const up = await uploadRawFile(miniature);
@@ -470,7 +470,7 @@ export const apiClient = {
         if (pdf) {
           const up = await uploadRawFile(pdf);
           if (!up.ok) return apiError<Article>(up.data.error || "Failed to upload PDF", up.status);
-          pdfId = up.data.id;
+          documentId = up.data.id;
         }
 
         const response = await fetch("/api/articles", {
@@ -482,7 +482,7 @@ export const apiClient = {
             content,
             abstract,
             miniatureId,
-            pdfId,
+            documentId,
             miniatureFocusX: miniatureFocus?.x ?? 50,
             miniatureFocusY: miniatureFocus?.y ?? 50,
           }),
@@ -531,7 +531,7 @@ export const apiClient = {
     ) => {
       try {
         let miniatureId: string | undefined;
-        let pdfId: string | null | undefined;
+        let documentId: string | null | undefined;
 
         if (miniature) {
           const up = await uploadRawFile(miniature);
@@ -542,9 +542,9 @@ export const apiClient = {
         if (pdf) {
           const up = await uploadRawFile(pdf);
           if (!up.ok) return apiError<Article>(up.data.error || "Failed to upload PDF", up.status);
-          pdfId = up.data.id;
+          documentId = up.data.id;
         } else if (removePdf) {
-          pdfId = null;
+          documentId = null;
         }
 
         const response = await fetch(`/api/articles/${articleId}`, {
@@ -556,7 +556,7 @@ export const apiClient = {
             content,
             abstract,
             miniatureId,
-            pdfId,
+            documentId,
             miniatureFocusX: miniatureFocus?.x ?? 50,
             miniatureFocusY: miniatureFocus?.y ?? 50,
           }),
@@ -685,7 +685,7 @@ export const apiClient = {
     //single article review page
     getReviewingArticle: async (articleId: string) => {
       try {
-        const response = await fetch(`/api/articles/${articleId}`, {
+        const response = await fetch(`/api/reviews/${articleId}`, {
           method: "GET",
           credentials: "include",
         });

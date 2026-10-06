@@ -80,7 +80,7 @@ router.post("/logout", async (req, res) => {
 	const userId = req.session.userId;
 	if (userId) {
 		await redisClient.sRem("online_users", userId);
-		await disconnectSessionSockets(req.session.userId, req.sessionID);
+		await disconnectSessionSockets(userId, req.sessionID);
 	}
 	req.session.destroy((err) => {
 		if (err)

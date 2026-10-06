@@ -3,7 +3,7 @@ import type { Article } from "@/lib/types";
 type ArticleMedia = Article & {
   miniatureUrl?: string | null;
   miniatureId?: string | null;
-  pdfId?: string | null;
+  documentId?: string | null;
 };
 
 export function getArticleMiniatureUrl(article: Article): string | null {
@@ -15,8 +15,8 @@ export function getArticleMiniatureUrl(article: Article): string | null {
 
 export function getArticlePdfUrl(article: Article): string | null {
   const media = article as ArticleMedia;
-  if (article.pdfUrl) return article.pdfUrl;
-  if (media.pdfId) return `/api/uploads/${media.pdfId}`;
+  if (article.documentUrl) return article.documentUrl;
+  if (media.documentId) return `/api/articles/${article.id}/document`;
   return null;
 }
 
@@ -27,7 +27,7 @@ export function hasStoredMiniature(article: Article): boolean {
 
 export function hasStoredPdf(article: Article): boolean {
   const media = article as ArticleMedia;
-  return Boolean(media.pdfId);
+  return Boolean(media.documentId);
 }
 
 export type MiniatureFocus = { x: number; y: number };
