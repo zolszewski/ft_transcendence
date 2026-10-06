@@ -5,7 +5,7 @@ import { User } from "@/lib/types";
 import { apiClient } from "@/lib/apiClient";
 import { validateUpload } from "@/lib/validateUpload";
 import { Upload, Edit2, Check, X, User as UserIcon } from "lucide-react";
-
+import TwoFactorSection from "@/components/TwoFactorSection";
 interface UserProfileSectionProps {
   user: User;
   isOwner?: boolean;
@@ -22,12 +22,10 @@ export default function UserProfileSection({
   const [fileError, setFileError] = useState("");
   const [formError, setFormError] = useState("");
 
-  // Form editable states
   const [name, setName] = useState(user.name ?? "");
   const [faculty, setFaculty] = useState(user.faculty ?? "");
   const [specialization, setSpecialization] = useState(user.specialization ?? "");
 
-  // Avatar state
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string>("");
   const [avatarFocus, setAvatarFocus] = useState<{ x: number; y: number }>({
@@ -347,6 +345,18 @@ export default function UserProfileSection({
           )}
         </div>
       </div>
+      {/* Two-Factor Authentication */}
+      {isOwner ? (
+        <TwoFactorSection
+          enabled={user.twoFactorEnabled}
+          onChanged={(enabled) => {
+            onUserUpdated?.({
+              ...user,
+              twoFactorEnabled: enabled,
+            });
+          }}
+        />
+      ) : null}
     </div>
   );
 }

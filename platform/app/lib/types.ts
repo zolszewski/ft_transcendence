@@ -34,7 +34,7 @@ export interface User {
     id: string;
     url: string;
   } | null;
-  
+  twoFactorEnabled: boolean;
 
 }
 

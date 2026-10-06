@@ -164,7 +164,7 @@ export const apiClient = {
   twoFactor: {
     setup: async () => {
       try {
-        const response = await fetch("/api/auth/me/2fa/setup", {
+        const response = await fetch("/api/users/me/2fa/setup", {
           method: "POST",
           credentials: "include",
         });
@@ -177,7 +177,7 @@ export const apiClient = {
     },
     enable: async (code: string) => {
       try {
-        const response = await fetch("/api/auth/me/2fa/enable", {
+        const response = await fetch("/api/users/me/2fa/enable", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
@@ -192,7 +192,7 @@ export const apiClient = {
     },
     disable: async (password: string, code: string) => {
       try {
-        const response = await fetch("/api/auth/me/2fa/disable", {
+        const response = await fetch("/api/users/me/2fa/disable", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
