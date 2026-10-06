@@ -32,7 +32,11 @@ function apiSuccess<T>(data: T, status?: number): ApiResponse<T> {
 }
 
 
-async function uploadRawFile(file: File, visibility: "PUBLIC" | "PRIVATE" = "PRIVATE") {
+async function uploadRawFile(
+  file: File,
+  visibility: "PUBLIC" | "PRIVATE" = "PRIVATE",
+  onProgress?: (percent: number) => void,
+) {
   const kind = file.type === "application/pdf" ? "pdf" : "image";
   const validationError = await validateUpload(file, kind);
   if (validationError) {
@@ -42,18 +46,56 @@ async function uploadRawFile(file: File, visibility: "PUBLIC" | "PRIVATE" = "PRI
   formData.append("file", file);
   formData.append("visibility", visibility);
 
-  const response = await fetch("/api/uploads", {
-    method: "POST",
-    body: formData,
-    credentials: "include",
-  });
-  let data: any = {};
-  try {
-    data = await response.json();
-  } catch {
-    if (response.status === 413) data = { error: "File is too large." };
+  const { status, data } = await uploadFileWithProgress(
+    "/api/uploads",
+    formData,
+    onProgress ?? (() => {}),
+  );
+  let parsed = data;
+  if (status === 413 && !parsed?.error) {
+    parsed = { error: "File is too large." };
   }
-  return { ok: response.ok, status: response.status, data };
+  return { ok: status >= 200 && status < 300, status, data: parsed };
+}
+
+async function uploadArticleFiles(
+  miniature: File | null | undefined,
+  pdf: File | null | undefined,
+  onProgress?: (percent: number) => void,
+): Promise<
+  | { ok: true; miniatureId?: string; documentId?: string }
+  | { ok: false; status: number; error: string }
+> {
+  const files: { file: File; kind: "miniature" | "pdf" }[] = [];
+  if (miniature) files.push({ file: miniature, kind: "miniature" });
+  if (pdf) files.push({ file: pdf, kind: "pdf" });
+
+  if (files.length === 0) {
+    return { ok: true };
+  }
+
+  const totalBytes = files.reduce((sum, entry) => sum + entry.file.size, 0) || 1;
+  let uploadedBytes = 0;
+  let miniatureId: string | undefined;
+  let documentId: string | undefined;
+
+  for (const entry of files) {
+    const startBytes = uploadedBytes;
+    const up = await uploadRawFile(entry.file, "PRIVATE", (filePercent) => {
+      if (!onProgress) return;
+      const loaded = startBytes + (entry.file.size * filePercent) / 100;
+      onProgress(Math.min(100, Math.round((loaded / totalBytes) * 100)));
+    });
+    if (!up.ok) {
+      return { ok: false, status: up.status, error: up.data.error || "Upload failed" };
+    }
+    uploadedBytes += entry.file.size;
+    onProgress?.(Math.min(100, Math.round((uploadedBytes / totalBytes) * 100)));
+    if (entry.kind === "miniature") miniatureId = up.data.id;
+    else documentId = up.data.id;
+  }
+
+  return { ok: true, miniatureId, documentId };
 }
 
 export const apiClient = {
@@ -456,22 +498,14 @@ export const apiClient = {
       abstract?: string,
       pdf?: File | null,
       miniatureFocus?: { x: number; y: number },
+      onUploadProgress?: (percent: number) => void,
     ) => {
       try {
-        let miniatureId: string | undefined;
-        let documentId: string | undefined;
-
-        if (miniature) {
-          const up = await uploadRawFile(miniature);
-          if (!up.ok) return apiError<Article>(up.data.error || "Failed to upload miniature", up.status);
-          miniatureId = up.data.id;
+        const uploads = await uploadArticleFiles(miniature, pdf, onUploadProgress);
+        if (!uploads.ok) {
+          return apiError<Article>(uploads.error, uploads.status);
         }
-
-        if (pdf) {
-          const up = await uploadRawFile(pdf);
-          if (!up.ok) return apiError<Article>(up.data.error || "Failed to upload PDF", up.status);
-          documentId = up.data.id;
-        }
+        const { miniatureId, documentId } = uploads;
 
         const response = await fetch("/api/articles", {
           method: "POST",
@@ -528,22 +562,19 @@ export const apiClient = {
       pdf?: File | null,
       removePdf?: boolean,
       miniatureFocus?: { x: number; y: number },
+      onUploadProgress?: (percent: number) => void,
     ) => {
       try {
         let miniatureId: string | undefined;
         let documentId: string | null | undefined;
 
-        if (miniature) {
-          const up = await uploadRawFile(miniature);
-          if (!up.ok) return apiError<Article>(up.data.error || "Failed to upload miniature", up.status);
-          miniatureId = up.data.id;
+        const uploads = await uploadArticleFiles(miniature, pdf, onUploadProgress);
+        if (!uploads.ok) {
+          return apiError<Article>(uploads.error, uploads.status);
         }
-
-        if (pdf) {
-          const up = await uploadRawFile(pdf);
-          if (!up.ok) return apiError<Article>(up.data.error || "Failed to upload PDF", up.status);
-          documentId = up.data.id;
-        } else if (removePdf) {
+        miniatureId = uploads.miniatureId;
+        documentId = uploads.documentId;
+        if (removePdf && !pdf) {
           documentId = null;
         }
 
@@ -603,6 +634,32 @@ export const apiClient = {
         );
       } catch {
         return apiError<ListResult<Article>>("Unable to connect to the server");
+      }
+    },
+    discover: async () => {
+      try {
+        const response = await fetch("/api/recommendations/discover", {
+          method: "GET",
+          credentials: "include",
+        });
+        const data = await response.json();
+        if (!response.ok) return apiError<Article[]>(data.error || "Failed to load recommendations", response.status);
+        return apiSuccess<Article[]>(data, response.status);
+      } catch {
+        return apiError<Article[]>("Unable to connect to the server");
+      }
+    },
+    deepen: async () => {
+      try {
+        const response = await fetch("/api/recommendations/deepen", {
+          method: "GET",
+          credentials: "include",
+        });
+        const data = await response.json();
+        if (!response.ok) return apiError<Article[]>(data.error || "Failed to load recommendations", response.status);
+        return apiSuccess<Article[]>(data, response.status);
+      } catch {
+        return apiError<Article[]>("Unable to connect to the server");
       }
     },
     listDraft: async () => {
