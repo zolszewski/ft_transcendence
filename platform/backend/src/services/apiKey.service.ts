@@ -16,7 +16,7 @@ export async function createApiKey(userId: string): Promise<string> {
 		const apiKey = await generateApiKey();
 		const keyHash = await hashApiKey(apiKey);
 
-		await prisma.ApiKey.create({
+		await prisma.apiKey.create({
 			data: { keyHash, userId },
 			include: { user: { select: { id: true, name: true } } },
 		});
@@ -31,7 +31,7 @@ export async function createApiKey(userId: string): Promise<string> {
 export async function getUserIdByApiKey(rawKey: string) {
 	try {
 		const keyHash = await hashApiKey(rawKey);
-		const apiKey = await prisma.ApiKey.findUnique({
+		const apiKey = await prisma.apiKey.findUnique({
 			where: { keyHash },
 		});
 		if (!apiKey)

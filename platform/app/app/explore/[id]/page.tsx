@@ -10,6 +10,7 @@ import PageShell from "@/components/PageShell";
 import AppHeader from "@/components/AppHeader";
 import NavLink from "@/components/NavLink";
 import ArticleDetailView from "@/components/ArticleDetailView";
+import LikeSection from "@/components/LikeSection";
 import CommentsSection from "@/components/CommentsSection";
 import CommentForm from "@/components/CommentForm";
 import LoginToCommentPrompt from "@/components/LoginToCommentPrompt";
@@ -27,6 +28,7 @@ export default function ExploreDetail() {
   const [commentError, setCommentError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
 
   useEffect(() => {
@@ -54,6 +56,7 @@ export default function ExploreDetail() {
   useEffect(() => {
     apiClient.auth.me().then((response) => {
       setIsLoggedIn(response.success);
+      setCurrentUserId(response.success ? response.data.id : null);
     });
   }, []);
 
@@ -121,6 +124,16 @@ export default function ExploreDetail() {
       {!loading && article && (
         <>
           <ArticleDetailView article={article} />
+
+          <LikeSection
+            articleId={article.id}
+            authorId={article.authorId}
+            likeCount={article.likeCount ?? 0}
+            likedByMe={article.likedByMe ?? false}
+            isLoggedIn={isLoggedIn}
+            currentUserId={currentUserId}
+            loginHref={`/authentication/login?redirect=/explore/${params.id}`}
+          />
 
           <CommentsSection comments={comments} loading={commentsLoading} />
 

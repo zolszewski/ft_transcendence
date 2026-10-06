@@ -20,7 +20,7 @@ export async function isValidFileFormat(filePath: string): Promise<boolean> {
 
 export async function createUpload(ownerId: string, filename: string, originalName: string, mimeType: string, size: number, visibility: UploadVisibility = "PRIVATE") {
 	try {
-		return await prisma.Upload.create({
+		return await prisma.upload.create({
 			data: { ownerId, filename, originalName, mimeType, size, visibility },
 		});
 	}
@@ -32,7 +32,7 @@ export async function createUpload(ownerId: string, filename: string, originalNa
 
 export async function getUploadById(id: string) {
 	try {
-		return await prisma.Upload.findUnique({ where: { id } });
+		return await prisma.upload.findUnique({ where: { id } });
 	}
 	catch (error) {
 		console.error("Failed to fetch upload:", error);
@@ -42,7 +42,7 @@ export async function getUploadById(id: string) {
 
 export async function deleteUpload(id: string, filename: string) {
 	try {
-		await prisma.Upload.delete({ where: { id } });
+		await prisma.upload.delete({ where: { id } });
 		await fs.unlink(`/app/uploads/${filename}`);
 	}
 	catch (error) {
@@ -53,7 +53,7 @@ export async function deleteUpload(id: string, filename: string) {
 
 export async function setUploadVisibility(id: string, visibility: UploadVisibility) {
 	try {
-		return await prisma.Upload.update({
+		return await prisma.upload.update({
 			where: { id },
 			data: { visibility },
 		});

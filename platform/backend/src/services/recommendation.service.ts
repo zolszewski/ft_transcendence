@@ -29,11 +29,11 @@ function weightedAverage(articles: { embedding: number[]; weight: number }[]): n
 
 async function getEngagedArticlesIds(userId: string): Promise<Set<string>> {
 	const [views, likes, comments, reviews, authored] = await Promise.all([
-		prisma.ArticleView.findMany({ where: { userId }, select: { articleId: true } }),
-		prisma.ArticleLike.findMany({ where: { userId }, select: { articleId: true } }),
-		prisma.Comment.findMany({ where: { authorId: userId }, select: { articleId: true } }),
-		prisma.Review.findMany({ where: { reviewerId: userId }, select: { articleId: true } }),
-		prisma.Article.findMany({ where: { authorId: userId }, select: { id: true } }),
+		prisma.articleView.findMany({ where: { userId }, select: { articleId: true } }),
+		prisma.articleLike.findMany({ where: { userId }, select: { articleId: true } }),
+		prisma.comment.findMany({ where: { authorId: userId }, select: { articleId: true } }),
+		prisma.review.findMany({ where: { reviewerId: userId }, select: { articleId: true } }),
+		prisma.article.findMany({ where: { authorId: userId }, select: { id: true } }),
 	]);
 	const ids = new Set<string>();
 	views.forEach((v) => ids.add(v.articleId));
@@ -46,10 +46,10 @@ async function getEngagedArticlesIds(userId: string): Promise<Set<string>> {
 
 async function buildReaderProfile(userId: string): Promise<number[] | null> {
 	const [views, likes, comments, reviews] = await Promise.all([
-		prisma.ArticleView.findMany({ where: { userId }, select: { articleId: true } }),
-		prisma.ArticleLike.findMany({ where: { userId }, select: { articleId: true } }),
-		prisma.Comment.findMany({ where: { authorId: userId }, select: { articleId: true } }),
-		prisma.Review.findMany({ where: { reviewerId: userId }, select: { articleId: true } }),
+		prisma.articleView.findMany({ where: { userId }, select: { articleId: true } }),
+		prisma.articleLike.findMany({ where: { userId }, select: { articleId: true } }),
+		prisma.comment.findMany({ where: { authorId: userId }, select: { articleId: true } }),
+		prisma.review.findMany({ where: { reviewerId: userId }, select: { articleId: true } }),
 	]);
 	const weightById = new Map<string, number>();
 	const addWeight = (id: string, w: number) => weightById.set(id, (weightById.get(id) ?? 0) + w);
@@ -59,7 +59,7 @@ async function buildReaderProfile(userId: string): Promise<number[] | null> {
 	reviews.forEach((r) => addWeight(r.articleId, 3));
 	if (weightById.size === 0)
 		return null;
-	const articles = await prisma.Article.findMany({
+	const articles = await prisma.article.findMany({
 		where: { id: { in: [...weightById.keys()] }, authorId: { not: userId } },
 		select: { id: true, embedding: true },
 	});
@@ -67,7 +67,7 @@ async function buildReaderProfile(userId: string): Promise<number[] | null> {
 }
 
 async function buildAuthorProfile(userId: string): Promise<number[] | null> {
-	const articles = await prisma.Article.findMany({
+	const articles = await prisma.article.findMany({
 		where: { authorId: userId, status: "PUBLISHED" },
 		select: { embedding: true },
 	});
@@ -75,7 +75,7 @@ async function buildAuthorProfile(userId: string): Promise<number[] | null> {
 }
 
 async function fallbackArticles(excludeIds: Set<string>, limit: number) {
-	return prisma.Article.findMany({
+	return prisma.article.findMany({
 		where: { status: "PUBLISHED", id: { notIn: [...excludeIds] } },
 		include: { author: { select: { id: true, name: true } } },
 		orderBy: { createdAt: "desc" },
@@ -84,7 +84,7 @@ async function fallbackArticles(excludeIds: Set<string>, limit: number) {
 }
 
 async function rankArticlesByProfile(profile: number[], excludeIds: Set<string>, limit: number) {
-	const candidates = await prisma.Article.findMany({
+	const candidates = await prisma.article.findMany({
 		where: { status: "PUBLISHED", id: { notIn: [...excludeIds] } },
 		include: { author: { select: { id: true, name: true } } },
 	});

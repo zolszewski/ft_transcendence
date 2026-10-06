@@ -2,7 +2,7 @@ import { prisma } from "../lib/prisma";
 
 export async function createUser(email: string, name: string, hashedPassword: string) {
 	try {
-		return await prisma.User.create({
+		return await prisma.user.create({
 			data: {
 				email,
 				name,
@@ -18,7 +18,7 @@ export async function createUser(email: string, name: string, hashedPassword: st
 
 export async function getUserByEmail(email: string) {
 	try {
-		return await prisma.User.findUnique({
+		return await prisma.user.findUnique({
 			where: {email},
 		});
 	}
@@ -30,7 +30,7 @@ export async function getUserByEmail(email: string) {
 
 export async function getUserById(id: string) {
 	try {
-		return await prisma.User.findUnique({
+		return await prisma.user.findUnique({
 			where: { id },
 		});
 	}
@@ -42,7 +42,7 @@ export async function getUserById(id: string) {
 
 export async function getOtherUsers(currentUserId: string) {
 	try {
-		return await prisma.User.findMany({
+		return await prisma.user.findMany({
 			where: { id: { not: currentUserId } },
 			select: {
 				id: true,
@@ -68,7 +68,7 @@ export async function updateUser(
 	},
 ) {
 	try {
-		return await prisma.User.update({
+		return await prisma.user.update({
 			where: { id },
 			data,
 		});
@@ -82,7 +82,7 @@ export async function updateUser(
 
 export async function setUserAvatar(id: string, avatarId: string) {
 	try {
-		return await prisma.User.update({
+		return await prisma.user.update({
 			where: { id },
 			data : { avatarId },
 		});
@@ -101,7 +101,7 @@ export function getAvatarUrl(avatarId: string | null): string {
 
 export async function createOAuthUser(email: string, name: string, oauthProvider: string, oauthId: string) {
 	try {
-		return await prisma.User.create({
+		return await prisma.user.create({
 			data: { email, name, oauthProvider, oauthId },
 		});
 	}
@@ -113,7 +113,7 @@ export async function createOAuthUser(email: string, name: string, oauthProvider
 
 export async function getUserByOAuth(oauthProvider: string, oauthId : string) {
 	try {
-		return await prisma.User.findUnique({
+		return await prisma.user.findUnique({
 			where: { oauthProvider_oauthId: { oauthProvider, oauthId }}
 		});
 	}
@@ -125,7 +125,7 @@ export async function getUserByOAuth(oauthProvider: string, oauthId : string) {
 
 export async function searchUsersByName(query: string, excludeUserId: string) {
 	try {
-		return await prisma.User.findMany({
+		return await prisma.user.findMany({
 			where: {
 				name: { contains: query, mode: "insensitive" },
 				id: { not : excludeUserId },

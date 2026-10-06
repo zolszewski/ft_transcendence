@@ -53,7 +53,12 @@ export default function StatsSection({ stats }: { stats: DashboardStats }) {
       </div>
 
       <CountGroup title="Articles" counts={stats.articleCounts} />
-      <CountGroup title="Reviews" counts={stats.reviewCounts} />
+      <CountGroup
+        title="Reviews"
+        counts={Object.fromEntries(
+          Object.entries(stats.reviewCounts).filter(([status]) => status !== "PENDING"),
+        )}
+      />
     </div>
   );
 }

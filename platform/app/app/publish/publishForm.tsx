@@ -120,6 +120,7 @@ export default function PublishForm() {
             pdfFile,
             pdfRemoved,
             miniatureFocus,
+            setUploadProgress,
           )
         : await apiClient.articles.create(
             title,
@@ -128,6 +129,7 @@ export default function PublishForm() {
             undefined,
             pdfFile,
             miniatureFocus,
+            setUploadProgress,
           );
       if (response.success === false) {
         setError(response.error);
@@ -196,6 +198,7 @@ export default function PublishForm() {
             pdfFile,
             pdfRemoved,
             miniatureFocus,
+            setUploadProgress,
           )
         : await apiClient.articles.create(
             title,
@@ -204,6 +207,7 @@ export default function PublishForm() {
             undefined,
             pdfFile,
             miniatureFocus,
+            setUploadProgress,
           );
       if (!createResponse.success) {
         setError(createResponse.error);

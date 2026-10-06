@@ -2,7 +2,7 @@ import { prisma } from "../lib/prisma";
 
 export async function createComment(articleId: string, authorId: string, content: string) {
 	try {
-		return await prisma.Comment.create({
+		return await prisma.comment.create({
 			data: { articleId, authorId, content },
 			include: { author: { select: { id: true, name: true } } },
 		});
@@ -15,7 +15,7 @@ export async function createComment(articleId: string, authorId: string, content
 
 export async function getCommentById(id: string) {
 	try {
-		return await prisma.Comment.findUnique({ where: { id } });
+		return await prisma.comment.findUnique({ where: { id } });
 	}
 	catch (error) {
 		console.error("Failed to fetch comment:", error);
@@ -25,7 +25,7 @@ export async function getCommentById(id: string) {
 
 export async function listCommentsForArticle(articleId: string) {
 	try {
-		return await prisma.Comment.findMany({
+		return await prisma.comment.findMany({
 			where: { articleId },
 			include: { author: { select: { id: true, name: true } } },
 		});
@@ -38,7 +38,7 @@ export async function listCommentsForArticle(articleId: string) {
 
 export async function deleteComment(id: string) {
 	try {
-		await prisma.Comment.delete({ where: { id } });
+		await prisma.comment.delete({ where: { id } });
 	}
 	catch (error) {
 		console.error("Failed to delete comment:", error);

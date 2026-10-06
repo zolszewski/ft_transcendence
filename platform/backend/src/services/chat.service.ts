@@ -6,7 +6,7 @@ function getDirectKey(userId: string, otherUserId: string) {
 }
 
 export async function listMessages(userId: string, otherUserId: string) {
-	return prisma.Message.findMany({
+	return prisma.message.findMany({
 		where: { conversation: { directKey: getDirectKey(userId, otherUserId) } },
 		select: {
 			id: true,
@@ -25,7 +25,7 @@ async function createMessage(userId: string, otherUserId: string, content: strin
 
 	return prisma.$transaction(async (transaction) => {
 		// crée la conversation si elle n'existe pas, sinon met à jour updatedAt
-		const conversation = await transaction.Conversation.upsert({
+		const conversation = await transaction.conversation.upsert({
 			where: { directKey },
 			update: { updatedAt: new Date() },
 			create: {
@@ -39,7 +39,7 @@ async function createMessage(userId: string, otherUserId: string, content: strin
 			},
 		});
 
-		return transaction.Message.create({
+		return transaction.message.create({
 			data: {
 				content: content.trim(),
 				conversationId: conversation.id,

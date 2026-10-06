@@ -5,7 +5,7 @@ import { bumpArticlesCacheVersion } from "../lib/cache";
 export async function createReview(articleId: string, reviewerId: string, comment?: string) {
 	try {
 		await bumpArticlesCacheVersion();
-		return await prisma.Review.create({
+		return await prisma.review.create({
 			data: { articleId, reviewerId, comment },
 			include: { reviewer: { select: { id: true, name: true } } },
 		});
@@ -18,7 +18,7 @@ export async function createReview(articleId: string, reviewerId: string, commen
 
 export async function getReviewByArticleAndReviewer(articleId: string, reviewerId: string) {
 	try {
-		return await prisma.Review.findUnique({
+		return await prisma.review.findUnique({
 			where: { articleId_reviewerId: {articleId, reviewerId } },
 		});
 	}
@@ -30,7 +30,7 @@ export async function getReviewByArticleAndReviewer(articleId: string, reviewerI
 
 export async function listReviewsForArticle(articleId: string) {
 	try {
-		return await prisma.Review.findMany({
+		return await prisma.review.findMany({
 			where: { articleId },
 			include: { reviewer: { select: { id: true, name: true } } },
 		});
@@ -43,7 +43,7 @@ export async function listReviewsForArticle(articleId: string) {
 
 export async function getReviewById(id: string) {
 	try {
-		return await prisma.Review.findUnique({
+		return await prisma.review.findUnique({
 			where: { id },
 		});
 	}
@@ -55,7 +55,7 @@ export async function getReviewById(id: string) {
 
 export async function updateReviewStatus(id: string, status: ReviewStatus) {
 	try {
-		return await prisma.Review.update({
+		return await prisma.review.update({
 			where: { id },
 			data: { status },
 			include: { reviewer: { select: { id: true, name: true } } },
