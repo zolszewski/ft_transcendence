@@ -47,7 +47,7 @@ export default function StatsSection({ stats }: { stats: DashboardStats }) {
           value={
             stats.approvalRate === null
               ? "N/A"
-              : `${Math.round(stats.approvalRate * 100)}%`
+              : `${Math.round(stats.approvalRate)}%`
           }
         />
       </div>

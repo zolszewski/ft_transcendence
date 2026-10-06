@@ -51,8 +51,11 @@ services:
       VAULT_ADDR: http://vault:8200
       VAULT_TOKEN_FILE: /vault-token/backend.token
     volumes:
-      - ./backend:/app
-      - backend_node_modules:/app/node_modules
+      - ./backend/src:/app/src
+      - ./backend/prisma:/app/prisma
+      - ./backend/scripts:/app/scripts
+      - ./backend/prisma.config.ts:/app/prisma.config.ts
+      - ./backend/uploads:/app/uploads
       - vault_token:/vault-token:ro
     ports:
     - "4000:4000"
@@ -142,7 +145,6 @@ volumes:
   postgresql_data:
   redis_data:
   nextjs_node_modules:
-  backend_node_modules:
   vault_data:
   vault_keys:
   vault_token:

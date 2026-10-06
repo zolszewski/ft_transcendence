@@ -50,7 +50,6 @@ export default function UserProfileSection({
     setIsEditing(false);
   }, [user]);
 
-  // Clean up object URLs
   useEffect(() => {
     if (!avatarFile) {
       setAvatarUrl("");

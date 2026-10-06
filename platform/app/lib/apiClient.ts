@@ -685,7 +685,7 @@ export const apiClient = {
     //single article review page
     getReviewingArticle: async (articleId: string) => {
       try {
-        const response = await fetch(`/api/reviews/${articleId}`, {
+        const response = await fetch(`/api/articles/${articleId}`, {
           method: "GET",
           credentials: "include",
         });
