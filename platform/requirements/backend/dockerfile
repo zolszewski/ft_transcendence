@@ -8,10 +8,12 @@ COPY backend/prisma ./prisma
 
 RUN npm install
 
-RUN npm install multer -D @types/multer
-
 COPY backend/ ./
+
+ENV MODEL_CACHE_DIR=/opt/model-cache
+
+RUN npx tsx scripts/warm-model.ts
 
 EXPOSE 4000
 
-CMD ["sh", "-c", "node scripts/with-vault.js npx prisma migrate deploy && node scripts/with-vault.js npm run dev"]
+CMD ["sh", "-c", "node scripts/with-vault.js npx prisma migrate deploy && node scripts/with-vault.js npx tsx scripts/seed.ts && node scripts/with-vault.js npm run dev"]
