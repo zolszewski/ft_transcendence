@@ -5,14 +5,14 @@ import type { FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-// même limite que le backend (chat.routes.ts)
+//same limit as the backend (chat.routes.ts)
 const MAX_MESSAGE_LENGTH = 2000;
 
 type MessageInputProps = {
   placeholder: string;
-  // met le curseur dans le champ dès l'affichage (fenêtre de chat qui s'ouvre)
+  //focus the input right away (chat window just opened)
   autoFocus?: boolean;
-  // renvoie true si le message est parti : le champ est alors vidé
+  //true if the message went through, then we clear the input
   onSend: (content: string) => Promise<boolean>;
 };
 
@@ -35,7 +35,7 @@ export default function MessageInput({ placeholder, autoFocus = false, onSend }:
         value={content}
         onChange={(event) => setContent(event.target.value)}
         placeholder={placeholder}
-        // le placeholder ne suffit pas aux lecteurs d'écran : il faut un vrai nom au champ
+        //placeholder isn't enough for screen readers, the input needs a real label
         aria-label={placeholder}
         autoFocus={autoFocus}
         maxLength={MAX_MESSAGE_LENGTH}

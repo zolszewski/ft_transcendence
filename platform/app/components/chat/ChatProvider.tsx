@@ -1,63 +1,56 @@
 "use client";
 
-//coté navigateur. ca doit etre en temps réel pour mettre a jour l interface
-
-//le fichier layout permet de garder la structure du chat partout sur toutes les pages et le fichiers providerchat contient tout l etat du chat 
-// (les contactes; les messages, le conversionation) il gere aussi le temps réel etc.
+//client-side chat state (contacts, messages, open convo) + the realtime stuff
 
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { apiClient } from "@/lib/apiClient";
 import { getSocket } from "@/lib/socket";
 import type { Message, User } from "@/lib/types";
 
-//import les outils react
-
-// message reçu par la socket : le back ajoute le destinataire pour savoir de quelle conversation il s'agit
+//socket message: the back adds the recipient so we know which convo it's for
 type SocketMessage = Message & { recipientId: string };
 
-//le minimum pour ouvrir une conversation (un User complet convient aussi)
+//bare minimum to open a convo (a full User works too)
 export type ChatContact = Pick<User, "id" | "name">;
 
 
-//décris tout le système du chat
+//everything the chat exposes
 type ChatContextValue = {
-  // l'utilisateur connecté (null si personne)
+  //logged-in user (null if nobody)
   myId: string | null;
-  // ids des utilisateurs connectés, tenus à jour par la socket
+  //ids of online users, kept in sync by the socket
   onlineUserIds: Set<string>;
-  // les autres utilisateurs, à qui on peut écrire
+  //everyone else, i.e. people you can message
   contacts: User[];
-  // la conversation ouverte (null = aucune)
+  //open convo (null = none)
   activeContact: ChatContact | null;
-  // les messages de la conversation ouverte
+  //messages of the open convo
   messages: Message[];
-  // nombre de messages non lus par contact (id -> nombre)
+  //unread count per contact (id -> count)
   unreadCounts: Record<string, number>;
   error: string;
   openChatWith: (contact: ChatContact) => void;
   closeChat: () => void;
-  // renvoie true si le message est parti
+  //true if the message went through
   sendMessage: (content: string) => Promise<boolean>;
 };
 
 const ChatContext = createContext<ChatContextValue | null>(null);
 
 type ChatProviderProps = {
-  // utilisateur connecté (lu par le layout côté serveur), null si personne
+  //logged-in user (read server-side by the layout), null if nobody
   userId: string | null;
   children: React.ReactNode;
 };
 
-// le même message peut arriver deux fois (réponse du POST + socket) : on ne l'ajoute qu'une fois
+//same message can land twice (POST response + socket), only keep one
 function appendOnce(messages: Message[], message: Message) {
   return messages.some((existing) => existing.id === message.id) ? messages : [...messages, message];
 }
 
 
-//useState : pour stocker les infos du chat (contacts, messages, etc)
-// et qauns ca change REact peut les modifier
-// placé dans le layout : une seule connexion socket pour tout le site,
-// qui reste ouverte quand on change de page (le layout ne se recharge pas)
+//lives in the layout: one socket for the whole site,
+//stays open across page changes (the layout doesn't remount)
 export function ChatProvider({ userId, children }: ChatProviderProps) {
   const [onlineUserIds, setOnlineUserIds] = useState<Set<string>>(new Set());
   const [contacts, setContacts] = useState<User[]>([]);
@@ -65,14 +58,12 @@ export function ChatProvider({ userId, children }: ChatProviderProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
   const [error, setError] = useState("");
-  // copie de activeContact lisible depuis le listener socket (sinon il garderait l'ancienne valeur)
+  //activeContact mirror for the socket listener (otherwise it'd see a stale value)
   const activeContactRef = useRef<ChatContact | null>(null);
   const activeContactId = activeContact?.id ?? null;
 
 
-  //Websocket permet le temps réel
-  //useEffect: quand un user met à jour le chat
-  // se (re)connecte quand l'utilisateur change : login, logout, changement de compte
+  //(re)connect whenever the user changes: login, logout, account switch
   useEffect(() => {
     if (!userId) return;
     const socket = getSocket();
@@ -84,12 +75,12 @@ export function ChatProvider({ userId, children }: ChatProviderProps) {
       else setError(response.error);
     });
 
-    // à la connexion : la liste complète de ceux qui sont déjà en ligne
+    //on connect: full list of who's already online
     function handleOnlineList(userIds: string[]) {
       setOnlineUserIds(new Set(userIds));
     }
 
-    // ensuite : un user qui arrive ou qui part
+    //then: someone comes or goes
     function handleUserOnline(onlineUserId: string) {
       setOnlineUserIds((previous) => new Set(previous).add(onlineUserId));
     }
@@ -103,13 +94,13 @@ export function ChatProvider({ userId, children }: ChatProviderProps) {
     }
 
     function handleNewMessage(message: SocketMessage) {
-      // l'autre personne de la conversation : l'expéditeur, ou le destinataire si j'ai écrit depuis un autre onglet
+      //the other person in the convo: the sender, or the recipient if I sent it from another tab
       const otherUserId = message.senderId === userId ? message.recipientId : message.senderId;
       if (activeContactRef.current?.id === otherUserId) {
         setMessages((previous) => appendOnce(previous, message));
         return;
       }
-      // conversation pas ouverte : un non-lu de plus (sauf pour mes propres messages)
+      //convo not open: one more unread (unless it's my own message)
       if (message.senderId !== userId)
         setUnreadCounts((previous) => ({ ...previous, [otherUserId]: (previous[otherUserId] ?? 0) + 1 }));
     }
@@ -126,7 +117,7 @@ export function ChatProvider({ userId, children }: ChatProviderProps) {
       socket.off("user:offline", handleUserOffline);
       socket.off("message:new", handleNewMessage);
       socket.disconnect();
-      // après un logout, on oublie tout ce qui concernait l'ancien utilisateur
+      //after logout, forget everything about the previous user
       activeContactRef.current = null;
       setOnlineUserIds(new Set());
       setContacts([]);
@@ -136,11 +127,10 @@ export function ChatProvider({ userId, children }: ChatProviderProps) {
       setError("");
     };
   }, [userId]);
-
-  // à chaque changement de conversation : charger ses messages
+  //convo changed: load its messages
   useEffect(() => {
     if (!activeContactId) return;
-    // ignore la réponse si on a changé de conversation entre-temps
+    //drop the response if the convo changed meanwhile
     let cancelled = false;
     apiClient.chat.getMessages(activeContactId).then((response) => {
       if (cancelled) return;
@@ -157,7 +147,7 @@ export function ChatProvider({ userId, children }: ChatProviderProps) {
     activeContactRef.current = contact;
     setActiveContact(contact);
     setError("");
-    // ouvrir la conversation = tout est lu
+    //opening the convo = everything's read
     setUnreadCounts((previous) => {
       const next = { ...previous };
       delete next[contact.id];
@@ -181,7 +171,7 @@ export function ChatProvider({ userId, children }: ChatProviderProps) {
       setError(response.error);
       return false;
     }
-    // la conversation a pu changer pendant l'envoi : n'ajoute le message que si c'est toujours la même
+    //convo might've changed while sending, only append if it's still the same one
     if (activeContactRef.current?.id === recipient.id)
       setMessages((previous) => appendOnce(previous, response.data));
     return true;
@@ -207,7 +197,7 @@ export function ChatProvider({ userId, children }: ChatProviderProps) {
   );
 }
 
-// tout l'état du chat, pour la chatbox et la page /chat
+//all the chat state, for the chat box and the /chat page
 export function useChat(): ChatContextValue {
   const context = useContext(ChatContext);
   if (!context)
@@ -215,7 +205,7 @@ export function useChat(): ChatContextValue {
   return context;
 }
 
-// à utiliser dans n'importe quel composant sous le layout : useOnlineUsers().has(user.id)
+//use it anywhere under the layout: useOnlineUsers().has(user.id)
 export function useOnlineUsers(): Set<string> {
   return useChat().onlineUserIds;
 }

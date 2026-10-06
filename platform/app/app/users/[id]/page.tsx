@@ -14,8 +14,8 @@ import PageShell from "@/components/PageShell";
 import UserProfileSection from "@/components/UserProfileSection";
 import FriendActions from "@/components/FriendActions";
 
-// profil public d'un autre utilisateur : ses infos (lecture seule), son statut en ligne,
-// et un bouton pour lui écrire (ouvre la fenêtre du chat en bas de l'écran)
+//someone else's public profile: read-only info, online status,
+//and a button to message them (opens the chat window at the bottom)
 export default function UserProfilePage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
@@ -24,7 +24,7 @@ export default function UserProfilePage() {
   const [error, setError] = useState("");
   const [errorStatus, setErrorStatus] = useState<number | null>(null);
 
-  // son propre profil se modifie dans le dashboard
+  //your own profile is edited from the dashboard
   const isMe = myId !== null && myId === params.id;
   useEffect(() => {
     if (isMe) router.replace("/dashboard");
@@ -32,7 +32,7 @@ export default function UserProfilePage() {
 
   useEffect(() => {
     if (isMe) return;
-    // ignore la réponse si on est passé à un autre profil entre-temps
+    //drop the response if we switched profiles meanwhile
     let cancelled = false;
     apiClient.profile.get(params.id).then((response) => {
       if (cancelled) return;
@@ -76,7 +76,7 @@ export default function UserProfilePage() {
         <p className="p-4 text-sm text-gray-600">Loading...</p>
       ) : (
         <>
-          {/* key : le formulaire interne repart des bonnes valeurs si on passe d'un profil à un autre */}
+          {/* key: resets the inner form when switching profiles */}
           <UserProfileSection key={user.id} user={user} isOwner={false} />
 
           <div className="mt-4 flex flex-wrap items-center gap-4">
@@ -84,7 +84,7 @@ export default function UserProfilePage() {
               <OnlineDot online={online} />
               <span aria-hidden="true">{online ? "Online" : "Offline"}</span>
             </p>
-            {/* le chat n'existe que pour un utilisateur connecté */}
+            {/* chat's only for logged-in users */}
             {myId ? (
               <>
                 <button type="button" className="btn-nav" onClick={() => openChatWith(user)}>

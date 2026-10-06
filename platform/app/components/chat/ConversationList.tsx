@@ -10,7 +10,7 @@ type ConversationListProps = {
   onSelect: (user: User) => void;
 };
 
-// liste des contacts avec leur pastille en ligne et leurs non-lus ; un clic ouvre la conversation
+//contact list with online dot + unread count, click to open the convo
 export default function ConversationList({ users, selectedUserId, onSelect }: ConversationListProps) {
   const { onlineUserIds, unreadCounts } = useChat();
 

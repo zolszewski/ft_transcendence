@@ -37,8 +37,8 @@ router.post("/:userId", requireAuth, async (req, res) => {
 		return res.status(404).json({ error: "User not found" });
 
 	const message = await sendMessage(currentUserId, otherUserId, content);
-	// temps réel : le destinataire + les autres onglets de l'expéditeur reçoivent le message
-	// recipientId permet au front de savoir à quelle conversation il appartient
+	//realtime: recipient + sender's other tabs get the message
+	//recipientId tells the front which convo it belongs to
 	getIO()
 		.to(`user:${otherUserId}`)
 		.to(`user:${currentUserId}`)

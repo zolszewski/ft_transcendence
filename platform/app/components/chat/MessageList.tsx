@@ -9,17 +9,17 @@ type MessageListProps = {
   otherUserName: string;
 };
 
-// messages en lignes simples (nom, heure, texte), comme le chat de Facebook
+//one-line messages (name, time, text), Facebook-style
 export default function MessageList({ messages, myId, otherUserName }: MessageListProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  // descend automatiquement au dernier message
+  //auto-scroll to the latest message
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   return (
-    // role="log" + aria-live : les lecteurs d'écran annoncent les nouveaux messages
+    //role="log" + aria-live so screen readers announce new messages
     <div className="flex-1 space-y-2 overflow-y-auto p-4" role="log" aria-live="polite" aria-label="Messages">
       {messages.length === 0 && <p className="text-sm text-gray-600">No messages yet. Say hello!</p>}
       {messages.map((message) => {

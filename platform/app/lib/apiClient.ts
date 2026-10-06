@@ -743,7 +743,7 @@ export const apiClient = {
     },
   },
   chat: {
-    // les autres utilisateurs (à qui on peut écrire)
+    //everyone else (people you can message)
     listUsers: async () => {
       try {
         const response = await fetch("/api/users", { credentials: "include" });

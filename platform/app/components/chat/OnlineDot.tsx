@@ -1,5 +1,5 @@
-// pastille verte si en ligne, grise sinon
-// la couleur seule ne suffit pas (daltoniens, lecteurs d'écran) : texte caché "online"/"offline" en plus
+//green dot if online, grey otherwise
+//color alone isn't enough (colorblind, screen readers), so there's hidden "online"/"offline" text too
 export default function OnlineDot({ online }: { online: boolean }) {
   return (
     <span
