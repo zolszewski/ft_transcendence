@@ -51,7 +51,7 @@ const DOMAIN = "demo.local";
 
 type Status = "DRAFT" | "SUBMITTED" | "PUBLISHED" | "REJECTED";
 
-const USERS = ["auteur", "historien", "economiste", "biologiste", "litteraire", "informaticien", "relecteur", "lecteur", "nouveau"];
+const USERS = ["auteur", "historien", "economiste", "biologiste", "litteraire", "informaticien", "relecteur", "lecteur", "nouveau", "historien2", ];
 
 /** faculty per user, for the explore filter demo; reviewer/reader/new accounts have none, they publish nothing */
 const USER_FACULTIES: Partial<Record<string, string>> = {
@@ -64,6 +64,10 @@ const USER_FACULTIES: Partial<Record<string, string>> = {
 };
 
 const ARTICLES: { key: string; author: string; title: string; content: string; status: Status }[] = [
+	
+	{}
+	{ key: "mosaique", author: "historien2", title: "Mosaïque romaines", status: "PUBLISHED",
+		content: "La mosaïque romaine se caractérise notamment par sa polychromie, qui est totalement maitrisée par les Romains au IIe siècle av. J.-C. Grâce à l'activité de ses ateliers itinérants, toutes les provinces situées autour du mare nostrum, ont connu dès les débuts de l'expansion romaine cet art qui a trouvé un terrain d'élection dans les pays où la lumière est reine. L'exposition, organisée en 2001 par l'Union Latine au musée archéologique de Madrid[2], a mis l'accent sur l'art de la mosaïque tel qu'il est illustré dans les pays du bassin méditerranéen.." },
 	{ key: "revolte", author: "auteur", title: "Darius Ier et la revolte ionienne", status: "PUBLISHED",
 		content: `En 499 avant notre ere, les cites grecques d'Ionie, sur la cote d'Asie Mineure, se revoltent contre la domination perse. Depuis une cinquantaine d'annees, elles sont placees sous l'autorite de tyrans qui gouvernent au nom du Grand Roi. Aristagoras de Milet, qui exerce ce pouvoir pour le compte de Darius, decide de se rebeller. Pour obtenir l'aide des cites grecques d'Europe, il se tourne vers Sparte, puis vers Athenes, qui envoie vingt navires, rejointe par Eretrie avec cinq autres.
 
