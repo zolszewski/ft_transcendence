@@ -61,6 +61,7 @@ services:
       - ./backend/prisma.config.ts:/app/prisma.config.ts
       - ./backend/uploads:/app/uploads
       - vault_token:/vault-token:ro
+  
   nextjs:
     build:
       context: ./app
@@ -68,9 +69,6 @@ services:
     container_name: nextjs
     environment:
       BACKEND_URL: ${BACKEND_URL}
-    volumes:
-      - ./app:/app
-      - nextjs_node_modules:/app/node_modules
     depends_on:
       - backend
     networks:
@@ -143,7 +141,6 @@ services:
 volumes:
   postgresql_data:
   redis_data:
-  nextjs_node_modules:
   vault_data:
   vault_keys:
   vault_token:
