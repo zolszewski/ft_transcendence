@@ -162,6 +162,8 @@ async function main() {
 		data: { articleId: articles.salamine.id, authorId: users.historien.id, content: "Complementaire de mon article sur Sparte." },
 	});
 
+	await prisma.Friendship.create({ data: { requesterId: users.lecteur.id, addresseeId: users.auteur.id, status: "ACCEPTED" }, });
+	await prisma.Friendship.create({ data: { requesterId: users.lecteur.id, addresseeId: users.historien.id, status: "ACCEPTED" }, });
 	await prisma.ArticleLike.create({ data: { articleId: articles.revolte.id, userId: users.lecteur.id } });
 	await prisma.ArticleView.create({ data: { articleId: articles.revolte.id, userId: users.lecteur.id } });
 

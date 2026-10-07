@@ -12,12 +12,13 @@ type ListArticlesOptions = {
 	createdFrom?: Date;
 	createdTo?: Date;
 	faculty?: string;
+	friendIds?: string[];
 };
 
 export async function listArticles(options: ListArticlesOptions = {}) {
-	const { search, sort = "newest", page = 1, limit = 10, createdFrom, createdTo, faculty } = options;
+	const { search, sort = "newest", page = 1, limit = 10, createdFrom, createdTo, faculty, friendIds } = options;
 	const version = await getArticlesCacheVersion();
-	const cacheKey = `articles:list:v${version}:search=${search ?? ""}:sort=${sort}:page=${page}:limit=${limit}:from=${createdFrom?.toISOString() ?? ""}:to=${createdTo?.toISOString() ?? ""}:faculty=${faculty ?? ""}`;
+	const cacheKey = `articles:list:v${version}:search=${search ?? ""}:sort=${sort}:page=${page}:limit=${limit}:from=${createdFrom?.toISOString() ?? ""}:to=${createdTo?.toISOString() ?? ""}:faculty=${faculty ?? ""}:friends=${friendIds === undefined ? "off" : friendIds.length ? [...friendIds].sort().join(",") : "none"}`;
 	const cached = await getCached<{ articles: unknown[]; total: number; page: number; totalPages: number }> (cacheKey);
 	if (cached)
 		return cached;
@@ -41,6 +42,9 @@ export async function listArticles(options: ListArticlesOptions = {}) {
 			: {}),
 		...(faculty
 			? { author: { faculty: { equals: faculty, mode: "insensitive" as const } } }
+			: {}),
+		...(friendIds
+			? { authorId: { in: friendIds } }
 			: {}),
 	};
 	try {

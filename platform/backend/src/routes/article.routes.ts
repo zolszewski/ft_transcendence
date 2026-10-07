@@ -7,13 +7,17 @@ import { isValidContent, isValidTitle, parseMiniatureFocus } from "../utils/vali
 import { createReview, getReviewByArticleAndReviewer, listReviewsForArticle } from "../services/review.service";
 import { createComment, listCommentsForArticle } from "../services/comment.service";
 import { getUploadById, setUploadVisibility } from "../services/upload.service";
+import { listFriendIds } from "../services/friend.service";
 
 const router = Router();
 
 router.get("/explore", async (req, res) => {
-	const { search, sort, page, limit, createdFrom, createdTo, faculty } = req.query;
+	const { search, sort, page, limit, createdFrom, createdTo, faculty, friendsOnly } = req.query;
 	const parsedFrom = typeof createdFrom === "string" ? new Date(createdFrom) : undefined;
 	const parsedTo = typeof createdTo === "string" ? new Date(createdTo) : undefined;
+	const friendIds = friendsOnly === "true" && req.session?.userId
+		? await listFriendIds(req.session.userId)
+		: undefined;
 	const result = await listArticles({
 		search: typeof search === "string" ? search : undefined,
 		sort: sort === "oldest" ? "oldest" : "newest",
@@ -22,6 +26,7 @@ router.get("/explore", async (req, res) => {
 		createdFrom: parsedFrom && !isNaN(parsedFrom.getTime()) ? parsedFrom : undefined,
 		createdTo: parsedTo && !isNaN(parsedTo.getTime()) ? parsedTo : undefined,
 		faculty: typeof faculty === "string" && faculty.trim() ? faculty.trim() : undefined,
+		friendIds,
 	});
 	res.json({ ...result, articles: await presentArticles(result.articles, req.session?.userId) });
 })

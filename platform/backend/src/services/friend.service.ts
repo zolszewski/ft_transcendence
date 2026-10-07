@@ -35,6 +35,17 @@ export async function listFriends(userId: string) {
 	);
 }
 
+export async function listFriendIds(userId: string): Promise<string[]> {
+	const rows = await prisma.friendship.findMany({
+		where: {
+			status: FriendshipStatus.ACCEPTED,
+			OR: [{ requesterId: userId }, { addresseeId: userId }],
+		},
+		select: { requesterId: true, addresseeId: true },
+	});
+	return rows.map((row) => (row.requesterId === userId ? row.addresseeId : row.requesterId));
+}
+
 export async function listIncomingRequests(userId: string) {
 	const rows = await prisma.friendship.findMany({
 		where: { addresseeId: userId, status: FriendshipStatus.PENDING },
