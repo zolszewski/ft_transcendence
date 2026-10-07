@@ -53,6 +53,16 @@ type Status = "DRAFT" | "SUBMITTED" | "PUBLISHED" | "REJECTED";
 
 const USERS = ["auteur", "historien", "economiste", "biologiste", "litteraire", "informaticien", "relecteur", "lecteur", "nouveau"];
 
+/** faculty per user, for the explore filter demo; reviewer/reader/new accounts have none, they publish nothing */
+const USER_FACULTIES: Partial<Record<string, string>> = {
+	auteur: "Histoire",
+	historien: "Histoire",
+	biologiste: "Biologie",
+	economiste: "Economie",
+	litteraire: "Lettres",
+	informaticien: "Informatique",
+};
+
 const ARTICLES: { key: string; author: string; title: string; content: string; status: Status }[] = [
 	{ key: "revolte", author: "auteur", title: "Darius Ier et la revolte ionienne", status: "PUBLISHED",
 		content: `En 499 avant notre ere, les cites grecques d'Ionie, sur la cote d'Asie Mineure, se revoltent contre la domination perse. Depuis une cinquantaine d'annees, elles sont placees sous l'autorite de tyrans qui gouvernent au nom du Grand Roi. Aristagoras de Milet, qui exerce ce pouvoir pour le compte de Darius, decide de se rebeller. Pour obtenir l'aide des cites grecques d'Europe, il se tourne vers Sparte, puis vers Athenes, qui envoie vingt navires, rejointe par Eretrie avec cinq autres.
@@ -113,7 +123,7 @@ async function main() {
 	const users: Record<string, { id: string }> = {};
 	for (const name of USERS) {
 		users[name] = await prisma.User.create({
-			data: { email: `${name}@${DOMAIN}`, name, password: await hashPassword(PASSWORD) },
+			data: { email: `${name}@${DOMAIN}`, name, password: await hashPassword(PASSWORD), faculty: USER_FACULTIES[name] },
 		});
 	}
 

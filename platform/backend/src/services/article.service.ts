@@ -9,12 +9,15 @@ type ListArticlesOptions = {
 	sort?: "newest" | "oldest";
 	page?: number;
 	limit?: number;
+	createdFrom?: Date;
+	createdTo?: Date;
+	faculty?: string;
 };
 
 export async function listArticles(options: ListArticlesOptions = {}) {
-	const { search, sort = "newest", page = 1, limit = 10 } = options;
+	const { search, sort = "newest", page = 1, limit = 10, createdFrom, createdTo, faculty } = options;
 	const version = await getArticlesCacheVersion();
-	const cacheKey = `articles:list:v${version}:search=${search ?? ""}:sort=${sort}:page=${page}:limit=${limit}`;
+	const cacheKey = `articles:list:v${version}:search=${search ?? ""}:sort=${sort}:page=${page}:limit=${limit}:from=${createdFrom?.toISOString() ?? ""}:to=${createdTo?.toISOString() ?? ""}:faculty=${faculty ?? ""}`;
 	const cached = await getCached<{ articles: unknown[]; total: number; page: number; totalPages: number }> (cacheKey);
 	if (cached)
 		return cached;
@@ -28,6 +31,17 @@ export async function listArticles(options: ListArticlesOptions = {}) {
 				],
 			}
 		: {}),
+		...((createdFrom || createdTo)
+			? {
+				createdAt: {
+					...(createdFrom ? { gte: createdFrom } : {}),
+					...(createdTo ? { lte: createdTo } : {}),
+				},
+			}
+			: {}),
+		...(faculty
+			? { author: { faculty: { equals: faculty, mode: "insensitive" as const } } }
+			: {}),
 	};
 	try {
 		const [articles, total] = await Promise.all([

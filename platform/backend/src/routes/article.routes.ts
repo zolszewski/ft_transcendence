@@ -11,12 +11,17 @@ import { getUploadById, setUploadVisibility } from "../services/upload.service";
 const router = Router();
 
 router.get("/explore", async (req, res) => {
-	const { search, sort, page, limit } = req.query;
+	const { search, sort, page, limit, createdFrom, createdTo, faculty } = req.query;
+	const parsedFrom = typeof createdFrom === "string" ? new Date(createdFrom) : undefined;
+	const parsedTo = typeof createdTo === "string" ? new Date(createdTo) : undefined;
 	const result = await listArticles({
 		search: typeof search === "string" ? search : undefined,
 		sort: sort === "oldest" ? "oldest" : "newest",
 		page: Math.max(1, Number(page) || 1),
 		limit: Math.min(50, Math.max(1, Number(limit) || 10)),
+		createdFrom: parsedFrom && !isNaN(parsedFrom.getTime()) ? parsedFrom : undefined,
+		createdTo: parsedTo && !isNaN(parsedTo.getTime()) ? parsedTo : undefined,
+		faculty: typeof faculty === "string" && faculty.trim() ? faculty.trim() : undefined,
 	});
 	res.json({ ...result, articles: await presentArticles(result.articles, req.session?.userId) });
 })

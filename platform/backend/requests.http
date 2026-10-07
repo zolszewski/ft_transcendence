@@ -504,6 +504,13 @@ GET {{baseUrl}}/api/articles/explore?page=-5
 ### Guard rails: huge limit -> capped at 50, no error
 GET {{baseUrl}}/api/articles/explore?limit=99999
 
+###
+GET {{baseUrl}}/api/articles/explore?createdFrom=2026-01-01&createdTo=2026-12-31
+
+###
+GET {{baseUrl}}/api/articles/explore?faculty=Histoire
+
+
 ### ==========================================================
 ### DAY 14: Redis cache on the article listing. The HTTP response
 ### looks the same whether it comes from the cache or the DB.
