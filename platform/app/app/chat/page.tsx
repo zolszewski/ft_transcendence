@@ -38,7 +38,7 @@ export default function ChatPage() {
   return (
     <main className="mx-auto flex h-screen w-full max-w-4xl flex-col px-4 py-8">
       <header className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Discussion</h1>
+        <h1 className="text-3xl font-bold">Échanger</h1>
         <div className="flex items-center gap-4">
           {me && (
             <p className="text-sm text-gray-600">
@@ -60,7 +60,7 @@ export default function ChatPage() {
         {/* conversation */}
         <section className="flex min-w-0 flex-1 flex-col">
           {!activeContact ? (
-            <p className="m-auto text-sm text-gray-600">Sélectionnez un utilisateur pour commencer à discuter.</p>
+            <p className="m-auto text-sm text-gray-600">Sélectionnez un utilisateur pour commencer à échanger.</p>
           ) : (
             <>
               <h2 className="flex items-center gap-2 border-b px-4 py-3 font-bold">

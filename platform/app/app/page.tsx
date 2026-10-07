@@ -34,7 +34,7 @@ export default async function Home() {
             Explorer.
           </Link>
           <Link href="/chat" className="hover:underline">
-            Discussion.
+            Echanger.
           </Link>
         </p>
         

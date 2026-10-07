@@ -53,7 +53,7 @@ export default function ChatWindow() {
           ? "w-72 shrink rounded-t-lg"
           : "fixed inset-0 z-50 h-dvh w-full sm:static sm:h-96 sm:w-72 sm:rounded-t-lg"
       }`}
-      aria-label={`Discussion avec ${activeContact.name}`}
+      aria-label={`Échanger avec ${activeContact.name}`}
       onKeyDown={handleKeyDown}
     >
       {/* header: click to minimize / reopen */}
@@ -62,7 +62,7 @@ export default function ChatWindow() {
           ref={headerButtonRef}
           onClick={toggleMinimized}
           className={`flex min-w-0 flex-1 items-center gap-2 text-left font-bold ${buttonFocus}`}
-          aria-label={`${minimized ? "Ouvrir" : "Réduire"} la discussion avec ${headerLabel}`}
+          aria-label={`${minimized ? "Ouvrir" : "Réduire"} l'échange avec ${headerLabel}`}
           aria-expanded={!minimized}
         >
           <OnlineDot online={online} />
@@ -83,7 +83,7 @@ export default function ChatWindow() {
         >
           <UserIcon size={16} aria-hidden="true" />
         </Link>
-        <button onClick={closeChat} className={`px-2 py-1 hover:opacity-70 ${buttonFocus}`} aria-label="Fermer la discussion">
+        <button onClick={closeChat} className={`px-2 py-1 hover:opacity-70 ${buttonFocus}`} aria-label="Fermer l'échange">
           ✕
         </button>
       </header>

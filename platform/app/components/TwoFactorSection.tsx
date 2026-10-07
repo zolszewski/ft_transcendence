@@ -25,6 +25,7 @@ export default function TwoFactorSection({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const [open, setOpen] = useState(false);
 
   async function handleStartSetup() {
     setLoading(true);
@@ -120,9 +121,7 @@ export default function TwoFactorSection({
     setMessage("");
   }
 
-  return (
-    <section className="section-divider mt-6 border-t pt-4">
-      {setup ? (
+  const innerContent = setup ? (
         /* -------------------- SETUP 2FA -------------------- */
         <div>
           <p className="text-sm font-medium">
@@ -298,18 +297,41 @@ export default function TwoFactorSection({
             </button>
           )}
         </div>
-      )}
+      );
 
-      {error ? (
-        <p className="mt-4 form-error">
-          {error}
-        </p>
-      ) : null}
+  return (
+    <section className="mt-6 rounded-none border border-border bg-card">
+      <h2 className="sr-only">Paramètres d&apos;authentification</h2>
+      <button
+        type="button"
+        id="auth-settings-trigger"
+        aria-expanded={open}
+        aria-controls="auth-settings-panel"
+        onClick={() => setOpen((previous) => !previous)}
+        className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-semibold uppercase tracking-wide text-muted-foreground transition-colors hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-inset"
+      >
+        <span className="min-w-0 flex-1 truncate normal-case tracking-normal">
+          Paramètres d&apos;authentification
+        </span>
+        {enabled ? (
+          <span className="shrink-0 text-xs font-medium text-primary">2FA activée</span>
+        ) : null}
+      </button>
 
-      {message ? (
-        <p className="mt-4 text-sm font-bold text-foreground">
-          {message}
-        </p>
+      {open ? (
+        <div
+          id="auth-settings-panel"
+          aria-labelledby="auth-settings-trigger"
+          className="border-t border-border p-4"
+        >
+          {innerContent}
+
+          {error ? <p className="mt-4 form-error">{error}</p> : null}
+
+          {message ? (
+            <p className="mt-4 text-sm font-bold text-foreground">{message}</p>
+          ) : null}
+        </div>
       ) : null}
     </section>
   );

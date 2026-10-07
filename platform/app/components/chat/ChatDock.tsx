@@ -15,12 +15,12 @@ function isHiddenOn(pathname: string) {
 }
 
 //chat on every page (lives in the layout), Facebook-style:
-//a "Discussion" bar bottom right that opens the contact list,
+//a "Échanger" bar bottom right that opens the contact list,
 //with the open convo window to its left
 export default function ChatDock() {
   const { myId, onlineUserIds, contacts, activeContact, unreadCounts, openChatWith } = useChat();
   const [contactsOpen, setContactsOpen] = useState(false);
-  //"Discussion" bar button, focus comes back here when Esc closes the list
+  //"Échanger" bar button, focus comes back here when Esc closes the list
   const barButtonRef = useRef<HTMLButtonElement>(null);
   const pathname = usePathname();
 
@@ -52,7 +52,7 @@ export default function ChatDock() {
 
       <section
         className="pointer-events-auto flex w-64 min-w-0 shrink flex-col overflow-hidden rounded-t-lg border bg-background shadow-lg"
-        aria-label="Contacts de discussion"
+        aria-label="Contacts pour échanger"
         onKeyDown={handleKeyDown}
       >
         {contactsOpen && (
@@ -72,7 +72,7 @@ export default function ChatDock() {
           aria-controls="chat-contacts"
         >
           <span className="min-w-0 flex-1 truncate">
-            Discussion ({onlineCount} en ligne)
+            Échanger ({onlineCount} en ligne)
           </span>
           {totalUnread > 0 && (
             <span

@@ -63,9 +63,6 @@ export default function FilterSection({
         {hasAppliedFilters ? (
           <span className="shrink-0 text-xs font-medium normal-case tracking-normal text-primary">Actif</span>
         ) : null}
-        <span className="shrink-0 text-xs normal-case tracking-normal" aria-hidden="true">
-          {open ? "▼" : "▶"}
-        </span>
       </button>
 
       {open ? (

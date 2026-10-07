@@ -13,137 +13,135 @@ export default function TermsPage() {
     <PageShell width="default" offset="sm">
       <PageHeading
         title="Conditions d'utilisation"
-        description="Last updated: October 6, 2026"
+        description="Dernière mise à jour : 6 octobre 2026"
       />
 
       <div className="legal-content">
         <section>
-          <h2>1. Acceptance of the terms</h2>
+          <h2>1. Acceptation des conditions</h2>
           <p>
-            By creating an account or using OpenScholar, you agree to these
-            Terms of Service and to our{" "}
-            <Link href="/privacy">Politique de confidentialité</Link>. If you do not agree,
-            please do not use the platform.
+            En créant un compte ou en utilisant OpenScholar, vous acceptez les présentes
+            conditions d&apos;utilisation et notre{" "}
+            <Link href="/privacy">Politique de confidentialité</Link>. Si vous n&apos;acceptez
+            pas ces conditions, veuillez ne pas utiliser la plateforme.
           </p>
         </section>
 
         <section>
-          <h2>2. The service</h2>
+          <h2>2. Le service</h2>
           <p>
-            OpenScholar is an academic publishing platform created as a student
-            project (42 curriculum, ft_transcendence). It allows users to write
-            and publish articles, submit them for peer review, review and
-            comment on the work of others, add friends and exchange private
-            messages in real time. The service is provided free of charge, for
-            educational purposes, and may change or be interrupted at any time.
+            OpenScholar est une plateforme de publication académique créée dans le cadre d&apos;un
+            projet étudiant (cursus 42, ft_transcendence). Elle permet aux utilisateurs de
+            rédiger et publier des articles, de les soumettre à la relecture par les pairs, de
+            relire et commenter le travail d&apos;autres personnes, d&apos;ajouter des amis et
+            d&apos;échanger des messages privés en temps réel. Le service est fourni gratuitement,
+            à des fins pédagogiques, et peut évoluer ou être interrompu à tout moment.
           </p>
         </section>
 
         <section>
-          <h2>3. Your account</h2>
+          <h2>3. Votre compte</h2>
           <ul>
-            <li>You must provide a valid email address and accurate information.</li>
+            <li>Vous devez fournir une adresse e-mail valide et des informations exactes.</li>
             <li>
-              You are responsible for keeping your password secret and for all
-              activity on your account. We recommend enabling two-factor
-              authentication.
+              Vous êtes responsable de la confidentialité de votre mot de passe et de toute
+              activité sur votre compte. Nous recommandons d&apos;activer l&apos;authentification
+              à deux facteurs.
             </li>
-            <li>You may not impersonate another user or a real researcher.</li>
+            <li>Vous ne devez pas usurper l&apos;identité d&apos;un autre utilisateur ou d&apos;un chercheur réel.</li>
             <li>
-              If you sign in with GitHub, you must also respect GitHub&apos;s
-              own terms.
+              Si vous vous connectez avec GitHub, vous devez également respecter les conditions
+              d&apos;utilisation de GitHub.
             </li>
           </ul>
         </section>
 
         <section>
-          <h2>4. Publishing and reviewing</h2>
+          <h2>4. Publication et relecture</h2>
           <ul>
             <li>
-              You may only publish content you wrote yourself or have the right
-              to share. Plagiarism, fabricated data and copyright infringement
-              are forbidden.
+              Vous ne pouvez publier que du contenu que vous avez rédigé vous-même ou que vous
+              avez le droit de partager. Le plagiat, la fabrication de données et la violation
+              du droit d&apos;auteur sont interdits.
             </li>
             <li>
-              Submitted articles go through a review process and may be
-              approved or rejected. A rejected article is not published.
+              Les articles soumis passent par un processus de relecture et peuvent être approuvés
+              ou rejetés. Un article rejeté n&apos;est pas publié.
             </li>
             <li>
-              Reviews must be honest, constructive and focused on the work, not
-              on the author.
+              Les relectures doivent être honnêtes, constructives et centrées sur le travail, et
+              non sur l&apos;auteur.
             </li>
             <li>
-              Uploaded files (images and PDFs) must respect the allowed types
-              and sizes and must not contain malicious code.
+              Les fichiers téléversés (images et PDF) doivent respecter les types et tailles
+              autorisés et ne doivent pas contenir de code malveillant.
             </li>
           </ul>
         </section>
 
         <section>
-          <h2>5. Chat, comments and community rules</h2>
-          <p>When interacting with other users, you agree not to:</p>
+          <h2>5. Échanges, commentaires et règles de la communauté</h2>
+          <p>Lors de vos échanges avec d&apos;autres utilisateurs, vous vous engagez à ne pas :</p>
           <ul>
-            <li>Harass, threaten, insult or discriminate against anyone.</li>
-            <li>Post hateful, violent, sexual or illegal content.</li>
-            <li>Send spam, advertising or unsolicited bulk messages.</li>
-            <li>Share another person&apos;s personal information without their consent.</li>
+            <li>Harceler, menacer, insulter ou discriminer quiconque.</li>
+            <li>Publier du contenu haineux, violent, sexuel ou illégal.</li>
+            <li>Envoyer du spam, de la publicité ou des messages en masse non sollicités.</li>
+            <li>Partager les informations personnelles d&apos;autrui sans leur consentement.</li>
             <li>
-              Try to break, overload or bypass the security of the platform,
-              or access data that is not yours.
+              Tenter de compromettre, surcharger ou contourner la sécurité de la plateforme, ou
+              d&apos;accéder à des données qui ne vous appartiennent pas.
             </li>
           </ul>
         </section>
 
         <section>
-          <h2>6. Intellectual property</h2>
+          <h2>6. Propriété intellectuelle</h2>
           <p>
-            You keep the ownership of the articles, reviews, comments and
-            files you publish. By publishing content, you allow OpenScholar to
-            store it and display it to other users within the platform. You
-            can remove your unpublished drafts at any time.
+            Vous conservez la propriété des articles, relectures, commentaires et fichiers que
+            vous publiez. En publiant du contenu, vous autorisez OpenScholar à le stocker et à
+            l&apos;afficher aux autres utilisateurs au sein de la plateforme. Vous pouvez supprimer
+            vos brouillons non publiés à tout moment.
           </p>
         </section>
 
         <section>
-          <h2>7. API usage</h2>
+          <h2>7. Utilisation de l&apos;API</h2>
           <p>
-            If you generate an API key, you are responsible for keeping it
-            secret. The API is rate-limited, and abusive use may lead to the
-            key being revoked.
+            Si vous générez une clé API, vous êtes responsable de la garder secrète. L&apos;API
+            est soumise à des limites de débit ; un usage abusif peut entraîner la révocation
+            de la clé.
           </p>
         </section>
 
         <section>
-          <h2>8. Moderation and termination</h2>
+          <h2>8. Modération et résiliation</h2>
           <p>
-            We may remove content or suspend accounts that break these terms,
-            without notice. You can stop using OpenScholar at any time and
-            request the deletion of your account by writing to{" "}
-            <a href="mailto:openscholar.team42@gmail.com">
-              openscholar.team42@gmail.com
-            </a>{" "}
-            (see the <Link href="/privacy">Politique de confidentialité</Link>).
+            Nous pouvons retirer du contenu ou suspendre des comptes en cas de violation de ces
+            conditions, sans préavis. Vous pouvez cesser d&apos;utiliser OpenScholar à tout moment
+            et demander la suppression de votre compte en écrivant à{" "}
+            <a href="mailto:openscholar.team42@gmail.com">openscholar.team42@gmail.com</a> (voir
+            la <Link href="/privacy">Politique de confidentialité</Link>).
           </p>
         </section>
 
         <section>
-          <h2>9. Liability</h2>
+          <h2>9. Responsabilité</h2>
           <p>
-            OpenScholar is a student project provided &quot;as is&quot;,
-            without any warranty of availability or accuracy. Content published
-            by users is the sole responsibility of its authors and does not
-            represent the opinion of the OpenScholar team. We are not liable
-            for any loss of data or damage resulting from the use of the
-            platform.
+            OpenScholar est un projet étudiant fourni « en l&apos;état », sans garantie de
+            disponibilité ou d&apos;exactitude. Le contenu publié par les utilisateurs relève de
+            la seule responsabilité de ses auteurs et ne reflète pas l&apos;opinion de
+            l&apos;équipe OpenScholar. Nous ne sommes pas responsables des pertes de données ou
+            des dommages résultant de l&apos;utilisation de la plateforme.
           </p>
         </section>
 
         <section>
-          <h2>10. Changes to these terms</h2>
+          <h2>10. Modifications des conditions</h2>
           <p>
-            We may update these terms as the platform evolves. The date at the
-            top of this page shows when they were last changed. Continuing to
-            use OpenScholar after a change means you accept the new terms.
+            Nous pouvons mettre à jour ces conditions au fil de l&apos;évolution de la
+            plateforme. La date en haut de cette page indique la dernière modification.
+            Continuer à utiliser OpenScholar après une modification vaut acceptation des
+            nouvelles conditions.
           </p>
         </section>
       </div>
