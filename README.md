@@ -106,7 +106,7 @@ All three members are developers: everyone wrote code, tested their own features
 
 ### Work organization
 
-- **Planning:** the project was split into small tasks in a shared day-by-day plan (`PLAN.md`, then `plan_v2.md`), with the task owner written next to each task. `PROGRESS.md` and `docs/` kept track of what was done and of important decisions.
+- **Planning:** the project was split into small tasks in a shared day-by-day plan with the task owner written next to each task. A progress file kept track of what was done and of important decisions.
 - **Task distribution:** at the start, one person worked mainly on the backend and one on the frontend, with integration steps in between. Then each member took full features (chat, public API, infrastructure, friends, uploads…) from backend to frontend.
 - **Meetings:** regular team meetings at 42 to sync on progress, split the next tasks and solve blockers together.
 - **Code reviews:** important changes (database schema, authentication, merges between branches) were reviewed by another member before being merged.
