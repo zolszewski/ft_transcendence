@@ -266,14 +266,14 @@ Auth required. Published articles close to your own publications (average of you
 ## Uploads
 
 ### `POST /uploads`
-Auth required. Uploads a file (PNG, JPEG, WebP or PDF, 5 MB max). Content is validated against its real format (magic bytes), not only the declared type. `visibility` defaults to `PRIVATE`; any value other than exactly `"PUBLIC"` is treated as `PRIVATE`.
+Auth required. Uploads a file (PNG, JPEG, WebP or PDF, 10 MB max). Content is validated against its real format (magic bytes), not only the declared type. `visibility` defaults to `PRIVATE`; any value other than exactly `"PUBLIC"` is treated as `PRIVATE`.
 
 Body: `multipart/form-data`, field `file` (required), field `visibility`? (`"PUBLIC"` or `"PRIVATE"`)
 
 - `201` `Upload`
 - `400` No file provided, or invalid format
 - `401` Not authenticated
-- `413` File larger than 5 MB
+- `413` File larger than 10 MB
 
 ### `GET /uploads/:id`
 Serves the file if `PUBLIC`, or if the caller is the owner.

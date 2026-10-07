@@ -57,6 +57,12 @@ curl -sk -o /dev/null -w "%{http_code}\n" "https://localhost:8444/?q=<script>ale
 | 941100, 941320 (XSS) | HTML tags in article text (`<p>`, `<strong>`) |
 | 942130, 942200 (SQLi) | Prose that looks like a SQL tautology, or has a comma followed by an apostrophe |
 
+**Exclusion on the uploaded file name** (`FILES:file`), for the same reason — never used as a path or executed, only stored as text and displayed:
+
+| Rule | False positive |
+|---|---|
+| 920120, 920121 | A quote or apostrophe in the file name (e.g. `Capture d'écran ....png`, the default name of a French screenshot) |
+
 ### Exception: `/socket.io/`
 
 WAF disabled there (`modsecurity off`), because it broke long-lived connections. Safe: ModSecurity never inspects WebSocket frames; the browser only receives events over the socket, it never sends data through it; chat messages go through `POST /api/chat/:userId`, which is inspected.
