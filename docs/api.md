@@ -481,12 +481,54 @@ The CRUD endpoints on `/articles` can be used without a browser session, with an
 | Update | `PUT /articles/:id` | Key, owner only |
 | Delete | `DELETE /articles/:id` | Key, owner only |
 
-Example (replace `<key>`; `-k` skips the local self-signed certificate check, same header for all 5 operations):
+Example (`-k` skips the local self-signed certificate check, same header for all 5 operations). Replace `YOUR_KEY_HERE` with the real key — the whole token, with no quotes or extra characters around it:
 
 ```bash
 curl -k -X POST https://localhost:8444/api/articles \
-  -H "Authorization: Bearer <key>" -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_KEY_HERE" -H "Content-Type: application/json" \
   -d '{"title": "My article", "content": "Article body"}'
 ```
 
-The key is created once with a logged-in session (`POST /auth/api-keys`). Rate limits and error format are the same as for the browser.
+The key is created once with a logged-in session (`POST /auth/api-keys`, also reachable from the profile page in the UI). Rate limits and error format are the same as for the browser.
+
+### Proving the module in the evaluation
+
+Generating the key from the UI only proves the route works with a session already open — it does not prove the key authenticates *on its own*. Run this in the browser's DevTools console, on the running site, no terminal needed. In every snippet below, replace `YOUR_KEY_HERE` with the real key — just the 64 hex characters, nothing added around them.
+
+**1. Generate a key** (while logged in; skip this step if using a key from the profile page instead):
+
+```js
+fetch('/api/auth/api-keys', { method: 'POST', credentials: 'include' })
+  .then(r => r.json()).then(console.log)
+```
+
+**2. Log out**, so the session cookie can no longer authenticate you — otherwise it's the cookie being tested, not the key:
+
+```js
+fetch('/api/auth/logout', { method: 'POST', credentials: 'include' })
+  .then(r => r.json()).then(console.log)
+```
+
+**3. Prove the key works on its own**, with no session:
+
+```js
+fetch('/api/auth/me', { headers: { Authorization: 'Bearer YOUR_KEY_HERE' } })
+  .then(r => r.json()).then(console.log)
+```
+
+**4. Create an article with it** (still no session, same key):
+
+```js
+fetch('/api/articles', {
+  method: 'POST',
+  headers: { Authorization: 'Bearer YOUR_KEY_HERE', 'Content-Type': 'application/json' },
+  body: JSON.stringify({ title: 'Test', content: 'Body' }),
+}).then(r => r.json()).then(console.log)
+```
+
+**5. Confirm an invalid key is rejected**, never treated as a real account:
+
+```js
+fetch('/api/auth/me', { headers: { Authorization: 'Bearer wrong' } })
+  .then(r => console.log(r.status)) // 401
+```

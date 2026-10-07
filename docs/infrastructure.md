@@ -50,7 +50,7 @@ Nginx + ModSecurity, OWASP CRS 3.3.4, blocking mode, paranoia level 2. Config in
 curl -sk -o /dev/null -w "%{http_code}\n" "https://localhost:8444/?q=<script>alert(1)</script>"   # expected: 403
 ```
 
-**Exclusions**, on the `content` and `abstract` fields only — both go through Prisma's parameterized queries, so SQLi there can't alter a query, and stored HTML is sanitized by DOMPurify on the frontend:
+**Exclusions**, on the `title`, `content` and `abstract` fields only — all three go through Prisma's parameterized queries, so SQLi there can't alter a query, and stored HTML is sanitized by DOMPurify on the frontend:
 
 | Rule | False positive |
 |---|---|
