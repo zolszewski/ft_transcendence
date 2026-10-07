@@ -1,4 +1,4 @@
-export const MAX_UPLOAD_BYTES = 5 * 1024 * 1024; // keep equal to multer's limit
+export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // keep equal to multer's limit
 
 export const IMAGE_TYPES = ["image/png", "image/jpeg", "image/webp"];
 export const PDF_TYPES = ["application/pdf"];
