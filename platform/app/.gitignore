@@ -41,3 +41,8 @@ yarn-error.log*
 next-env.d.ts
 
 /lib/generated/prisma
+
+# AI coding assistant skill caches, auto-created by various editors/tools
+.agents/
+.claude/
+.windsurf/

@@ -1,6 +1,11 @@
 node_modules/
 .env
 
+# AI coding assistant skill caches, auto-created by various editors/tools
+.agents/
+.claude/
+.windsurf/
+
 # uploaded files: never committed, only the directory itself is kept
 platform/backend/uploads/*
 !platform/backend/uploads/.gitkeep
