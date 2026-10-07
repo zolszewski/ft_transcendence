@@ -63,8 +63,8 @@ services:
       - vault_token:/vault-token:ro
   nextjs:
     build:
-      context: .
-      dockerfile: ./requirements/nextjs/dockerfile
+      context: ./app
+      dockerfile: ../requirements/nextjs/dockerfile
     container_name: nextjs
     environment:
       BACKEND_URL: ${BACKEND_URL}

@@ -1,0 +1,8 @@
+# Default when build context is platform/ (backend, nginx, etc.)
+**/.git
+**/.next
+**/node_modules
+**/out
+**/.env*
+backend/uploads
+backups
