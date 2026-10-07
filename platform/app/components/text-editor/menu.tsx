@@ -24,7 +24,7 @@ export default function Menu({ editorRef, onImageUpload }: MenuProps) {
   }
 
   function addLink() {
-    const url = window.prompt("Enter a URL");
+    const url = window.prompt("Saisissez une URL");
     if (url?.trim()) applyFormat("createLink", url.trim());
   }
 
@@ -56,7 +56,7 @@ export default function Menu({ editorRef, onImageUpload }: MenuProps) {
         onMouseDown={(event) => event.preventDefault()}
         onClick={() => applyFormat("bold")}
         className="editor-toolbar-btn font-bold"
-        aria-label="Bold"
+        aria-label="Gras"
       >
         B
       </button>
@@ -65,7 +65,7 @@ export default function Menu({ editorRef, onImageUpload }: MenuProps) {
         onMouseDown={(event) => event.preventDefault()}
         onClick={() => applyFormat("italic")}
         className="editor-toolbar-btn italic"
-        aria-label="Italic"
+        aria-label="Italique"
       >
         I
       </button>
@@ -74,8 +74,8 @@ export default function Menu({ editorRef, onImageUpload }: MenuProps) {
         onMouseDown={(event) => event.preventDefault()}
         onClick={addLink}
         className="editor-toolbar-btn"
-        aria-label="Add link"
-        title="Add link"
+        aria-label="Ajouter un lien"
+        title="Ajouter un lien"
       >
         <LinkIcon size={18} aria-hidden="true" />
       </button>
@@ -84,8 +84,8 @@ export default function Menu({ editorRef, onImageUpload }: MenuProps) {
         onMouseDown={(event) => event.preventDefault()}
         onClick={() => imageInputRef.current?.click()}
         className="editor-toolbar-btn"
-        aria-label="Add image"
-        title="Add image"
+        aria-label="Ajouter une image"
+        title="Ajouter une image"
         disabled={uploadingImage}
       >
         <ImagePlus size={18} aria-hidden="true" />

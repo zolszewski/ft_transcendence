@@ -26,7 +26,7 @@ export default function ArticleSection({
 
       {articles.length === 0 ? (
         <p className="text-sm text-muted-foreground">
-          No articles.
+          Aucun article.
         </p>
       ) : (
         <div className="space-y-4">

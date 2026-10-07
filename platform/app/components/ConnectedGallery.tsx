@@ -24,7 +24,7 @@ type LaidOutNode = NodeInput & {
  
 const NODES: NodeInput[] = [
   { src: "/items/Dhyani.jpg", title: "The Dhyani Buddha Akshobhya, Tibetan thangka, 13th c." },
-  { src: "/items/003.jpg", title: "Poster by Tadanori Yokoo, Japan, 70s" },
+  { src: "/items/003.jpg", title: "Poster par Tadanori Yokoo, Japan, 70s" },
   { src: "/items/0700505.jpg", title: "NASA illustration on Apollo Saturn V, USA, 1967" },
   { src: "/items/anonymous.jpg", title: "Anonymous on Occupy Wall Street movement, USA, 2012" },
   { src: "/items/1338.jpg", title: "Pioneer plaque on Pioneer 10, USA, 1972" },
@@ -32,7 +32,7 @@ const NODES: NodeInput[] = [
   { src: "/items/virgen.jpg", title: "La virgen de la Soledad de Cristóbal de Villalpando, Mexico, 17th c." },
   { src: "/items/palestine.jpg", title: "Palestine Perspectives, October 1984" },
   { src: "/items/fresca.JPG", title: "Tamar fresco in Vardzia, Georgia, 12th c." },
-  { src: "/items/sankara.png", title: "Thomas Sankara Discourses, corpus by Daouda Coulibaly" },
+  { src: "/items/sankara.png", title: "Thomas Sankara Discourses, corpus par Daouda Coulibaly" },
   
 ];
  

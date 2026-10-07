@@ -41,7 +41,7 @@ export default function MessageInput({ placeholder, autoFocus = false, onSend }:
         maxLength={MAX_MESSAGE_LENGTH}
       />
       <Button type="submit" disabled={sending || !content.trim()}>
-        Send
+        Envoyer
       </Button>
     </form>
   );

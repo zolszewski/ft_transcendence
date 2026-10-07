@@ -28,14 +28,14 @@ function RegisterForm() {
     try {
       const registerResponse = await apiClient.auth.register(name, email, password);
       if (!registerResponse.success) {
-        setError(registerResponse.error ?? "Unable to create your account.");
+        setError(registerResponse.error ?? "Impossible de créer votre compte.");
         return;
       }
       const redirectTo = searchParams.get("redirect") || "/";
       //full reload so the layout re-reads the session and the chat picks up the right user
       window.location.assign(redirectTo);
     } catch {
-      setError("Unable to connect to the server.");
+      setError("Impossible de se connecter au serveur.");
     } finally {
       setLoading(false);
     }
@@ -48,7 +48,7 @@ function RegisterForm() {
         </h1>
 
         <p className="mt-2 text-muted-foreground">
-          Join OpenScholar.
+          Rejoignez OpenScholar.
         </p>
 
         <form
@@ -119,7 +119,7 @@ function RegisterForm() {
             disabled={loading}
             className="btn-nav w-full justify-center disabled:opacity-50"
           >
-            {loading ? "Creating account..." : "Register"}
+            {loading ? "Création du compte…" : "Inscription"}
           </button>
 
         </form>
@@ -139,7 +139,7 @@ function RegisterForm() {
             href="/"
             className="text-muted-foreground hover:underline"
           >
-            Back to OpenScholar
+            Retour à OpenScholar
           </Link>
         </p>
     </PageShell>
@@ -148,7 +148,7 @@ function RegisterForm() {
 
 export default function RegisterPage() {
   return (
-    <Suspense fallback={<p className="p-8">Loading...</p>}>
+    <Suspense fallback={<p className="p-8">Chargement…</p>}>
       <RegisterForm />
     </Suspense>
   );

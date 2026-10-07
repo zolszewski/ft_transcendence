@@ -98,12 +98,12 @@ export default function PublishForm() {
 
     if (!title) {
       if (allowEmpty) return true;
-      setPageError("Add a title before saving the draft.");
+      setPageError("Ajoutez un titre avant d'enregistrer le brouillon.");
       return false;
     }
     if (!content) {
       if (allowEmpty) return true;
-      setPageError("Write some content before saving the draft.");
+      setPageError("Rédigez du contenu avant d'enregistrer le brouillon.");
       return false;
     }
 
@@ -142,7 +142,7 @@ export default function PublishForm() {
       }
       return true;
     } catch {
-      setError("Unable to connect to the server.");
+      setError("Impossible de se connecter au serveur.");
       return false;
     } finally {
       setLoading(false);
@@ -177,11 +177,11 @@ export default function PublishForm() {
     const miniatureFocus = editorRef.current?.getMiniatureFocus() ?? { x: 50, y: 50 };
 
     if (!title) {
-      setPageError("Add a title before continuing.");
+      setPageError("Ajoutez un titre avant de continuer.");
       return;
     }
     if (!content) {
-      setPageError("Write some content before continuing.");
+      setPageError("Rédigez du contenu avant de continuer.");
       return;
     }
     setLoading(true);
@@ -228,7 +228,7 @@ export default function PublishForm() {
       router.push(redirectTo);
       router.refresh();
     } catch {
-      setError("Unable to connect to the server.");
+      setError("Impossible de se connecter au serveur.");
     } finally {
       setLoading(false);
       setUploadProgress(null);
@@ -248,16 +248,16 @@ export default function PublishForm() {
           left={
             <div className="flex gap-2">
               <NavLink href="/" onClick={handleHomeClick}>
-                Home
+                Accueil
               </NavLink>
-              <NavLink href="/drafts">Drafts</NavLink>
+              <NavLink href="/drafts">Brouillons</NavLink>
             </div>
           }
           right={<LogoutButton beforeLogout={() => persistDraft(true)} />}
         />
       }
     >
-      <PageHeading title="Publish" description="Submit your academic work for review." />
+      <PageHeading title="Publier" description="Soumettez votre travail académique pour relecture." />
 
       <form onSubmit={handleSubmit} className="mt-8 space-y-4">
         <TextEditor
@@ -278,10 +278,10 @@ export default function PublishForm() {
         {pageError ? <p className="form-error">{pageError}</p> : null}
 
         <button type="submit" disabled={loading} className="btn-action-full py-3 font-bold">
-          {loading ? "Submitting..." : "Submit for review"}
+          {loading ? "Envoi…" : "Soumettre pour relecture"}
         </button>
         <button type="button" onClick={saveDraft} disabled={loading} className="btn-action-full py-3 font-bold">
-          Save as draft
+          Enregistrer comme brouillon
         </button>
       </form>
     </PageShell>

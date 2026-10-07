@@ -41,8 +41,8 @@ export default function ChatWindow() {
     headerButtonRef.current?.focus();
   }
 
-  const headerLabel = `${activeContact.name}, ${online ? "online" : "offline"}${
-    unread > 0 ? `, ${unread} new messages` : ""
+  const headerLabel = `${activeContact.name}, ${online ? "en ligne" : "hors ligne"}${
+    unread > 0 ? `, ${unread} nouveaux messages` : ""
   }`;
   const buttonFocus = "rounded focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none";
 
@@ -53,7 +53,7 @@ export default function ChatWindow() {
           ? "w-72 shrink rounded-t-lg"
           : "fixed inset-0 z-50 h-dvh w-full sm:static sm:h-96 sm:w-72 sm:rounded-t-lg"
       }`}
-      aria-label={`Chat with ${activeContact.name}`}
+      aria-label={`Discussion avec ${activeContact.name}`}
       onKeyDown={handleKeyDown}
     >
       {/* header: click to minimize / reopen */}
@@ -62,7 +62,7 @@ export default function ChatWindow() {
           ref={headerButtonRef}
           onClick={toggleMinimized}
           className={`flex min-w-0 flex-1 items-center gap-2 text-left font-bold ${buttonFocus}`}
-          aria-label={`${minimized ? "Open" : "Minimize"} chat with ${headerLabel}`}
+          aria-label={`${minimized ? "Ouvrir" : "Réduire"} la discussion avec ${headerLabel}`}
           aria-expanded={!minimized}
         >
           <OnlineDot online={online} />
@@ -78,12 +78,12 @@ export default function ChatWindow() {
         <Link
           href={`/users/${activeContact.id}`}
           className={`px-2 py-1 hover:opacity-70 ${buttonFocus}`}
-          aria-label={`View ${activeContact.name}'s profile`}
-          title="Profile"
+          aria-label={`Voir le profil de ${activeContact.name}`}
+          title="Profil"
         >
           <UserIcon size={16} aria-hidden="true" />
         </Link>
-        <button onClick={closeChat} className={`px-2 py-1 hover:opacity-70 ${buttonFocus}`} aria-label="Close chat">
+        <button onClick={closeChat} className={`px-2 py-1 hover:opacity-70 ${buttonFocus}`} aria-label="Fermer la discussion">
           ✕
         </button>
       </header>
@@ -92,7 +92,7 @@ export default function ChatWindow() {
         <>
           <MessageList messages={messages} myId={myId} otherUserName={activeContact.name} />
           {error && <p className="px-3 text-sm text-red-600">{error}</p>}
-          <MessageInput placeholder={`Message ${activeContact.name}`} autoFocus onSend={sendMessage} />
+          <MessageInput placeholder={`Message à ${activeContact.name}`} autoFocus onSend={sendMessage} />
         </>
       )}
     </section>

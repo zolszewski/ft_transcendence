@@ -196,7 +196,7 @@ const TextEditor = forwardRef<TextEditorHandle, TextEditorProps>(
     const miniatureImage = displayImageUrl ? (
       <img
         src={displayImageUrl}
-        alt="Article miniature"
+        alt="Miniature de l'article"
         draggable={false}
         className="pointer-events-none absolute inset-0 h-full w-full select-none object-cover"
         style={{
@@ -248,10 +248,10 @@ const TextEditor = forwardRef<TextEditorHandle, TextEditorProps>(
               type="button"
               onClick={() => miniatureInputRef.current?.click()}
               className="editor-toolbar-btn inline-flex items-center gap-1"
-              aria-label={displayImageUrl ? "Change miniature" : "Add miniature"}
+              aria-label={displayImageUrl ? "Changer la miniature" : "Ajouter une miniature"}
             >
               <Upload size={16} aria-hidden="true" />
-              {displayImageUrl ? "Change" : "Add"}
+              {displayImageUrl ? "Modifier" : "Ajouter"}
             </button>
 
             {displayImageUrl && !imageRemoved ? (
@@ -259,7 +259,7 @@ const TextEditor = forwardRef<TextEditorHandle, TextEditorProps>(
                 type="button"
                 onClick={removeImage}
                 className="editor-toolbar-btn inline-flex items-center gap-1"
-                aria-label="Remove miniature"
+                aria-label="Retirer la miniature"
               >
                 <X size={16} aria-hidden="true" />
                 Remove
@@ -278,11 +278,11 @@ const TextEditor = forwardRef<TextEditorHandle, TextEditorProps>(
 
         <div className="border-b border-border p-4">
           <label className="block text-left">
-            <span className="editor-field-label">Title</span>
+            <span className="editor-field-label">Titre</span>
             <textarea
               ref={titleRef}
               name="title"
-              placeholder="Enter your article title"
+              placeholder="Saisissez le titre de votre article"
               rows={2}
               required
               className="editor-title-input"
@@ -301,7 +301,7 @@ const TextEditor = forwardRef<TextEditorHandle, TextEditorProps>(
                 type="button"
                 onClick={() => setPdf(null)}
                 className="editor-toolbar-btn inline-flex items-center gap-1"
-                aria-label="Remove PDF"
+                aria-label="Retirer le PDF"
               >
                 <X size={16} aria-hidden="true" />
                 Remove PDF
@@ -309,7 +309,7 @@ const TextEditor = forwardRef<TextEditorHandle, TextEditorProps>(
             </>
           ) : pdfRemoved ? (
             <>
-              <span className="flex-1 text-sm text-red-600">PDF will be removed on save</span>
+              <span className="flex-1 text-sm text-red-600">Le PDF sera supprimé à l'enregistrement</span>
               <button type="button" onClick={undoRemovePdf} className="editor-toolbar-btn text-sm">
                 Undo
               </button>
@@ -328,14 +328,14 @@ const TextEditor = forwardRef<TextEditorHandle, TextEditorProps>(
                 type="button"
                 onClick={removePdf}
                 className="editor-toolbar-btn inline-flex items-center gap-1"
-                aria-label="Remove PDF"
+                aria-label="Retirer le PDF"
               >
                 <X size={16} aria-hidden="true" />
                 Remove PDF
               </button>
             </>
           ) : (
-            <span className="flex-1 text-sm text-gray-500">No PDF attached</span>
+            <span className="flex-1 text-sm text-gray-500">Aucun PDF joint</span>
           )}
 
           <label
@@ -343,7 +343,7 @@ const TextEditor = forwardRef<TextEditorHandle, TextEditorProps>(
             className="editor-toolbar-btn inline-flex cursor-pointer items-center gap-1"
           >
             <Upload size={16} aria-hidden="true" />
-            {initialPdfUrl || pdf ? "Replace PDF" : "Attach PDF"}
+            {initialPdfUrl || pdf ? "Remplacer le PDF" : "Joindre un PDF"}
           </label>
         </div>
 
@@ -354,7 +354,7 @@ const TextEditor = forwardRef<TextEditorHandle, TextEditorProps>(
           suppressContentEditableWarning
           role="textbox"
           aria-multiline="true"
-          data-placeholder="Write your academic work here..."
+          data-placeholder="Rédigez votre travail académique ici…"
           className="academic-editor editor-surface"
           onInput={notifyChange}
         />

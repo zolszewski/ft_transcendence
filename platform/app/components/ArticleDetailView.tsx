@@ -52,7 +52,7 @@ export default function ArticleDetailView({
             className="article-pdf-link mt-2 inline-flex items-center gap-2 border px-4 py-2 text-sm hover:bg-gray-50"
           >
             <FileText size={16} aria-hidden="true" />
-            View PDF
+            Voir le PDF
           </a>
         ) : null}
       </header>

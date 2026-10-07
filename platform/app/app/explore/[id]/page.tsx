@@ -40,12 +40,12 @@ export default function ExploreDetail() {
         if (getArticleResponse.success) {
           setArticle(getArticleResponse.data);
         } else {
-          setError("Unable to load this article.");
+          setError("Impossible de charger cet article.");
           setErrorStatus(getArticleResponse.status || null);
           return;
         }
       } catch {
-        setError("Unable to connect to the server.");
+        setError("Impossible de se connecter au serveur.");
       } finally {
         setLoading(false);
       }
@@ -85,7 +85,7 @@ export default function ExploreDetail() {
     if (!article) 
         return;
     if (!comment.trim()) {
-      setCommentError("Write a comment before submitting.");
+      setCommentError("Rédigez un commentaire avant de publier.");
       return;
     }
     setSubmitting(true);
@@ -94,7 +94,7 @@ export default function ExploreDetail() {
     try {
       const postCommentResponse = await apiClient.articles.postComment(params.id, comment.trim());
       if (!postCommentResponse.success) {
-        setCommentError(postCommentResponse.error ?? "Unable to submit comment.");
+        setCommentError(postCommentResponse.error ?? "Impossible de publier le commentaire.");
         setErrorStatus(postCommentResponse.status || null);
         return;
       }
@@ -102,7 +102,7 @@ export default function ExploreDetail() {
       setComments((current) => [newComment, ...current]);
       setComment("");
     } catch {
-      setCommentError("Unable to connect to the server.");
+      setCommentError("Impossible de se connecter au serveur.");
     } finally {
       setSubmitting(false);
     }
@@ -114,12 +114,12 @@ export default function ExploreDetail() {
     <PageShell
       header={
         <AppHeader
-          left={<NavLink href="/explore">Back to explore</NavLink>}
+          left={<NavLink href="/explore">Retour à l'exploration</NavLink>}
           right={<LogoutButton />}
         />
       }
     >
-      {loading && <p className="text-sm">Loading...</p>}
+      {loading && <p className="text-sm">Chargement…</p>}
 
       {!loading && article && (
         <>

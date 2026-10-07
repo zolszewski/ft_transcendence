@@ -4,15 +4,15 @@ import PageShell from "@/components/PageShell";
 import PageHeading from "@/components/PageHeading";
 
 export const metadata: Metadata = {
-  title: "Terms of Service - OpenScholar",
-  description: "The rules for using OpenScholar.",
+  title: "Conditions d'utilisation - OpenScholar",
+  description: "Règles d'utilisation d'OpenScholar.",
 };
 
 export default function TermsPage() {
   return (
     <PageShell width="default" offset="sm">
       <PageHeading
-        title="Terms of Service"
+        title="Conditions d'utilisation"
         description="Last updated: October 6, 2026"
       />
 
@@ -22,7 +22,7 @@ export default function TermsPage() {
           <p>
             By creating an account or using OpenScholar, you agree to these
             Terms of Service and to our{" "}
-            <Link href="/privacy">Privacy Policy</Link>. If you do not agree,
+            <Link href="/privacy">Politique de confidentialité</Link>. If you do not agree,
             please do not use the platform.
           </p>
         </section>
@@ -122,7 +122,7 @@ export default function TermsPage() {
             <a href="mailto:openscholar.team42@gmail.com">
               openscholar.team42@gmail.com
             </a>{" "}
-            (see the <Link href="/privacy">Privacy Policy</Link>).
+            (see the <Link href="/privacy">Politique de confidentialité</Link>).
           </p>
         </section>
 

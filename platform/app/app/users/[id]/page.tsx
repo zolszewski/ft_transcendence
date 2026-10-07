@@ -59,12 +59,12 @@ export default function UserProfilePage() {
       header={
         <AppHeader
           variant="bordered"
-          left={<NavLink href="/">Home</NavLink>}
-          center={<h1 className="text-xl font-bold">Profile</h1>}
+          left={<NavLink href="/">Accueil</NavLink>}
+          center={<h1 className="text-xl font-bold">Profil</h1>}
           right={
             myId ? (
               <div className="flex items-center gap-2">
-                <NavLink href="/friends">Friends</NavLink>
+                <NavLink href="/friends">Amis</NavLink>
                 <LogoutButton />
               </div>
             ) : null
@@ -73,7 +73,7 @@ export default function UserProfilePage() {
       }
     >
       {!user || isMe ? (
-        <p className="p-4 text-sm text-gray-600">Loading...</p>
+        <p className="p-4 text-sm text-gray-600">Chargement…</p>
       ) : (
         <>
           {/* key: resets the inner form when switching profiles */}

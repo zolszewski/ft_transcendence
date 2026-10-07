@@ -8,12 +8,12 @@ import ErrorPage from "@/components/ErrorPage";
 import PageShell from "@/components/PageShell";
 import AppHeader from "@/components/AppHeader";
 import NavLink from "@/components/NavLink";
-import PageHeading from "@/components/PageHeading";
+import PageTitre from "@/components/PageHeading";
 import { Card } from "@/components/ui/card";
 
 
-export default function DraftsPage() {
-  const [drafts, setDrafts] = useState<Article[]>([]);
+export default function BrouillonsPage() {
+  const [drafts, setBrouillons] = useState<Article[]>([]);
   const [error, setError] = useState("");
   const [errorStatus, setErrorStatus] = useState<number | null>(null);
   useEffect(() => {
@@ -23,7 +23,7 @@ export default function DraftsPage() {
         setErrorStatus(response.status || null);
         return;
       }
-      setDrafts(response.data.data);
+      setBrouillons(response.data.data);
     });
   }, []);
   if (error)
@@ -35,13 +35,13 @@ export default function DraftsPage() {
       header={
         <AppHeader
           variant="bordered"
-          left={<PageHeading title="Drafts" />}
-          right={<NavLink href="/publish">Publish</NavLink>}
+          left={<PageTitre title="Brouillons" />}
+          right={<NavLink href="/publish">Publier</NavLink>}
         />
       }
     >
       {!error && drafts.length === 0 && (
-        <p className="text-sm text-muted-foreground">You have no drafts yet.</p>
+        <p className="text-sm text-muted-foreground">Vous have no drafts yet.</p>
       )}
       <ul className="mt-8 space-y-3">
         {drafts.map((draft) => (
@@ -54,7 +54,7 @@ export default function DraftsPage() {
                 {draft.title}
               </Link>
               <p className="mt-1 text-sm text-muted-foreground">
-                Edited on {new Date(draft.updatedAt).toLocaleDateString()}
+                Modifié le {new Date(draft.updatedAt).toLocaleDateString()}
               </p>
             </Card>
           </li>

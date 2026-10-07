@@ -20,15 +20,15 @@ export default function MessageList({ messages, myId, otherUserName }: MessageLi
 
   return (
     //role="log" + aria-live so screen readers announce new messages
-    <div className="flex-1 space-y-2 overflow-y-auto p-4" role="log" aria-live="polite" aria-label="Messages">
-      {messages.length === 0 && <p className="text-sm text-gray-600">No messages yet. Say hello!</p>}
+    <div className="flex-1 space-y-2 overflow-y-auto p-4" role="log" aria-live="polite" aria-label="Fil de messages">
+      {messages.length === 0 && <p className="text-sm text-gray-600">Pas encore de messages. Dites bonjour !</p>}
       {messages.map((message) => {
         const isMine = message.senderId === myId;
         return (
           <div key={message.id}>
             <p className="text-xs text-gray-600">
               <span className={`font-bold ${isMine ? "text-primary" : "text-foreground"}`}>
-                {isMine ? "You" : otherUserName}
+                {isMine ? "Vous" : otherUserName}
               </span>{" "}
               {new Date(message.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
             </p>

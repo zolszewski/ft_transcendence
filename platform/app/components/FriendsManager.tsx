@@ -126,7 +126,7 @@ export default function FriendsManager({ currentUser }: FriendsManagerProps) {
             type="search"
             value={inputValue}
             onChange={(event) => setInputValue(event.target.value)}
-            placeholder="Search for a friend"
+            placeholder="Rechercher un ami"
             className="field-input min-w-[min(100%,16rem)] flex-1"
             autoComplete="off"
           />
@@ -138,7 +138,7 @@ export default function FriendsManager({ currentUser }: FriendsManagerProps) {
 
       {requests.length > 0 ? (
         <section>
-          <h2 className="mb-3 text-lg font-semibold">Friend requests</h2>
+          <h2 className="mb-3 text-lg font-semibold">Demandes d'amis</h2>
           <ul className="space-y-3">
             {requests.map((request) => (
               <li
@@ -156,7 +156,7 @@ export default function FriendsManager({ currentUser }: FriendsManagerProps) {
       ) : null}
 
       <section>
-        <h2 className="mb-3 text-lg font-semibold">Your friends</h2>
+        <h2 className="mb-3 text-lg font-semibold">Vos amis</h2>
         {friends.length === 0 ? (
           <p className="text-sm text-muted-foreground">No friends yet. Search above to add someone.</p>
         ) : (
@@ -184,11 +184,11 @@ export default function FriendsManager({ currentUser }: FriendsManagerProps) {
 
       {queryFromUrl.trim() ? (
         <section>
-          <h2 className="mb-3 text-lg font-semibold">Search results</h2>
+          <h2 className="mb-3 text-lg font-semibold">Résultats de recherche</h2>
           {searching ? (
-            <p className="text-sm text-muted-foreground">Searching...</p>
+            <p className="text-sm text-muted-foreground">Recherche…</p>
           ) : results.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No users found.</p>
+            <p className="text-sm text-muted-foreground">Aucun utilisateur trouvé.</p>
           ) : (
             <ul className="space-y-3">
               {results.map((user) => (

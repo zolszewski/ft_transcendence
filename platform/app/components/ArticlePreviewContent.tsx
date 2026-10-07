@@ -25,7 +25,7 @@ export default function ArticlePreviewContent({
       )}
 
       <p className="article-list-meta">
-        {showAuthor ? <>by {article.author.name} · </> : null}
+        {showAuthor ? <>par {article.author.name} · </> : null}
         {new Date(article.createdAt).toLocaleDateString()}
       </p>
 

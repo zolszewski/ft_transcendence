@@ -1,6 +1,6 @@
 "use client";
 
-export default function GithubLoginButton({ redirectTo }: { redirectTo?: string }) {
+export default function GithubConnexionButton({ redirectTo }: { redirectTo?: string }) {
   function handleClick() {
     const target = redirectTo ? `?redirect=${encodeURIComponent(redirectTo)}` : "";
     window.location.href = `/api/auth/oauth/github${target}`;
@@ -8,7 +8,7 @@ export default function GithubLoginButton({ redirectTo }: { redirectTo?: string 
 
   return (
     <button type="button" onClick={handleClick} className="btn-nav w-full justify-center">
-      Continue with GitHub
+      Continuer avec GitHub
     </button>
   );
 }

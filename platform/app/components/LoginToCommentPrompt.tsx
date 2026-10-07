@@ -1,17 +1,17 @@
 import NavLink from "@/components/NavLink";
 
-type LoginToCommentPromptProps = {
+type ConnexionToCommentPromptProps = {
   loginHref: string;
 };
 
-export default function LoginToCommentPrompt({ loginHref }: LoginToCommentPromptProps) {
+export default function ConnexionToCommentPrompt({ loginHref }: ConnexionToCommentPromptProps) {
   return (
     <div className="section-divider">
       <p className="text-sm text-muted-foreground">
-        You must be logged in to leave a comment.
+        Vous devez être connecté pour laisser un commentaire.
       </p>
       <NavLink href={loginHref} size="sm" className="mt-3">
-        Log in to comment
+        Se connecter pour commenter
       </NavLink>
     </div>
   );

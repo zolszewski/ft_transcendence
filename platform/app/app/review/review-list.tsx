@@ -31,7 +31,7 @@ export default function ReviewList() {
         ...(currentSearch ? { search: currentSearch } : {}),
       });
       if (!getArticles.success) {
-        setError("Unable to load articles awaiting review.");
+        setError("Impossible de charger les articles en attente de relecture.");
         setErrorStatus(getArticles.status || null);
         return;
       }
@@ -46,7 +46,7 @@ export default function ReviewList() {
       setPage(getArticles.data.page);
       setTotalPages(getArticles.data.pages);
     } catch {
-      setError("Unable to connect to the server.");
+      setError("Impossible de se connecter au serveur.");
     }
   }
   useEffect(() => {
@@ -70,7 +70,7 @@ export default function ReviewList() {
     <PageShell
       header={
         <AppHeader
-          left={<NavLink href="/">Home</NavLink>}
+          left={<NavLink href="/">Accueil</NavLink>}
           right={<LogoutButton />}
         />
       }
@@ -78,7 +78,7 @@ export default function ReviewList() {
       <ArticleSearchList
         heading={
           <PageHeading
-            title="Review queue"
+            title="File de relecture"
             description="Articles submitted by other authors, waiting for a review."
           />
         }

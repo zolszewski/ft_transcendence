@@ -10,8 +10,8 @@ type DashboardTabsProps = {
 };
 
 const tabs: { id: DashboardTab; label: string }[] = [
-  { id: "information", label: "My Information" },
-  { id: "articles", label: "My Dashboard" },
+  { id: "information", label: "Mes informations" },
+  { id: "articles", label: "Mon tableau de bord" },
 ];
 
 export default function DashboardTabs({ active, onChange }: DashboardTabsProps) {

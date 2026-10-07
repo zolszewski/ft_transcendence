@@ -53,7 +53,7 @@ async function uploadRawFile(
   );
   let parsed = data;
   if (status === 413 && !parsed?.error) {
-    parsed = { error: "File is too large." };
+    parsed = { error: "Fichier trop volumineux." };
   }
   return { ok: status >= 200 && status < 300, status, data: parsed };
 }
@@ -87,7 +87,7 @@ async function uploadArticleFiles(
       onProgress(Math.min(100, Math.round((loaded / totalBytes) * 100)));
     });
     if (!up.ok) {
-      return { ok: false, status: up.status, error: up.data.error || "Upload failed" };
+      return { ok: false, status: up.status, error: up.data.error || "Échec du téléversement" };
     }
     uploadedBytes += entry.file.size;
     onProgress?.(Math.min(100, Math.round((uploadedBytes / totalBytes) * 100)));
@@ -110,12 +110,12 @@ export const apiClient = {
         });
         const data = await response.json();
         if (!response.ok) 
-          return apiError<User>(data.error || "Failed to login", response.status);
+          return apiError<User>(data.error || "Échec de la connexion", response.status);
         if (data.requires2fa)
           return { requires2fa: true, status: response.status };
         return apiSuccess<User>(data, response.status);
       } catch {
-        return apiError<User>("Unable to connect to the server");
+        return apiError<User>("Impossible de se connecter au serveur");
       }
     },
     logout: async () => {
@@ -126,11 +126,11 @@ export const apiClient = {
         });
         if (!response.ok) {
           const data = await response.json();
-          return apiError<null>(data.error || "Failed to logout", response.status);
+          return apiError<null>(data.error || "Échec de la déconnexion", response.status);
         }
         return apiSuccess<null>(null, response.status);
       } catch {
-        return apiError<null>("Unable to connect to the server");
+        return apiError<null>("Impossible de se connecter au serveur");
       }
     },
     me: async () => {
@@ -140,10 +140,10 @@ export const apiClient = {
           credentials: "include",
         });
         const data = await response.json();
-        if (!response.ok) return apiError<User>(data.error || "Failed to fetch user info", response.status);
+        if (!response.ok) return apiError<User>(data.error || "Impossible de récupérer les informations utilisateur", response.status);
         return apiSuccess<User>(data, response.status);
       } catch {
-        return apiError<User>("Unable to connect to the server");
+        return apiError<User>("Impossible de se connecter au serveur");
       }
     },
     register: async (name: string, email: string, password: string) => {
@@ -154,10 +154,10 @@ export const apiClient = {
           headers: { "Content-Type": "application/json" },
         });
         const data = await response.json();
-        if (!response.ok) return apiError<User>(data.error || "Failed to register", response.status);
+        if (!response.ok) return apiError<User>(data.error || "Échec de l'inscription", response.status);
         return apiSuccess<User>(data, response.status);
       } catch {
-        return apiError<User>("Unable to connect to the server");
+        return apiError<User>("Impossible de se connecter au serveur");
       }
     },
   },
@@ -169,10 +169,10 @@ export const apiClient = {
           credentials: "include",
         });
         const data = await response.json();
-        if (!response.ok) return apiError<{ otpauthUrl: string; qrCode: string }>(data.error || "Failed to start 2FA setup", response.status);
+        if (!response.ok) return apiError<{ otpauthUrl: string; qrCode: string }>(data.error || "Impossible de démarrer la configuration 2FA", response.status);
         return apiSuccess<{ otpauthUrl: string; qrCode: string }>(data, response.status);
       } catch {
-        return apiError<{ otpauthUrl: string; qrCode: string }>("Unable to connect to the server");
+        return apiError<{ otpauthUrl: string; qrCode: string }>("Impossible de se connecter au serveur");
       }
     },
     enable: async (code: string) => {
@@ -184,10 +184,10 @@ export const apiClient = {
           body: JSON.stringify({ code }),
         });
         const data = await response.json();
-        if (!response.ok) return apiError<{ twoFactorEnabled: boolean }>(data.error || "Failed to enable 2FA", response.status);
+        if (!response.ok) return apiError<{ twoFactorEnabled: boolean }>(data.error || "Impossible d'activer la 2FA", response.status);
         return apiSuccess<{ twoFactorEnabled: boolean }>(data, response.status);
       } catch {
-        return apiError<{ twoFactorEnabled: boolean }>("Unable to connect to the server");
+        return apiError<{ twoFactorEnabled: boolean }>("Impossible de se connecter au serveur");
       }
     },
     disable: async (password: string, code: string) => {
@@ -199,10 +199,10 @@ export const apiClient = {
           body: JSON.stringify({ password, code }),
         });
         const data = await response.json();
-        if (!response.ok) return apiError<{ twoFactorEnabled: boolean }>(data.error || "Failed to disable 2FA", response.status);
+        if (!response.ok) return apiError<{ twoFactorEnabled: boolean }>(data.error || "Impossible de désactiver la 2FA", response.status);
         return apiSuccess<{ twoFactorEnabled: boolean }>(data, response.status);
       } catch {
-        return apiError<{ twoFactorEnabled: boolean }>("Unable to connect to the server");
+        return apiError<{ twoFactorEnabled: boolean }>("Impossible de se connecter au serveur");
       }
     },
     verifyLogin: async (code: string) => {
@@ -214,10 +214,10 @@ export const apiClient = {
           body: JSON.stringify({ code }),
         });
         const data = await response.json();
-        if (!response.ok) return apiError<User>(data.error || "Invalid code", response.status);
+        if (!response.ok) return apiError<User>(data.error || "Code invalide", response.status);
         return apiSuccess<User>(data, response.status);
       } catch {
-        return apiError<User>("Unable to connect to the server");
+        return apiError<User>("Impossible de se connecter au serveur");
       }
     },
   },
@@ -242,7 +242,7 @@ export const apiClient = {
         });
         const data = await response.json();
         if (!response.ok) {
-          return apiError<ListResult<Article>>(data.error || "Failed to load articles", response.status);
+          return apiError<ListResult<Article>>(data.error || "Impossible de charger les articles", response.status);
         }
         return apiSuccess<ListResult<Article>>(
           {
@@ -256,7 +256,7 @@ export const apiClient = {
           response.status
         );
       } catch {
-        return apiError<ListResult<Article>>("Unable to connect to the server");
+        return apiError<ListResult<Article>>("Impossible de se connecter au serveur");
       }
     },
     stats: async () => {
@@ -267,11 +267,11 @@ export const apiClient = {
         });
         const data = await response.json();
         if (!response.ok) {
-          return apiError<DashboardStats>(data.error || "Failed to load dashboard stats", response.status);
+          return apiError<DashboardStats>(data.error || "Impossible de charger les statistiques", response.status);
         }
         return apiSuccess<DashboardStats>(data, response.status);
       } catch {
-        return apiError<DashboardStats>("Unable to connect to the server");
+        return apiError<DashboardStats>("Impossible de se connecter au serveur");
       }
     },
   },
@@ -285,11 +285,11 @@ export const apiClient = {
         });
         const data = await response.json();
         if (!response.ok) {
-          return apiError<User>(data.error || "Failed to fetch user profile", response.status);
+          return apiError<User>(data.error || "Impossible de récupérer le profil", response.status);
         }
         return apiSuccess<User>(data, response.status);
       } catch {
-        return apiError<User>("Unable to connect to the server");
+        return apiError<User>("Impossible de se connecter au serveur");
       }
     },
     update: async (payload: {
@@ -314,7 +314,7 @@ export const apiClient = {
         const patchData = await patchResponse.json();
         if (!patchResponse.ok) {
           return apiError<User>(
-            patchData.error || "Failed to update profile",
+            patchData.error || "Impossible de mettre à jour le profil",
             patchResponse.status,
           );
         }
@@ -322,7 +322,7 @@ export const apiClient = {
         if (payload.avatarFile) {
           const uploadRes = await apiClient.uploads.image(payload.avatarFile, "PUBLIC");
           if (!uploadRes.success) {
-            return apiError<User>(uploadRes.error || "Failed to upload avatar image", uploadRes.status);
+            return apiError<User>(uploadRes.error || "Impossible de téléverser l'avatar", uploadRes.status);
           }
           const avatarResponse = await fetch("/api/users/me/avatar", {
             method: "PUT",
@@ -334,7 +334,7 @@ export const apiClient = {
           const avatarData = await avatarResponse.json();
           if (!avatarResponse.ok) {
             return apiError<User>(
-              avatarData.error || "Failed to set user avatar",
+              avatarData.error || "Impossible de définir l'avatar",
               avatarResponse.status,
             );
           }
@@ -342,7 +342,7 @@ export const apiClient = {
         }
         return apiSuccess<User>(currentUser, patchResponse.status);
       } catch {
-        return apiError<User>("Unable to connect to the server");
+        return apiError<User>("Impossible de se connecter au serveur");
       }
     },
   },
@@ -353,13 +353,13 @@ export const apiClient = {
         const data = await response.json();
         if (!response.ok) {
           return apiError<FriendSummary[]>(
-            data.error || "Failed to load friends",
+            data.error || "Impossible de charger la liste d'amis",
             response.status,
           );
         }
         return apiSuccess<FriendSummary[]>(data, response.status);
       } catch {
-        return apiError<FriendSummary[]>("Unable to connect to the server");
+        return apiError<FriendSummary[]>("Impossible de se connecter au serveur");
       }
     },
     listRequests: async () => {
@@ -368,13 +368,13 @@ export const apiClient = {
         const data = await response.json();
         if (!response.ok) {
           return apiError<FriendRequestItem[]>(
-            data.error || "Failed to load friend requests",
+            data.error || "Impossible de charger les demandes d'amis",
             response.status,
           );
         }
         return apiSuccess<FriendRequestItem[]>(data, response.status);
       } catch {
-        return apiError<FriendRequestItem[]>("Unable to connect to the server");
+        return apiError<FriendRequestItem[]>("Impossible de se connecter au serveur");
       }
     },
     getStatus: async (userId: string) => {
@@ -386,13 +386,13 @@ export const apiClient = {
         const data = await response.json();
         if (!response.ok) {
           return apiError<FriendRelationStatus>(
-            data.error || "Failed to load friend status",
+            data.error || "Impossible de charger le statut d'amitié",
             response.status,
           );
         }
         return apiSuccess<FriendRelationStatus>(data.status, response.status);
       } catch {
-        return apiError<FriendRelationStatus>("Unable to connect to the server");
+        return apiError<FriendRelationStatus>("Impossible de se connecter au serveur");
       }
     },
     request: async (userId: string) => {
@@ -401,13 +401,13 @@ export const apiClient = {
         const data = await response.json();
         if (!response.ok) {
           return apiError<FriendRelationStatus>(
-            data.error || "Failed to send friend request",
+            data.error || "Impossible d'envoyer la demande d'ami",
             response.status,
           );
         }
         return apiSuccess<FriendRelationStatus>(data.status, response.status);
       } catch {
-        return apiError<FriendRelationStatus>("Unable to connect to the server");
+        return apiError<FriendRelationStatus>("Impossible de se connecter au serveur");
       }
     },
     accept: async (userId: string) => {
@@ -416,13 +416,13 @@ export const apiClient = {
         const data = await response.json();
         if (!response.ok) {
           return apiError<FriendRelationStatus>(
-            data.error || "Failed to accept friend request",
+            data.error || "Impossible d'accepter la demande d'ami",
             response.status,
           );
         }
         return apiSuccess<FriendRelationStatus>("friends", response.status);
       } catch {
-        return apiError<FriendRelationStatus>("Unable to connect to the server");
+        return apiError<FriendRelationStatus>("Impossible de se connecter au serveur");
       }
     },
     remove: async (userId: string) => {
@@ -432,9 +432,9 @@ export const apiClient = {
           return apiSuccess<null>(null, response.status);
         }
         const data = await response.json();
-        return apiError<null>(data.error || "Failed to remove friend", response.status);
+        return apiError<null>(data.error || "Impossible de retirer l'ami", response.status);
       } catch {
-        return apiError<null>("Unable to connect to the server");
+        return apiError<null>("Impossible de se connecter au serveur");
       }
     },
     search: async (query: string) => {
@@ -447,13 +447,13 @@ export const apiClient = {
         const data = await response.json();
         if (!response.ok) {
           return apiError<{ id: string; name: string; avatarUrl: string | null }[]>(
-            data.error || "Failed to search users",
+            data.error || "Impossible de rechercher des utilisateurs",
             response.status,
           );
         }
         return apiSuccess<{ id: string; name: string; avatarUrl: string | null }[]>(data, response.status);
       } catch {
-        return apiError<{ id: string; name: string; avatarUrl: string | null }[]>("Unable to connect to the server");
+        return apiError<{ id: string; name: string; avatarUrl: string | null }[]>("Impossible de se connecter au serveur");
       }
     },
   },
@@ -478,14 +478,14 @@ export const apiClient = {
         );
 
         if (status < 200 || status >= 300) {
-          return apiError<{ id: string; url: string }>(data.error || "Failed to upload image", status);
+          return apiError<{ id: string; url: string }>(data.error || "Impossible de téléverser l'image", status);
         }
         return apiSuccess<{ id: string; url: string }>(
           { id: data.id as string, url: `/api/uploads/${data.id}` },
           status
         );
       } catch {
-        return apiError<{ id: string; url: string }>("Unable to connect to the server");
+        return apiError<{ id: string; url: string }>("Impossible de se connecter au serveur");
       }
     },
   },
@@ -523,20 +523,20 @@ export const apiClient = {
         });
 
         const data = await response.json();
-        if (!response.ok) return apiError<Article>(data.error || "Failed to create article", response.status);
+        if (!response.ok) return apiError<Article>(data.error || "Impossible de créer l'article", response.status);
         return apiSuccess<Article>(data, response.status);
       } catch {
-        return apiError<Article>("Unable to connect to the server");
+        return apiError<Article>("Impossible de se connecter au serveur");
       }
     },
     getDraft: async (articleId: string) => {
       try {
         const response = await fetch(`/api/articles/${articleId}`, { credentials: "include" });
         const data = await response.json();
-        if (!response.ok) return apiError<Article>(data.error || "Failed to load draft", response.status);
+        if (!response.ok) return apiError<Article>(data.error || "Impossible de charger le brouillon", response.status);
         return apiSuccess<Article>(data, response.status);
       } catch {
-        return apiError<Article>("Unable to connect to the server");
+        return apiError<Article>("Impossible de se connecter au serveur");
       }
     },
     submit: async (articleId: string) => {
@@ -546,10 +546,10 @@ export const apiClient = {
           credentials: "include",
         });
         const data = await response.json();
-        if (!response.ok) return apiError<null>(data.error || "Failed to submit article", response.status);
+        if (!response.ok) return apiError<null>(data.error || "Impossible de soumettre l'article", response.status);
         return apiSuccess<null>(null, response.status);
       } catch {
-        return apiError<null>("Unable to connect to the server");
+        return apiError<null>("Impossible de se connecter au serveur");
       }
     },
     //update article saved in dashboard
@@ -593,10 +593,10 @@ export const apiClient = {
           }),
         });
         const data = await response.json();
-        if (!response.ok) return apiError<Article>(data.error || "Failed to update article", response.status);
+        if (!response.ok) return apiError<Article>(data.error || "Impossible de mettre à jour l'article", response.status);
         return apiSuccess<Article>(data, response.status);
       } catch {
-        return apiError<Article>("Unable to connect to the server");
+        return apiError<Article>("Impossible de se connecter au serveur");
       }
     },
     //explore - list articles
@@ -619,7 +619,7 @@ export const apiClient = {
         });
         const data = await response.json();
         if (!response.ok) {
-          return apiError<ListResult<Article>>(data.error || "Failed to load articles", response.status);
+          return apiError<ListResult<Article>>(data.error || "Impossible de charger les articles", response.status);
         }
         return apiSuccess<ListResult<Article>>(
           {
@@ -633,7 +633,7 @@ export const apiClient = {
           response.status
         );
       } catch {
-        return apiError<ListResult<Article>>("Unable to connect to the server");
+        return apiError<ListResult<Article>>("Impossible de se connecter au serveur");
       }
     },
     discover: async () => {
@@ -643,10 +643,10 @@ export const apiClient = {
           credentials: "include",
         });
         const data = await response.json();
-        if (!response.ok) return apiError<Article[]>(data.error || "Failed to load recommendations", response.status);
+        if (!response.ok) return apiError<Article[]>(data.error || "Impossible de charger les recommandations", response.status);
         return apiSuccess<Article[]>(data, response.status);
       } catch {
-        return apiError<Article[]>("Unable to connect to the server");
+        return apiError<Article[]>("Impossible de se connecter au serveur");
       }
     },
     deepen: async () => {
@@ -656,10 +656,10 @@ export const apiClient = {
           credentials: "include",
         });
         const data = await response.json();
-        if (!response.ok) return apiError<Article[]>(data.error || "Failed to load recommendations", response.status);
+        if (!response.ok) return apiError<Article[]>(data.error || "Impossible de charger les recommandations", response.status);
         return apiSuccess<Article[]>(data, response.status);
       } catch {
-        return apiError<Article[]>("Unable to connect to the server");
+        return apiError<Article[]>("Impossible de se connecter au serveur");
       }
     },
     listDraft: async () => {
@@ -673,10 +673,10 @@ export const apiClient = {
           credentials: "include",
         });
         const data = await response.json();
-        if (!response.ok) return apiError<ArticleDetail>(data.error || "Article not found", response.status);
+        if (!response.ok) return apiError<ArticleDetail>(data.error || "Article introuvable", response.status);
         return apiSuccess<ArticleDetail>(data, response.status);
       } catch {
-        return apiError<ArticleDetail>("Unable to connect to the server");
+        return apiError<ArticleDetail>("Impossible de se connecter au serveur");
       }
     },
     like: async (articleId: string) => {
@@ -687,9 +687,9 @@ export const apiClient = {
         });
         if (response.status === 204) return apiSuccess<null>(null, response.status);
         const data = await response.json();
-        return apiError<null>(data.error || "Failed to like article", response.status);
+        return apiError<null>(data.error || "Impossible d'aimer l'article", response.status);
       } catch {
-        return apiError<null>("Unable to connect to the server");
+        return apiError<null>("Impossible de se connecter au serveur");
       }
     },
     unlike: async (articleId: string) => {
@@ -700,9 +700,9 @@ export const apiClient = {
         });
         if (response.status === 204) return apiSuccess<null>(null, response.status);
         const data = await response.json();
-        return apiError<null>(data.error || "Failed to unlike article", response.status);
+        return apiError<null>(data.error || "Impossible de retirer le j'aime", response.status);
       } catch {
-        return apiError<null>("Unable to connect to the server");
+        return apiError<null>("Impossible de se connecter au serveur");
       }
     },
     //comments
@@ -713,10 +713,10 @@ export const apiClient = {
           credentials: "include",
         });
         const data = await response.json();
-        if (!response.ok) return apiError<Comment[]>(data.error || "Failed to load comments", response.status);
+        if (!response.ok) return apiError<Comment[]>(data.error || "Impossible de charger les commentaires", response.status);
         return apiSuccess<Comment[]>(data, response.status);
       } catch {
-        return apiError<Comment[]>("Unable to connect to the server");
+        return apiError<Comment[]>("Impossible de se connecter au serveur");
       }
     },
     postComment: async (articleId: string, content: string) => {
@@ -728,10 +728,10 @@ export const apiClient = {
           credentials: "include",
         });
         const data = await response.json();
-        if (!response.ok) return apiError<Comment>(data.error || "Failed to post comment", response.status);
+        if (!response.ok) return apiError<Comment>(data.error || "Impossible de publier le commentaire", response.status);
         return apiSuccess<Comment>(data, response.status);
       } catch {
-        return apiError<Comment>("Unable to connect to the server");
+        return apiError<Comment>("Impossible de se connecter au serveur");
       }
     },
     //reviews main page
@@ -748,7 +748,7 @@ export const apiClient = {
         });
         const data = await response.json();
         if (!response.ok) {
-          return apiError<ListResult<Article>>(data.error || "Failed to load submitted articles", response.status);
+          return apiError<ListResult<Article>>(data.error || "Impossible de charger les articles soumis", response.status);
         }
         return apiSuccess<ListResult<Article>>(
           {
@@ -762,7 +762,7 @@ export const apiClient = {
           response.status
         );
       } catch {
-        return apiError<ListResult<Article>>("Unable to connect to the server");
+        return apiError<ListResult<Article>>("Impossible de se connecter au serveur");
       }
     },
     //single article review page
@@ -774,11 +774,11 @@ export const apiClient = {
         });
         const data = await response.json();
         if (!response.ok) {
-          return apiError<Article>(data.error || "Failed to load reviewing article", response.status);
+          return apiError<Article>(data.error || "Impossible de charger l'article à relire", response.status);
         }
         return apiSuccess<Article>(data, response.status);
       } catch {
-        return apiError<Article>("Unable to connect to the server");
+        return apiError<Article>("Impossible de se connecter au serveur");
       }
     },
     postDecision: async (reviewId: string, decision: "APPROVED" | "REJECTED") => {
@@ -790,10 +790,10 @@ export const apiClient = {
           credentials: "include",
         });
         const data = await response.json();
-        if (!response.ok) return apiError<null>(data.error || "Failed to post decision", response.status);
+        if (!response.ok) return apiError<null>(data.error || "Impossible d'enregistrer la décision", response.status);
         return apiSuccess<null>(null, response.status);
       } catch {
-        return apiError<null>("Unable to connect to the server");
+        return apiError<null>("Impossible de se connecter au serveur");
       }
     },
     postReview: async (articleId: string, comment?: string) => {
@@ -805,10 +805,10 @@ export const apiClient = {
           credentials: "include",
         });
         const data = await response.json();
-        if (!response.ok) return apiError<Review>(data.error || "Failed to post review", response.status);
+        if (!response.ok) return apiError<Review>(data.error || "Impossible d'envoyer la relecture", response.status);
         return apiSuccess<Review>(data, response.status);
       } catch {
-        return apiError<Review>("Unable to connect to the server");
+        return apiError<Review>("Impossible de se connecter au serveur");
       }
     },
     getReviews: async (articleId: string) => {
@@ -818,10 +818,10 @@ export const apiClient = {
           credentials: "include",
         });
         const data = await response.json();
-        if (!response.ok) return apiError<Review[]>(data.error || "Failed to load reviews", response.status);
+        if (!response.ok) return apiError<Review[]>(data.error || "Impossible de charger les relectures", response.status);
         return apiSuccess<Review[]>(data, response.status);
       } catch {
-        return apiError<Review[]>("Unable to connect to the server");
+        return apiError<Review[]>("Impossible de se connecter au serveur");
       }
     },
   },
@@ -831,20 +831,20 @@ export const apiClient = {
       try {
         const response = await fetch("/api/users", { credentials: "include" });
         const data = await response.json();
-        if (!response.ok) return apiError<User[]>(data.error || "Failed to load users", response.status);
+        if (!response.ok) return apiError<User[]>(data.error || "Impossible de charger les utilisateurs", response.status);
         return apiSuccess<User[]>(data, response.status);
       } catch {
-        return apiError<User[]>("Unable to connect to the server");
+        return apiError<User[]>("Impossible de se connecter au serveur");
       }
     },
     getMessages: async (userId: string) => {
       try {
         const response = await fetch(`/api/chat/${userId}`, { credentials: "include" });
         const data = await response.json();
-        if (!response.ok) return apiError<Message[]>(data.error || "Failed to load messages", response.status);
+        if (!response.ok) return apiError<Message[]>(data.error || "Impossible de charger les messages", response.status);
         return apiSuccess<Message[]>(data, response.status);
       } catch {
-        return apiError<Message[]>("Unable to connect to the server");
+        return apiError<Message[]>("Impossible de se connecter au serveur");
       }
     },
     sendMessage: async (userId: string, content: string) => {
@@ -856,10 +856,10 @@ export const apiClient = {
           credentials: "include",
         });
         const data = await response.json();
-        if (!response.ok) return apiError<Message>(data.error || "Failed to send message", response.status);
+        if (!response.ok) return apiError<Message>(data.error || "Impossible d'envoyer le message", response.status);
         return apiSuccess<Message>(data, response.status);
       } catch {
-        return apiError<Message>("Unable to connect to the server");
+        return apiError<Message>("Impossible de se connecter au serveur");
       }
     },
   },

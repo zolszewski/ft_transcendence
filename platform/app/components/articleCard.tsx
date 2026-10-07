@@ -7,6 +7,7 @@ import ArticleMiniature from "@/components/ArticleMiniature";
 import ArticlePreviewContent from "@/components/ArticlePreviewContent";
 import NavLink from "@/components/NavLink";
 import { Card, CardFooter } from "@/components/ui/card";
+import { articleStatusLabel } from "@/lib/articleStatusLabels";
 
 type ArticleCardProps = {
   article: Article;
@@ -34,27 +35,27 @@ export default function ArticleCard({ article }: ArticleCardProps) {
 
       <ArticlePreviewContent article={article} showAuthor={false}>
         <p className="mt-2 text-xs text-muted-foreground">
-          Status: <strong className="text-foreground">{article.status}</strong>
+          Statut : <strong className="text-foreground">{articleStatusLabel(article.status)}</strong>
         </p>
         {article.status === "SUBMITTED" ? (
           <p className="mt-1 text-sm text-muted-foreground">
-            Reviews: {articleWithCounts.reviewCount ?? 0}
+            Relectures : {articleWithCounts.reviewCount ?? 0}
           </p>
         ) : null}
         {article.status === "PUBLISHED" ? (
           <p className="mt-1 text-sm text-muted-foreground">
-            Comments: {articleWithCounts.commentCount ?? 0}
+            Commentaires : {articleWithCounts.commentCount ?? 0}
           </p>
         ) : null}
       </ArticlePreviewContent>
 
       <CardFooter className="gap-2 border-t border-border bg-transparent px-4 pb-4">
         <NavLink href={`/dashboard/${article.id}`} size="sm">
-          View
+          Voir
         </NavLink>
         {(article.status === "DRAFT" || article.status === "REJECTED") && (
           <NavLink href={`/dashboard/articles/${article.id}/edit`} size="sm">
-            Edit
+            Modifier
           </NavLink>
         )}
       </CardFooter>

@@ -15,7 +15,7 @@ export default function ConversationList({ users, selectedUserId, onSelect }: Co
   const { onlineUserIds, unreadCounts } = useChat();
 
   if (users.length === 0)
-    return <p className="p-4 text-sm text-gray-600">No other users yet.</p>;
+    return <p className="p-4 text-sm text-gray-600">Pas encore d'autres utilisateurs.</p>;
 
   return (
     <ul>

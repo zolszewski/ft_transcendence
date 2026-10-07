@@ -43,7 +43,7 @@ export default function FriendActions({
     setBusy(true);
     setError("");
     const result = await action();
-    if (!result.success) setError(result.error || "Something went wrong");
+    if (!result.success) setError(result.error || "Une erreur s'est produite");
     else await reload();
     setBusy(false);
   }
@@ -113,7 +113,7 @@ export default function FriendActions({
         disabled={busy}
         onClick={() => run(() => sendFriendRequest(targetUserId))}
       >
-        Add friend
+        Ajouter en ami
       </button>
     </div>
   );

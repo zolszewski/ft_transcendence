@@ -17,15 +17,15 @@ type CommentFormProps = {
 
 export default function CommentForm({
   id = "comment",
-  label = "Add a comment",
+  label = "Ajouter un commentaire",
   value,
   onChange,
   onSubmit,
   error,
   submitting = false,
-  placeholder = "Write your feedback...",
-  submitLabel = "Post comment",
-  submittingLabel = "Posting...",
+  placeholder = "Rédigez votre retour…",
+  submitLabel = "Publier le commentaire",
+  submittingLabel = "Publication…",
 }: CommentFormProps) {
   return (
     <form onSubmit={onSubmit} className="section-divider">

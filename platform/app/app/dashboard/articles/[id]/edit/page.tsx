@@ -39,7 +39,7 @@ export default function EditArticlePage() {
 
   useEffect(() => {
     if (!articleId) {
-      setError("Missing article id in the URL.");
+      setError("Identifiant d'article manquant dans l'URL.");
       setErrorStatus(400);
       setLoading(false);
       return;
@@ -51,13 +51,13 @@ export default function EditArticlePage() {
       try {
         const response = await apiClient.articles.getById(articleId);
         if (!response.success) {
-          setError(response.error || "Failed to load article");
+          setError(response.error || "Impossible de charger l'article");
           setErrorStatus(response.status);
           return;
         }
         setArticle(response.data);
       } catch {
-        setError("Unable to connect to the server.");
+        setError("Impossible de se connecter au serveur.");
         setErrorStatus(0);
       } finally {
         setLoading(false);
@@ -71,7 +71,7 @@ export default function EditArticlePage() {
     const response = await apiClient.uploads.image(file, "PUBLIC", setUploadProgress);
     setUploadProgress(null);
     if (!response.success) {
-      setPageError(response.error || "Failed to upload image");
+      setPageError(response.error || "Impossible de téléverser l'image");
       return null;
     }
     return response.data.url;
@@ -79,7 +79,7 @@ export default function EditArticlePage() {
 
   async function handleSave() {
     if (!editorRef.current) {
-      setPageError("Editor is not ready.");
+      setPageError("L'éditeur n'est pas prêt.");
       return;
     }
 
@@ -89,8 +89,8 @@ export default function EditArticlePage() {
     try {
       const data = editorRef.current.getData();
 
-      if (!data.title.trim()) throw new Error("Title is required.");
-      if (!data.content.trim()) throw new Error("Article content is required.");
+      if (!data.title.trim()) throw new Error("Le titre est obligatoire.");
+      if (!data.content.trim()) throw new Error("Le contenu de l'article est obligatoire.");
 
       if (editorRef.current.image || editorRef.current.pdf) {
         setUploadProgress(0);
@@ -107,7 +107,7 @@ export default function EditArticlePage() {
         setUploadProgress,
       );
       if (!updateResponse.success) {
-        throw new Error(updateResponse.error || "Failed to update article");
+        throw new Error(updateResponse.error || "Impossible de mettre à jour l'article");
       }
 
       editorRef.current.clearImage();
@@ -116,7 +116,7 @@ export default function EditArticlePage() {
       router.push(`/dashboard/${articleId}`);
       router.refresh();
     } catch (err) {
-      setPageError(err instanceof Error ? err.message : "Failed to update article");
+      setPageError(err instanceof Error ? err.message : "Impossible de mettre à jour l'article");
     } finally {
       setSaving(false);
       setUploadProgress(null);
@@ -124,7 +124,7 @@ export default function EditArticlePage() {
   }
 
   if (loading) {
-    return <main className="p-8">Loading article...</main>;
+    return <main className="p-8">Chargement de l'article…</main>;
   }
 
   if (error) {
@@ -132,7 +132,7 @@ export default function EditArticlePage() {
   }
 
   if (!article) {
-    return <ErrorPage statusCode={404} message="Article not found" />;
+    return <ErrorPage statusCode={404} message="Article introuvable" />;
   }
 
   return (
@@ -142,7 +142,7 @@ export default function EditArticlePage() {
         <AppHeader
           variant="bordered"
           left={
-            <NavLink href={`/dashboard/${article.id}`}>Back to article</NavLink>
+            <NavLink href={`/dashboard/${article.id}`}>Retour à l&apos;article</NavLink>
           }
           center={<h1 className="text-xl font-bold">Edit Article</h1>}
           right={<NavLink href="/dashboard">Dashboard</NavLink>}
@@ -181,7 +181,7 @@ export default function EditArticlePage() {
             disabled={saving}
             className="btn-nav disabled:opacity-50"
           >
-            {saving ? "Saving..." : "Save changes"}
+            {saving ? "Enregistrement…" : "Enregistrer les modifications"}
           </button>
           <button
             type="button"

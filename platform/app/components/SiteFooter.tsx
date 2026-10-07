@@ -7,10 +7,10 @@ export default function SiteFooter() {
       <span>© {new Date().getFullYear()} OpenScholar</span>
       <nav className="flex gap-4">
         <Link href="/privacy" className="hover:underline">
-          Privacy Policy
+          Politique de confidentialité
         </Link>
         <Link href="/terms" className="hover:underline">
-          Terms of Service
+          Conditions d'utilisation
         </Link>
       </nav>
     </footer>

@@ -1,4 +1,5 @@
 import { DashboardStats } from "@/lib/types";
+import { statsCountLabel } from "@/lib/articleStatusLabels";
 
 function StatCard({ label, value }: { label: string; value: string | number }) {
   return (
@@ -21,13 +22,13 @@ function CountGroup({
     <section className="mt-6">
       <h2 className="mb-3 text-lg font-semibold">{title}</h2>
       {entries.length === 0 ? (
-        <p className="text-sm text-gray-500">No data yet.</p>
+        <p className="text-sm text-gray-500">Pas encore de données.</p>
       ) : (
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
           {entries.map(([key, count]) => (
             <StatCard
               key={key}
-              label={key.charAt(0) + key.slice(1).toLowerCase()}
+              label={statsCountLabel(key)}
               value={count}
             />
           ))}
@@ -41,12 +42,12 @@ export default function StatsSection({ stats }: { stats: DashboardStats }) {
   return (
     <div>
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-        <StatCard label="Days since joined" value={stats.daysSinceJoined} />
+        <StatCard label="Jours depuis l'inscription" value={stats.daysSinceJoined} />
         <StatCard
-          label="Approval rate"
+          label="Taux d'approbation"
           value={
             stats.approvalRate === null
-              ? "N/A"
+              ? "--"
               : `${Math.round(stats.approvalRate)}%`
           }
         />
@@ -54,7 +55,7 @@ export default function StatsSection({ stats }: { stats: DashboardStats }) {
 
       <CountGroup title="Articles" counts={stats.articleCounts} />
       <CountGroup
-        title="Reviews"
+        title="Relectures"
         counts={Object.fromEntries(
           Object.entries(stats.reviewCounts).filter(([status]) => status !== "PENDING"),
         )}

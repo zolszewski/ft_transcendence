@@ -39,13 +39,13 @@ export default function MyArticleDetail() {
       try {
         const response = await apiClient.articles.getById(params.id);
         if (!response.success) {
-          setError(response.error || "Unable to load this article." );
+          setError(response.error || "Impossible de charger cet article." );
           setErrorStatus(response.status || null);
           return;
         }
         setArticle(await response.data);
       } catch {
-        setError("Unable to connect to the server.");
+        setError("Impossible de se connecter au serveur.");
         
       } finally {
         setLoading(false);
@@ -76,18 +76,18 @@ export default function MyArticleDetail() {
     return <ErrorPage statusCode={errorStatus ?? 500} message={error} />;
   }
   if (!article && !loading) 
-    return <ErrorPage statusCode={404} message="Article not found" />;
+    return <ErrorPage statusCode={404} message="Article introuvable" />;
 
   return (
     <PageShell
       header={
         <AppHeader
-          left={<NavLink href="/dashboard">Back to dashboard</NavLink>}
+          left={<NavLink href="/dashboard">Retour au tableau de bord</NavLink>}
           right={<LogoutButton />}
         />
       }
     >
-      {loading && <p className="text-sm">Loading...</p>}
+      {loading && <p className="text-sm">Chargement…</p>}
 
       {!loading && article && (
   <>

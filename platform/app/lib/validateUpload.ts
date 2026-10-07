@@ -6,7 +6,7 @@ export const PDF_TYPES = ["application/pdf"];
 type Kind = "image" | "pdf";
 
 const RULES: Record<Kind, { types: string[]; label: string }> = {
-  image: { types: IMAGE_TYPES, label: "PNG, JPEG or WebP" },
+  image: { types: IMAGE_TYPES, label: "PNG, JPEG ou WebP" },
   pdf: { types: PDF_TYPES, label: "PDF" },
 };
 
@@ -21,7 +21,7 @@ export function validateFile(file: File, kind: Kind): string | null {
     return `Invalid file type. Allowed: ${rule.label}.`;
   }
   if (file.size === 0) {
-    return "This file is empty.";
+    return "Ce fichier est vide.";
   }
   if (file.size > MAX_UPLOAD_BYTES) {
     return `File is too large (${formatMb(file.size)}). Maximum is ${formatMb(MAX_UPLOAD_BYTES)}.`;
@@ -43,7 +43,7 @@ export async function validateFileSignature(file: File, kind: Kind): Promise<str
       startsWith([0xff, 0xd8, 0xff]) || // JPEG
       (startsWith([0x52, 0x49, 0x46, 0x46]) && startsWith([0x57, 0x45, 0x42, 0x50], 8)); // RIFF....WEBP
   }
-  return ok ? null : "The file content doesn't match its type.";
+  return ok ? null : "Le contenu du fichier ne correspond pas à son type.";
 }
 
 

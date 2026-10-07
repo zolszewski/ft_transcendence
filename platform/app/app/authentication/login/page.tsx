@@ -38,12 +38,12 @@ function LoginForm() {
         return;
       }
       if (!response.success) {
-        setError(response.error ?? "Unable to log in.");
+        setError(response.error ?? "Impossible de se connecter.");
         return;
       }
       redirectAfterLogin();
     } catch {
-      setError("Unable to connect to the server.");
+      setError("Impossible de se connecter au serveur.");
     } finally {
       setLoading(false);
     }
@@ -62,15 +62,15 @@ function LoginForm() {
         if (response.error === "No pending login") {
           setNeedsCode(false);
           setCode("");
-          setError("Your session expired. Please log in again.");
+          setError("Votre session a expiré. Veuillez vous reconnecter.");
           return;
         }
-        setError(response.error ?? "Invalid code.");
+        setError(response.error ?? "Code invalide.");
         return;
       }
       redirectAfterLogin();
     } catch {
-      setError("Unable to connect to the server.");
+      setError("Impossible de se connecter au serveur.");
     } finally {
       setLoading(false);
     }
@@ -79,7 +79,7 @@ function LoginForm() {
   if (needsCode) {
     return (
       <PageShell variant="auth">
-        <h1 className="text-3xl font-bold">Two-factor authentication</h1>
+        <h1 className="text-3xl font-bold">Authentification à deux facteurs</h1>
         <p className="mt-2 text-muted-foreground">
           Enter the 6-digit code from your authenticator app.
         </p>
@@ -102,7 +102,7 @@ function LoginForm() {
             disabled={loading || code.length !== 6}
             className="btn-nav w-full justify-center disabled:opacity-50"
           >
-            {loading ? "Verifying..." : "Verify"}
+            {loading ? "Vérification…" : "Vérifier"}
           </button>
         </form>
       </PageShell>
@@ -111,12 +111,12 @@ function LoginForm() {
 
   return (
     <PageShell variant="auth">
-      <h1 className="text-3xl font-bold">Welcome back</h1>
-      <p className="mt-2 text-muted-foreground">Log in to OpenScholar.</p>
+      <h1 className="text-3xl font-bold">Bienvenue</h1>
+      <p className="mt-2 text-muted-foreground">Connectez-vous à OpenScholar.</p>
 
       <form onSubmit={handleSubmit} className="mt-8 flex flex-col gap-4">
         <div className="flex flex-col gap-2">
-          <label htmlFor="email">Email</label>
+          <label htmlFor="email">E-mail</label>
           <input
             id="email"
             type="email"
@@ -129,7 +129,7 @@ function LoginForm() {
         </div>
 
         <div className="flex flex-col gap-2">
-          <label htmlFor="password">Password</label>
+          <label htmlFor="password">Mot de passe</label>
           <input
             id="password"
             type="password"
@@ -148,7 +148,7 @@ function LoginForm() {
           disabled={loading}
           className="btn-nav w-full justify-center disabled:opacity-50"
         >
-          {loading ? "Logging in..." : "Login"}
+          {loading ? "Connexion…" : "Connexion"}
         </button>
       </form>
 
@@ -157,9 +157,9 @@ function LoginForm() {
       </div>
 
       <p className="mt-6 text-sm text-muted-foreground">
-        Don&apos;t have an account?{" "}
+        Pas encore de compte ?{" "}
         <Link href="/authentication/register" className="font-medium text-foreground hover:underline">
-          Register
+          S&apos;inscrire
         </Link>
       </p>
     </PageShell>
@@ -168,7 +168,7 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<p className="p-8">Loading...</p>}>
+    <Suspense fallback={<p className="p-8">Chargement…</p>}>
       <LoginForm />
     </Suspense>
   );

@@ -4,16 +4,16 @@ import PageShell from "@/components/PageShell";
 import PageHeading from "@/components/PageHeading";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy - OpenScholar",
-  description: "How OpenScholar collects, uses and protects your personal data.",
+  title: "Politique de confidentialité - OpenScholar",
+  description: "Comment OpenScholar collecte, utilise et protège vos données personnelles.",
 };
 
 export default function PrivacyPage() {
   return (
     <PageShell width="default" offset="sm">
       <PageHeading
-        title="Privacy Policy"
-        description="Last updated: October 6, 2026"
+        title="Politique de confidentialité"
+        description="Dernière mise à jour : 6 octobre 2026"
       />
 
       <div className="legal-content">
@@ -192,7 +192,7 @@ export default function PrivacyPage() {
           <p>
             We may update this policy as the platform evolves. The date at the
             top of this page shows when it was last changed. Please also read
-            our <Link href="/terms">Terms of Service</Link>.
+            our <Link href="/terms">Conditions d'utilisation</Link>.
           </p>
         </section>
       </div>

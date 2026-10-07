@@ -25,16 +25,16 @@ export default async function Home() {
  
         <p className="mt-6 text-xl flex gap-2">
           <Link href="/publish" className="hover:underline">
-            Publish.
+            Publier.
           </Link>
           <Link href="/review" className="hover:underline">
-            Review.
+            Relire.
           </Link>
           <Link href="/explore" className="hover:underline">
-            Explore.
+            Explorer.
           </Link>
           <Link href="/chat" className="hover:underline">
-            Chat.
+            Discussion.
           </Link>
         </p>
         

@@ -5,7 +5,7 @@ type UploadProgressProps = {
   label?: string;
 };
 
-export default function UploadProgress({ percent, label = "Uploading" }: UploadProgressProps) {
+export default function UploadProgress({ percent, label = "Téléversement" }: UploadProgressProps) {
   if (percent === null) return null;
 
   return (

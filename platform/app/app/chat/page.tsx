@@ -27,9 +27,9 @@ export default function ChatPage() {
   if (notLoggedIn) {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center gap-4">
-        <p>You must be logged in to use the chat.</p>
+        <p>Vous devez être connecté pour utiliser la messagerie.</p>
         <Link href="/authentication/login?redirect=/chat" className="border px-4 py-2 hover:underline">
-          Login
+          Connexion
         </Link>
       </main>
     );
@@ -38,15 +38,15 @@ export default function ChatPage() {
   return (
     <main className="mx-auto flex h-screen w-full max-w-4xl flex-col px-4 py-8">
       <header className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Chat</h1>
+        <h1 className="text-3xl font-bold">Discussion</h1>
         <div className="flex items-center gap-4">
           {me && (
             <p className="text-sm text-gray-600">
-              Connected as <span className="font-bold">{me.name}</span>
+              Connecté en tant que <span className="font-bold">{me.name}</span>
             </p>
           )}
           <Link href="/" className="hover:underline">
-            Home
+            Accueil
           </Link>
         </div>
       </header>
@@ -60,7 +60,7 @@ export default function ChatPage() {
         {/* conversation */}
         <section className="flex min-w-0 flex-1 flex-col">
           {!activeContact ? (
-            <p className="m-auto text-sm text-gray-600">Select a user to start chatting.</p>
+            <p className="m-auto text-sm text-gray-600">Sélectionnez un utilisateur pour commencer à discuter.</p>
           ) : (
             <>
               <h2 className="flex items-center gap-2 border-b px-4 py-3 font-bold">
@@ -69,7 +69,7 @@ export default function ChatPage() {
                   {activeContact.name}
                 </Link>
                 <span className="text-xs font-normal text-gray-600">
-                  {onlineUserIds.has(activeContact.id) ? "online" : "offline"}
+                  {onlineUserIds.has(activeContact.id) ? "en ligne" : "hors ligne"}
                 </span>
               </h2>
 
@@ -77,7 +77,7 @@ export default function ChatPage() {
 
               {error && <p className="px-4 text-sm text-red-600">{error}</p>}
 
-              <MessageInput placeholder={`Message ${activeContact.name}`} onSend={sendMessage} />
+              <MessageInput placeholder={`Message à ${activeContact.name}`} onSend={sendMessage} />
             </>
           )}
         </section>

@@ -11,12 +11,12 @@ export default function CommentsSection({
 }: CommentsSectionProps) {
   return (
     <section className="section-divider-spaced">
-      <h2 className="text-xl font-bold">Comments</h2>
+      <h2 className="text-xl font-bold">Commentaires</h2>
 
       {loading ? (
-        <p className="mt-4 text-sm">Loading comments...</p>
+        <p className="mt-4 text-sm">Chargement des commentaires…</p>
       ) : comments.length === 0 ? (
-        <p className="mt-4 text-sm text-muted-foreground">No comments yet.</p>
+        <p className="mt-4 text-sm text-muted-foreground">Pas encore de commentaires.</p>
       ) : (
         <ul className="mt-4 space-y-4">
           {comments.map((item) => (

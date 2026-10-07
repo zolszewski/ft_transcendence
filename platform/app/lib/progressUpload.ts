@@ -30,7 +30,7 @@ export function uploadFileWithProgress(
       resolve({ status: xhr.status, data });
     };
 
-    xhr.onerror = () => reject(new Error("Network error"));
+    xhr.onerror = () => reject(new Error("Erreur réseau"));
     xhr.send(formData);
   });
 }

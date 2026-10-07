@@ -21,7 +21,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "OpenScholar",
-  description: "a 42 students project",
+  description: "Projet étudiant 42",
   icons: {
     icon: "/favicon.ico",
     shortcut: "/favicon.ico",
@@ -38,7 +38,7 @@ export default async function RootLayout({
 
   return (
     <html
-      lang="en"
+      lang="fr"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">

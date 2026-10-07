@@ -21,7 +21,7 @@ type ArticleSearchListProps = {
 export default function ArticleSearchList({
   search,
   onSearchChange,
-  searchPlaceholder = "Search by title or content...",
+  searchPlaceholder = "Rechercher par titre ou contenu…",
   loading,
   loadingMore,
   articles,
@@ -44,7 +44,7 @@ export default function ArticleSearchList({
         className="field-input mt-6"
       />
 
-      {loading ? <p className="mt-8 text-sm">Loading...</p> : null}
+      {loading ? <p className="mt-8 text-sm">Chargement…</p> : null}
 
       {!loading && articles.length === 0 ? (
         <p className="mt-8 text-sm text-muted-foreground">{emptyMessage}</p>
@@ -70,7 +70,7 @@ export default function ArticleSearchList({
           disabled={loadingMore}
           className="btn-action-full mt-8"
         >
-          {loadingMore ? "Loading..." : "Load more"}
+          {loadingMore ? "Chargement…" : "Charger plus"}
         </button>
       ) : null}
     </>

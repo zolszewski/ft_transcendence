@@ -55,7 +55,7 @@ export default function LikeSection({
 
   return (
     <section className="section-divider-spaced">
-      <h2 className="text-xl font-bold">Likes</h2>
+      <h2 className="text-xl font-bold">J'aime</h2>
       <div className="mt-4 flex flex-wrap items-center gap-3">
         {canToggle ? (
           <button
@@ -66,15 +66,15 @@ export default function LikeSection({
             aria-pressed={likedByMe}
           >
             <Heart size={18} className={likedByMe ? "fill-current" : undefined} aria-hidden="true" />
-            {likedByMe ? "Liked" : "Like"}
+            {likedByMe ? "Aimé" : "J'aime"}
           </button>
         ) : isLoggedIn === false ? (
           <Link href={loginHref} className="btn-nav inline-flex items-center gap-2">
             <Heart size={18} aria-hidden="true" />
-            Log in to like
+            Se connecter pour aimer
           </Link>
         ) : isOwnArticle ? (
-          <span className="text-sm text-muted-foreground">You cannot like your own article.</span>
+          <span className="text-sm text-muted-foreground">Vous ne pouvez pas aimer votre propre article.</span>
         ) : null}
         <span className="text-sm text-muted-foreground">
           {likeCount} {likeCount === 1 ? "like" : "likes"}

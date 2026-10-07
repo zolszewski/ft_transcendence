@@ -38,19 +38,19 @@ export default function DashboardForm() {
         ]);
 
         if (!userResponse.success) {
-          setError(userResponse.error || "Unable to load user profile.");
+          setError(userResponse.error || "Impossible de charger le profil utilisateur.");
           setErrorStatus(userResponse.status || null);
           return;
         }
 
         if (!dashboardResponse.success) {
-          setError(dashboardResponse.error || "Unable to load dashboard.");
+          setError(dashboardResponse.error || "Impossible de charger le tableau de bord.");
           setErrorStatus(dashboardResponse.status || null);
           return;
         }
 
         if (!statsResponse.success) {
-          setError(statsResponse.error || "Unable to load dashboard stats.");
+          setError(statsResponse.error || "Impossible de charger les statistiques du tableau de bord.");
           setErrorStatus(statsResponse.status || null);
           return;
         }
@@ -65,7 +65,7 @@ export default function DashboardForm() {
         setRejected(articles.filter((article) => article.status === "REJECTED"));
       } catch (err) {
         setError(
-          err instanceof Error ? err.message : "Failed to load dashboard",
+          err instanceof Error ? err.message : "Impossible de charger le tableau de bord",
         );
       } finally {
         setLoading(false);
@@ -76,7 +76,7 @@ export default function DashboardForm() {
   }, []);
 
   if (loading) {
-    return <p className="p-8">Loading...</p>;
+    return <p className="p-8">Chargement…</p>;
   }
   if (error) {
     return <ErrorPage statusCode={errorStatus ?? 500} message={error} />;
@@ -88,11 +88,11 @@ export default function DashboardForm() {
       header={
         <AppHeader
           variant="bordered"
-          left={<NavLink href="/">Home</NavLink>}
-          center={<h1 className="text-xl font-bold">My Dashboard</h1>}
+          left={<NavLink href="/">Accueil</NavLink>}
+          center={<h1 className="text-xl font-bold">Mon tableau de bord</h1>}
           right={
             <div className="flex items-center gap-2">
-              <NavLink href="/friends">Friends</NavLink>
+              <NavLink href="/friends">Amis</NavLink>
               <LogoutButton />
             </div>
           }
@@ -113,16 +113,16 @@ export default function DashboardForm() {
         stats ? (
           <StatsSection stats={stats} />
         ) : (
-          <p className="p-4 text-sm text-gray-500">No statistics available.</p>
+          <p className="p-4 text-sm text-gray-500">Aucune statistique disponible.</p>
         )
       ) : null}
 
       {activeTab === "articles" ? (
         <>
-          <ArticleSection title="Drafts" articles={drafts} />
-          <ArticleSection title="Submitted" articles={submitted} />
-          <ArticleSection title="Published" articles={published} />
-          <ArticleSection title="Rejected" articles={rejected} />
+          <ArticleSection title="Brouillons" articles={drafts} />
+          <ArticleSection title="En attente de validation" articles={submitted} />
+          <ArticleSection title="Publiés" articles={published} />
+          <ArticleSection title="Rejetés" articles={rejected} />
         </>
       ) : null}
     </PageShell>

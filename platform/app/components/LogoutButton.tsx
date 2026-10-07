@@ -19,7 +19,7 @@ export default function LogoutButton({ beforeLogout }: LogoutButtonProps) {
 
       if (response.success) {
         //full reload (not router.replace) to wipe all browser state
-        //(socket, ChatProvider, router cache), otherwise the old user can stick around
+        //(socket, DiscussionProvider, router cache), otherwise the old user can stick around
         window.location.replace("/");
       }
     } finally {
@@ -34,7 +34,7 @@ export default function LogoutButton({ beforeLogout }: LogoutButtonProps) {
       disabled={loading}
       className="btn-nav"
     >
-      {loading ? "Logging out..." : "Log out"}
+      {loading ? "Déconnexion…" : "Se déconnecter"}
     </button>
   );
 }

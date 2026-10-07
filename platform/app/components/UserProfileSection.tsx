@@ -135,7 +135,7 @@ export default function UserProfileSection({
       if (avatarFile) {
         const uploadRes = await apiClient.uploads.image(avatarFile, "PUBLIC");
         if (!uploadRes.success) {
-          throw new Error(uploadRes.error || "Failed to upload avatar image");
+          throw new Error(uploadRes.error || "Impossible de téléverser l'avatar");
         }
         newAvatarId = uploadRes.data.id;
       }
@@ -155,7 +155,7 @@ export default function UserProfileSection({
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to update profile");
+        throw new Error(errorData.error || "Impossible de mettre à jour le profil");
       }
 
       const updatedUser: User = await response.json();
@@ -164,7 +164,7 @@ export default function UserProfileSection({
       setIsEditing(false);
     } catch (err) {
       setFormError(
-        err instanceof Error ? err.message : "An error occurred while saving."
+        err instanceof Error ? err.message : "Une erreur s'est produite lors de l'enregistrement."
       );
     } finally {
       setSaving(false);
@@ -177,7 +177,7 @@ export default function UserProfileSection({
         month: "long",
         day: "numeric",
       })
-    : "N/A";
+    : "--";
 
   return (
     <div className="mb-6 rounded-none border border-border bg-card p-6 shadow-sm">
@@ -241,7 +241,7 @@ export default function UserProfileSection({
             {isEditing ? (
               <div className="space-y-2">
                 <div>
-                  <label className="text-xs font-semibold text-muted-foreground">Name</label>
+                  <label className="text-xs font-semibold text-muted-foreground">Nom</label>
                   <input
                     type="text"
                     className="field-input text-base font-bold"
@@ -277,7 +277,7 @@ export default function UserProfileSection({
                   className="btn-nav inline-flex items-center gap-1 bg-primary text-primary-foreground hover:bg-primary/90"
                 >
                   <Check size={16} />
-                  {saving ? "Saving..." : "Save"}
+                  {saving ? "Enregistrement…" : "Enregistrer"}
                 </button>
                 <button
                   type="button"
@@ -296,7 +296,7 @@ export default function UserProfileSection({
                 className="btn-nav inline-flex items-center gap-1"
               >
                 <Edit2 size={16} />
-                Edit Profile
+                Modifier le profil
               </button>
             )}
           </div>
@@ -313,13 +313,13 @@ export default function UserProfileSection({
             <input
               type="text"
               className="field-input mt-1"
-              placeholder="e.g. Science & Technology"
+              placeholder="ex. Sciences et technologies"
               value={faculty}
               onChange={(e) => setFaculty(e.target.value)}
             />
           ) : (
             <p className="mt-1 text-sm font-medium">
-              {user.faculty || <span className="text-muted-foreground italic font-normal">Not specified</span>}
+              {user.faculty || <span className="text-muted-foreground italic font-normal">Non renseigné</span>}
             </p>
           )}
         </div>
@@ -332,14 +332,14 @@ export default function UserProfileSection({
             <input
               type="text"
               className="field-input mt-1"
-              placeholder="e.g. Computer Science"
+              placeholder="ex. Informatique"
               value={specialization}
               onChange={(e) => setSpecialization(e.target.value)}
             />
           ) : (
             <p className="mt-1 text-sm font-medium">
               {user.specialization || (
-                <span className="text-muted-foreground italic font-normal">Not specified</span>
+                <span className="text-muted-foreground italic font-normal">Non renseigné</span>
               )}
             </p>
           )}

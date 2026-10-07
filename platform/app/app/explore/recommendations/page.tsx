@@ -14,7 +14,7 @@ import ArticleCarouselSection from "@/components/ArticleCarouselSection";
 export default function MyRecommendationsPage() {
   const router = useRouter();
 
-  const [discover, setDiscover] = useState<Article[]>([]);
+  const [discover, setDécouvrir] = useState<Article[]>([]);
   const [deepen, setDeepen] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -35,15 +35,15 @@ export default function MyRecommendationsPage() {
             router.push(`/authentication/login?redirect=${encodeURIComponent("/explore/recommendations")}`);
             return;
           }
-          setError(discoverResponse.error || "Unable to load recommendations.");
+          setError(discoverResponse.error || "Impossible de charger les recommandations.");
           setErrorStatus(discoverResponse.status);
           return;
         }
-        setDiscover(discoverResponse.data);
+        setDécouvrir(discoverResponse.data);
 
         if (deepenResponse.success) setDeepen(deepenResponse.data);
       } catch {
-        setError("Unable to connect to the server.");
+        setError("Impossible de se connecter au serveur.");
       } finally {
         setLoading(false);
       }
@@ -61,24 +61,24 @@ export default function MyRecommendationsPage() {
       offset="sm"
       header={
         <AppHeader
-          left={<NavLink href="/explore">Back to explore</NavLink>}
+          left={<NavLink href="/explore">Retour à l'exploration</NavLink>}
           right={<LogoutButton />}
         />
       }
     >
-      <h1 className="mb-6 text-2xl font-bold">My Recommendations</h1>
+      <h1 className="mb-6 text-2xl font-bold">Mes recommandations</h1>
 
-      {loading ? <p className="text-sm">Loading...</p> : null}
+      {loading ? <p className="text-sm">Chargement…</p> : null}
 
       {!loading && discover.length === 0 && deepen.length === 0 ? (
         <p className="text-sm text-muted-foreground">
-          Engage with a few articles (view, like, comment, review) to get personalized recommendations.
+          Interagissez avec quelques articles (consultation, j'aime, commentaire, relecture) pour obtenir des recommandations personnalisées.
         </p>
       ) : null}
 
       {!loading && discover.length > 0 ? (
         <ArticleCarouselSection
-          title="Discover"
+          title="Découvrir"
           articles={discover}
           getArticleHref={(article) => `/explore/${article.id}`}
         />
@@ -86,7 +86,7 @@ export default function MyRecommendationsPage() {
 
       {!loading && deepen.length > 0 ? (
         <ArticleCarouselSection
-          title="Deepen your knowledge"
+          title="Approfondir vos connaissances"
           articles={deepen}
           getArticleHref={(article) => `/explore/${article.id}`}
         />

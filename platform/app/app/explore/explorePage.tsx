@@ -9,32 +9,52 @@ import PageShell from "@/components/PageShell";
 import AppHeader from "@/components/AppHeader";
 import NavLink from "@/components/NavLink";
 import ArticleSearchList from "@/components/ArticleSearchList";
+import FilterSection, { emptyExploreFilters, type ExploreFilters } from "@/components/FilterSection";
 
 const LIMIT = 10;
+
+function exploreDateRange(filters: ExploreFilters) {
+  return {
+    createdFrom: filters.createdFrom ? `${filters.createdFrom}T00:00:00.000Z` : undefined,
+    createdTo: filters.createdTo ? `${filters.createdTo}T23:59:59.999Z` : undefined,
+  };
+}
 
 export default function ExplorePageContent() {
   const [articles, setArticles] = useState<ListResult<Article> | null>(null);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [search, setSearch] = useState("");
+  const [filterDraft, setFilterDraft] = useState<ExploreFilters>(emptyExploreFilters);
+  const [appliedFilters, setAppliedFilters] = useState<ExploreFilters>(emptyExploreFilters);
   const [errorStatus, setErrorStatus] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
 
-  async function fetchPage(targetPage: number, currentSearch: string, replace: boolean) {
+  async function fetchPage(
+    targetPage: number,
+    currentSearch: string,
+    currentFilters: ExploreFilters,
+    replace: boolean,
+  ) {
     try {
+      const dates = exploreDateRange(currentFilters);
       const getArticles = await apiClient.articles.explore({
         page: targetPage,
         limit: LIMIT,
         ...(currentSearch ? { search: currentSearch } : {}),
+        ...(currentFilters.faculty.trim() ? { faculty: currentFilters.faculty.trim() } : {}),
+        ...dates,
+        ...(currentFilters.friendsOnly && isLoggedIn === true ? { friendsOnly: true } : {}),
       });
       if (!getArticles.success) {
-        setError("Unable to load articles.");
+        setError("Impossible de charger les articles.");
         setErrorStatus(getArticles.status);
         return;
       }
+      setError("");
       setArticles((previousArticles) =>
         replace || !previousArticles
           ? getArticles.data
@@ -46,21 +66,45 @@ export default function ExplorePageContent() {
       setPage(getArticles.data.page);
       setTotalPages(getArticles.data.pages);
     } catch {
-      setError("Unable to connect to the server.");
+      setError("Impossible de se connecter au serveur.");
     }
   }
 
   useEffect(() => {
-    fetchPage(1, search, true).finally(() => setLoading(false));
-  }, [search]);
+    setLoading(true);
+    fetchPage(1, search, appliedFilters, true).finally(() => setLoading(false));
+  }, [search, appliedFilters, isLoggedIn]);
 
   useEffect(() => {
     apiClient.auth.me().then((response) => setIsLoggedIn(response.success));
   }, []);
 
+  useEffect(() => {
+    if (isLoggedIn === false) {
+      setFilterDraft((previous) =>
+        previous.friendsOnly ? { ...previous, friendsOnly: false } : previous,
+      );
+      setAppliedFilters((previous) =>
+        previous.friendsOnly ? { ...previous, friendsOnly: false } : previous,
+      );
+    }
+  }, [isLoggedIn]);
+
+  function applyFilters() {
+    setAppliedFilters({
+      ...filterDraft,
+      friendsOnly: isLoggedIn === true ? filterDraft.friendsOnly : false,
+    });
+  }
+
+  function clearFilters() {
+    setFilterDraft(emptyExploreFilters);
+    setAppliedFilters(emptyExploreFilters);
+  }
+
   async function handleLoadMore() {
     setLoadingMore(true);
-    await fetchPage(page + 1, search, false);
+    await fetchPage(page + 1, search, appliedFilters, false);
     setLoadingMore(false);
   }
 
@@ -81,23 +125,32 @@ export default function ExplorePageContent() {
       offset="sm"
       header={
         <AppHeader
-          left={<NavLink href="/">Home</NavLink>}
+          left={<NavLink href="/">Accueil</NavLink>}
           right={
             <div className="flex items-center gap-2">
-              <NavLink href={recommendationsHref}>My Recommendations</NavLink>
+              <NavLink href={recommendationsHref}>Mes recommandations</NavLink>
               <LogoutButton />
             </div>
           }
         />
       }
     >
+      <FilterSection
+        filters={filterDraft}
+        appliedFilters={appliedFilters}
+        onChange={setFilterDraft}
+        onApply={applyFilters}
+        onClear={clearFilters}
+        isLoggedIn={isLoggedIn}
+      />
+
       <ArticleSearchList
         search={search}
         onSearchChange={setSearch}
         loading={loading}
         loadingMore={loadingMore}
         articles={articles?.data ?? []}
-        emptyMessage="No articles found."
+        emptyMessage="Aucun article trouvé."
         hasMore={hasMore}
         onLoadMore={handleLoadMore}
         getArticleHref={(article) => `/explore/${article.id}`}

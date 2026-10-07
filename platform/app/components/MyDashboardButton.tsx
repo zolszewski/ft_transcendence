@@ -31,7 +31,7 @@ export default function MyDashboardButton({ beforeLogout }: DashboardButtonProps
       onClick={goToDashboard}
       className="btn-nav mr-2"
     >
-      My Dashboard
+      Mon tableau de bord
     </button>
   );
 }

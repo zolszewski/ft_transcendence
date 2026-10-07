@@ -30,13 +30,13 @@ export default function ReviewDetail() {
       try {
         const response = await apiClient.articles.getReviewingArticle(params.id);
         if (!response.success) {
-          setError(response.error || "Unable to load this article." );
+          setError(response.error || "Impossible de charger cet article." );
           setErrorStatus(response.status || null);
           return;
         }
         setArticle(response.data);
       } catch {
-        setError("Unable to connect to the server.");
+        setError("Impossible de se connecter au serveur.");
       } finally {
         setLoading(false);
       }
@@ -50,20 +50,20 @@ export default function ReviewDetail() {
     try {
       const reviewComment = await apiClient.articles.postReview(params.id, comment);
       if (!reviewComment.success) {
-        setError(reviewComment.error || "Unable to submit review.");
+        setError(reviewComment.error || "Impossible d'envoyer la relecture.");
         setErrorStatus(reviewComment.status || null);
         return;
       }
       const reviewDecision = await apiClient.articles.postDecision(reviewComment.data.id, decision);
       if (!reviewDecision.success) {
-        setError(reviewDecision.error || "Unable to record decision.");
+        setError(reviewDecision.error || "Impossible d'enregistrer la décision.");
         setErrorStatus(reviewDecision.status || null);
         return;
       }
       router.push("/review");
       router.refresh();
     } catch {
-      setError("Unable to connect to the server.");
+      setError("Impossible de se connecter au serveur.");
     } finally {
       setSubmitting(null);
     }
@@ -72,19 +72,19 @@ export default function ReviewDetail() {
     return <ErrorPage statusCode={errorStatus ?? 500} message={error} />;
   }
   if (!article && !loading) {
-    return <ErrorPage statusCode={404} message="Article not found" />;
+    return <ErrorPage statusCode={404} message="Article introuvable" />;
   }
 
   return (
     <PageShell
       header={
         <AppHeader
-          left={<NavLink href="/review">Back to queue</NavLink>}
+          left={<NavLink href="/review">Retour à la file</NavLink>}
           right={<LogoutButton />}
         />
       }
     >
-      {loading && <p className="text-sm">Loading...</p>}
+      {loading && <p className="text-sm">Chargement…</p>}
 
       {!loading && article && (
         <>
@@ -103,7 +103,7 @@ export default function ReviewDetail() {
               onChange={(e) => setComment(e.target.value)}
               rows={5}
               className="field-textarea"
-              placeholder="Share your feedback..."
+              placeholder="Partagez votre avis…"
             />
 
             <div className="mt-4 flex gap-4">
@@ -113,7 +113,7 @@ export default function ReviewDetail() {
                 disabled={submitting !== null}
                 className="btn-action-full flex-1 font-bold"
               >
-                {submitting === "APPROVED" ? "Submitting..." : "Approve"}
+                {submitting === "APPROVED" ? "Envoi…" : "Approuver"}
               </button>
               <button
                 type="button"
@@ -121,7 +121,7 @@ export default function ReviewDetail() {
                 disabled={submitting !== null}
                 className="btn-action-full flex-1 font-bold"
               >
-                {submitting === "REJECTED" ? "Submitting..." : "Reject"}
+                {submitting === "REJECTED" ? "Envoi…" : "Rejeter"}
               </button>
             </div>
           </div>

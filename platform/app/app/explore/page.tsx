@@ -1,8 +1,8 @@
-import  ExplorePageContent  from "./explorePage";
+import  ExplorerPageContent  from "./explorePage";
 
-export default async function ExplorePage() {
+export default async function ExplorerPage() {
   
   return (
-    <ExplorePageContent />
+    <ExplorerPageContent />
   );
 }
