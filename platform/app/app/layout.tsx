@@ -23,9 +23,8 @@ export const metadata: Metadata = {
   title: "OpenScholar",
   description: "a 42 students project",
   icons: {
-    icon: "/favicon.svg",
-    shortcut: "/favicon.svg",
-    apple: "/favicon.svg",
+    icon: "/favicon.ico",
+    shortcut: "/favicon.ico",
   },
 };
 
