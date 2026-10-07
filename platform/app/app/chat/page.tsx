@@ -75,7 +75,7 @@ export default function ChatPage() {
 
               <MessageList messages={messages} myId={me?.id ?? null} otherUserName={activeContact.name} />
 
-              {error && <p className="px-4 text-sm text-red-600">{error}</p>}
+              {error && <p className="px-4 text-sm font-bold text-foreground">{error}</p>}
 
               <MessageInput placeholder={`Message à ${activeContact.name}`} onSend={sendMessage} />
             </>

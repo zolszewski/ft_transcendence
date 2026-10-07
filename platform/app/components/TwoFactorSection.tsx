@@ -307,7 +307,7 @@ export default function TwoFactorSection({
       ) : null}
 
       {message ? (
-        <p className="mt-4 text-sm text-muted-foreground">
+        <p className="mt-4 text-sm font-bold text-foreground">
           {message}
         </p>
       ) : null}

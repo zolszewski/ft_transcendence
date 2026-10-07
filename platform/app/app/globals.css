@@ -278,15 +278,15 @@
   }
 
   .form-error {
-    @apply text-sm text-destructive;
+    @apply text-sm font-bold text-foreground;
   }
 
   .alert-banner-error {
-    @apply mb-6 rounded-none border border-destructive/30 p-3 text-destructive;
+    @apply mb-6 rounded-none border border-border p-3 text-sm font-bold text-foreground;
   }
 
   .alert-banner-success {
-    @apply mb-6 rounded-none border border-green-600/30 p-3 text-green-700 dark:text-green-400;
+    @apply mb-6 rounded-none border border-border p-3 text-sm font-bold text-foreground;
   }
 
   .editor-panel {

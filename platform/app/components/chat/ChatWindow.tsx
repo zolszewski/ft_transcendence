@@ -91,7 +91,7 @@ export default function ChatWindow() {
       {!minimized && (
         <>
           <MessageList messages={messages} myId={myId} otherUserName={activeContact.name} />
-          {error && <p className="px-3 text-sm text-red-600">{error}</p>}
+          {error && <p className="px-3 text-sm font-bold text-foreground">{error}</p>}
           <MessageInput placeholder={`Message à ${activeContact.name}`} autoFocus onSend={sendMessage} />
         </>
       )}

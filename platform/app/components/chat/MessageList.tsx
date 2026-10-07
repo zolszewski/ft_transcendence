@@ -26,13 +26,11 @@ export default function MessageList({ messages, myId, otherUserName }: MessageLi
         const isMine = message.senderId === myId;
         return (
           <div key={message.id}>
-            <p className="text-xs text-gray-600">
-              <span className={`font-bold ${isMine ? "text-primary" : "text-foreground"}`}>
-                {isMine ? "Vous" : otherUserName}
-              </span>{" "}
+            <p className="text-xs text-foreground">
+              <span className="font-bold">{isMine ? "Vous" : otherUserName}</span>{" "}
               {new Date(message.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
             </p>
-            <p className="break-words whitespace-pre-wrap">{message.content}</p>
+            <p className="break-words whitespace-pre-wrap font-bold text-foreground">{message.content}</p>
           </div>
         );
       })}
