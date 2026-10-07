@@ -605,12 +605,20 @@ export const apiClient = {
       sort?: "newest" | "oldest";
       page?: number;
       limit?: number;
+      faculty?: string;
+      createdFrom?: string;
+      createdTo?: string;
+      friendsOnly?: boolean;
     }): Promise<ApiResponse<ListResult<Article>>> => {
       const queryParams = new URLSearchParams();
       if (params?.search) queryParams.append("search", params.search);
       if (params?.sort) queryParams.append("sort", params.sort);
       if (params?.page) queryParams.append("page", params.page.toString());
       if (params?.limit) queryParams.append("limit", params.limit.toString());
+      if (params?.faculty) queryParams.append("faculty", params.faculty);
+      if (params?.createdFrom) queryParams.append("createdFrom", params.createdFrom);
+      if (params?.createdTo) queryParams.append("createdTo", params.createdTo);
+      if (params?.friendsOnly) queryParams.append("friendsOnly", "true");
 
       try {
         const response = await fetch(`/api/articles/explore?${queryParams.toString()}`, {

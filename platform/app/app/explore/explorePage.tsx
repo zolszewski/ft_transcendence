@@ -9,7 +9,11 @@ import PageShell from "@/components/PageShell";
 import AppHeader from "@/components/AppHeader";
 import NavLink from "@/components/NavLink";
 import ArticleSearchList from "@/components/ArticleSearchList";
-import FilterSection, { emptyExploreFilters, type ExploreFilters } from "@/components/FilterSection";
+import FilterSection, {
+  emptyExploreFilters,
+  type ExploreFilters,
+  type ExploreSort,
+} from "@/components/FilterSection";
 
 const LIMIT = 10;
 
@@ -27,6 +31,7 @@ export default function ExplorePageContent() {
   const [search, setSearch] = useState("");
   const [filterDraft, setFilterDraft] = useState<ExploreFilters>(emptyExploreFilters);
   const [appliedFilters, setAppliedFilters] = useState<ExploreFilters>(emptyExploreFilters);
+  const [sort, setSort] = useState<ExploreSort>("newest");
   const [errorStatus, setErrorStatus] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -37,6 +42,7 @@ export default function ExplorePageContent() {
     targetPage: number,
     currentSearch: string,
     currentFilters: ExploreFilters,
+    currentSort: ExploreSort,
     replace: boolean,
   ) {
     try {
@@ -44,6 +50,7 @@ export default function ExplorePageContent() {
       const getArticles = await apiClient.articles.explore({
         page: targetPage,
         limit: LIMIT,
+        sort: currentSort,
         ...(currentSearch ? { search: currentSearch } : {}),
         ...(currentFilters.faculty.trim() ? { faculty: currentFilters.faculty.trim() } : {}),
         ...dates,
@@ -72,8 +79,8 @@ export default function ExplorePageContent() {
 
   useEffect(() => {
     setLoading(true);
-    fetchPage(1, search, appliedFilters, true).finally(() => setLoading(false));
-  }, [search, appliedFilters, isLoggedIn]);
+    fetchPage(1, search, appliedFilters, sort, true).finally(() => setLoading(false));
+  }, [search, appliedFilters, sort, isLoggedIn]);
 
   useEffect(() => {
     apiClient.auth.me().then((response) => setIsLoggedIn(response.success));
@@ -104,7 +111,7 @@ export default function ExplorePageContent() {
 
   async function handleLoadMore() {
     setLoadingMore(true);
-    await fetchPage(page + 1, search, appliedFilters, false);
+    await fetchPage(page + 1, search, appliedFilters, sort, false);
     setLoadingMore(false);
   }
 
@@ -138,6 +145,8 @@ export default function ExplorePageContent() {
       <FilterSection
         filters={filterDraft}
         appliedFilters={appliedFilters}
+        sort={sort}
+        onSortChange={setSort}
         onChange={setFilterDraft}
         onApply={applyFilters}
         onClear={clearFilters}

@@ -6,7 +6,7 @@ import { apiClient } from "@/lib/apiClient";
 import {
   getArticleMiniatureFocus,
   getArticleMiniatureUrl,
-  hasStoredMiniature,
+  hasAuthorMiniature,
 } from "@/lib/articleUtils";
 import type { Article } from "@/lib/types";
  
@@ -63,7 +63,7 @@ function overlayPublishedArticles(
   articles: Article[]
 ): NodeInput[] {
   const withMini = articles
-    .filter(hasStoredMiniature)
+    .filter(hasAuthorMiniature)
     .map((article) => ({
       article,
       url: getArticleMiniatureUrl(article),

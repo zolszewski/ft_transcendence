@@ -25,6 +25,14 @@ export function hasStoredMiniature(article: Article): boolean {
   return Boolean(media.miniatureId);
 }
 
+/** True when the author uploaded a miniature (not the default placeholder). */
+export function hasAuthorMiniature(article: Article): boolean {
+  if (hasStoredMiniature(article)) return true;
+  const media = article as ArticleMedia;
+  const url = media.miniatureUrl ?? getArticleMiniatureUrl(article);
+  return Boolean(url?.includes("/api/uploads/"));
+}
+
 export function hasStoredPdf(article: Article): boolean {
   const media = article as ArticleMedia;
   return Boolean(media.documentId);

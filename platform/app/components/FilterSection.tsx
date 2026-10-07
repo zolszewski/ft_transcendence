@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 
+export type ExploreSort = "newest" | "oldest";
+
 export type ExploreFilters = {
   faculty: string;
   createdFrom: string;
@@ -25,6 +27,8 @@ function filtersActive(filters: ExploreFilters) {
 type FilterSectionProps = {
   filters: ExploreFilters;
   appliedFilters: ExploreFilters;
+  sort: ExploreSort;
+  onSortChange: (sort: ExploreSort) => void;
   onChange: (filters: ExploreFilters) => void;
   onApply: () => void;
   onClear: () => void;
@@ -34,6 +38,8 @@ type FilterSectionProps = {
 export default function FilterSection({
   filters,
   appliedFilters,
+  sort,
+  onSortChange,
   onChange,
   onApply,
   onClear,
@@ -71,6 +77,25 @@ export default function FilterSection({
           aria-labelledby="explore-filters-trigger"
           className="space-y-3 border-t border-border p-4"
         >
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-sm font-medium text-muted-foreground">Tri</span>
+            <button
+              type="button"
+              className={`btn-nav-sm ${sort === "newest" ? "border-primary text-primary" : ""}`}
+              aria-pressed={sort === "newest"}
+              onClick={() => onSortChange("newest")}
+            >
+              Plus récent → plus ancien
+            </button>
+            <button
+              type="button"
+              className={`btn-nav-sm ${sort === "oldest" ? "border-primary text-primary" : ""}`}
+              aria-pressed={sort === "oldest"}
+              onClick={() => onSortChange("oldest")}
+            >
+              Plus ancien → plus récent
+            </button>
+          </div>
           <div
             className={`grid grid-cols-1 gap-4 sm:grid-cols-2 ${showFriendsFilter ? "lg:grid-cols-4" : "lg:grid-cols-3"}`}
           >
