@@ -300,10 +300,11 @@ const TextEditor = forwardRef<TextEditorHandle, TextEditorProps>(
               <button
                 type="button"
                 onClick={() => setPdf(null)}
-                className="editor-toolbar-btn"
-                aria-label="Cancel new PDF selection"
+                className="editor-toolbar-btn inline-flex items-center gap-1"
+                aria-label="Remove PDF"
               >
                 <X size={16} aria-hidden="true" />
+                Remove PDF
               </button>
             </>
           ) : pdfRemoved ? (
@@ -315,21 +316,22 @@ const TextEditor = forwardRef<TextEditorHandle, TextEditorProps>(
             </>
           ) : initialPdfUrl ? (
             <>
-              
+              <a
                 href={initialPdfUrl}
                 target="_blank"
                 rel="noreferrer"
                 className="flex-1 truncate text-sm underline"
-              <a>
+              >
                 Current PDF
               </a>
               <button
                 type="button"
                 onClick={removePdf}
-                className="editor-toolbar-btn"
+                className="editor-toolbar-btn inline-flex items-center gap-1"
                 aria-label="Remove PDF"
               >
                 <X size={16} aria-hidden="true" />
+                Remove PDF
               </button>
             </>
           ) : (
