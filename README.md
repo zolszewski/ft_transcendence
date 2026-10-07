@@ -86,7 +86,7 @@ make re     # Rebuild everything from scratch and restart
 make clean  # Remove containers and volumes (deletes the database)
 ```
 
-More details about the health check, backups and restore, WAF and Vault are in [docs/infrastructure.md](docs/infrastructure.md). The public API is documented in [platform/backend/API.md](platform/backend/API.md).
+More details about the health check, backups and restore, WAF and Vault are in [docs/infrastructure.md](docs/infrastructure.md). The public API is documented in [docs/api.md](docs/api.md).
 
 ---
 
@@ -234,7 +234,7 @@ erDiagram
 | Friends | Send, accept, refuse and remove friend requests, friends list with online status | zoolszew |
 | Real-time chat | Private conversations, chat page and chat dock on every page, unread counters, online status, accessible and responsive | kaizatov |
 | Activity dashboard | Personal statistics: articles by status, reviews done, approval rate, days since joining | zoolszew (frontend), rlaigle (backend) |
-| Public API | API keys (hashed), rate limiting, documentation in `API.md` | rlaigle |
+| Public API | API keys (hashed), rate limiting, documentation in `docs/api.md` | rlaigle |
 | Security | HTTPS, ModSecurity WAF (OWASP CRS), Vault for secrets, helmet, rate limiting | rlaigle |
 | Health and backups | `/health` and `/status` pages, automated PostgreSQL backups and documented restore procedure | rlaigle |
 | Privacy Policy and Terms of Service | Pages linked from the footer of every page | kaizatov |
@@ -272,7 +272,7 @@ erDiagram
 
 **3. User interaction.** An academic platform is about exchanging with other people. *How:* private chat (send / receive messages, history stored in PostgreSQL), profile page for every user, friends system (add, accept, remove, friends list).
 
-**4. Public API.** Researchers or tools can use the platform from scripts. *How:* users generate API keys (`POST /api/auth/api-keys`); only the SHA-256 hash is stored. Requests use `Authorization: Bearer <key>`. Global rate limiting with `express-rate-limit` plus a stricter limit on login/register. More than 5 endpoints with GET, POST, PUT and DELETE (articles, friends, uploads…), documented in [API.md](platform/backend/API.md).
+**4. Public API.** Researchers or tools can use the platform from scripts. *How:* users generate API keys (`POST /api/auth/api-keys`); only the SHA-256 hash is stored. Requests use `Authorization: Bearer <key>`. Global rate limiting with `express-rate-limit` plus a stricter limit on login/register. More than 5 endpoints with GET, POST, PUT and DELETE (articles, friends, uploads…), documented in [docs/api.md](docs/api.md).
 
 **5. Standard user management.** *How:* users can edit their name, faculty and specialization, upload an avatar (a default avatar is shown otherwise), add friends and see their online status, and every user has a profile page.
 
@@ -318,7 +318,7 @@ erDiagram
 
 - Most of the backend API: authentication, articles, reviews, comments, uploads, users, validation and error handling
 - GitHub OAuth and 2FA backend
-- Public API: API keys, rate limiting, `API.md` documentation, HTTP test requests
+- Public API: API keys, rate limiting, `docs/api.md` documentation, HTTP test requests
 - Recommendation system with embeddings and likes
 - ModSecurity WAF, HashiCorp Vault, Nginx configuration
 - Health check, status page, automated backups and disaster recovery procedure

@@ -653,7 +653,7 @@ GET {{baseUrl}}/api/articles/{{createArticleDay17.response.body.$.id}}/reviews
 
 ### ==========================================================
 ### DAY 18: Public API module - API key auth
-### (on top of the session cookie), docs in API.md.
+### (on top of the session cookie), docs in docs/api.md.
 ### ==========================================================
 
 ### Create an account
