@@ -84,7 +84,6 @@ make logs   # Show logs
 make ps     # Show container status
 make re     # Rebuild everything from scratch and restart
 make clean  # Remove containers and volumes (deletes the database)
-make studio # Open Prisma Studio to browse the database
 ```
 
 More details about the health check, backups and restore, WAF and Vault are in [docs/infrastructure.md](docs/infrastructure.md). The public API is documented in [platform/backend/API.md](platform/backend/API.md).
@@ -279,7 +278,7 @@ erDiagram
 
 **6. Recommendation system (ML).** With many articles, readers need help to find the ones that match their interests. *How:* content-based filtering. When an article is created or updated, its title and content are turned into a 384-dimension vector with the `all-MiniLM-L6-v2` sentence-embedding model (Transformers.js, run locally). Each user gets a *reader profile*: the weighted average of the vectors of the articles they interacted with (view = 1, like = 2, comment = 2, review = 3). Articles are ranked by cosine similarity with this profile ("Discover"). A second list ("Deepen") uses the *author profile* built from the user's own published articles. Recommendations improve over time because each new view, like, comment or review changes the profile.
 
-**7. WAF + Vault.** User-generated HTML content and file uploads make the application a target. *How:* ModSecurity with the OWASP Core Rule Set in blocking mode, paranoia level 2, with only a few targeted exclusions (article HTML content, OAuth parameter). Vault is initialized and unsealed automatically at startup; secrets are stored in a KV v2 engine and the backend reads them with a read-only token at startup. Details in [docs/infrastructure.md](docs/infrastructure.md).
+**7. WAF + Vault.** User-generated HTML content and file uploads make the application a target. *How:* ModSecurity with the OWASP Core Rule Set in blocking mode, paranoia level 2, with only a few targeted exclusions (article HTML content, OAuth parameter). The WAF is disabled on `/socket.io/` only, because it broke the long-lived chat connections; this path receives no user data (messages are sent through `POST /api/chat/:userId`, which the WAF inspects), see [docs/infrastructure.md](docs/infrastructure.md#exception-socketio). Vault is initialized and unsealed automatically at startup; secrets are stored in a KV v2 engine and the backend reads them with a read-only token at startup. Details in [docs/infrastructure.md](docs/infrastructure.md).
 
 **8. ORM.** *How:* Prisma 7 with a typed client and versioned migrations in `platform/backend/prisma/migrations`.
 
@@ -295,7 +294,7 @@ erDiagram
 
 **14. User activity analytics dashboard.** Authors want to follow their activity. *How:* `/api/dashboard` aggregates the user's articles by status, reviews done, approval rate and seniority; displayed on the dashboard page.
 
-**15. Additional browsers.** *How:* the application was tested on Google Chrome and on the following additional browsers: **TODO: list the browsers tested (e.g. Firefox, Edge) and any limitation found**.
+**15. Additional browsers.** *How:* every feature (authentication, editor, uploads, chat, friends, dashboard) was tested on Google Chrome (reference browser) and on two additional browsers: **Mozilla Firefox** (Gecko engine) and **Brave** (Chromium engine). No browser-specific limitation was found. Notes: on first visit, each browser shows its own warning for the self-signed certificate; Brave Shields must stay compatible with first-party cookies (the default setting), because sessions rely on a cookie.
 
 **16. Health check and backups.** *How:* `/health` (JSON, `200` or `503`) and `/status` (HTML page refreshed every 30 s) check the backend, PostgreSQL and Redis with a timeout. A backup container dumps the database every hour and keeps the last 7 dumps. The restore procedure is documented and tested in [docs/infrastructure.md](docs/infrastructure.md).
 

@@ -39,18 +39,18 @@ fclean:
 re: fclean up
 
 studio:
-	$(COMPOSE) exec backend npm exec prisma studio -- --browser none
+	$(COMPOSE) exec backend node scripts/with-vault.js npx prisma studio --browser none
 
 prisma-generate:
-	$(COMPOSE) exec backend npx prisma generate
+	$(COMPOSE) exec backend node scripts/with-vault.js npx prisma generate
 
 prisma-migrate:
-	$(COMPOSE) exec backend npx prisma migrate deploy
+	$(COMPOSE) exec backend node scripts/with-vault.js npx prisma migrate deploy
 
 prisma-migrate-dev:
-	$(COMPOSE) exec backend npx prisma migrate dev
+	$(COMPOSE) exec backend node scripts/with-vault.js npx prisma migrate dev
 
 prisma-validate:
-	$(COMPOSE) exec backend npx prisma validate
+	$(COMPOSE) exec backend node scripts/with-vault.js npx prisma validate
 
 .PHONY: all up down stop start restart logs ps clean fclean re prisma-generate prisma-migrate

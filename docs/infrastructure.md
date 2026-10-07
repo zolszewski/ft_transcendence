@@ -93,7 +93,7 @@ docker compose -f platform/docker-compose.yml exec -T postgresql psql -U academi
 
 ```bash
 docker compose -f platform/docker-compose.yml start backend backup
-curl -i http://localhost:4000/health
+curl -sk -i https://localhost:8444/health
 ```
 
 The health check must answer `200`.
@@ -135,6 +135,16 @@ At paranoia level 2, the rules blocked the legitimate HTML sent by the article e
 - **942130** (SQLi detection): it blocked a text formatted like an SQL tautology.
 
 These exclusions only apply to the `content` field. The backend uses Prisma, which sends values as parameterized queries: an SQL injection in this field cannot change a query. The XSS risk on stored content is handled on the frontend, by sanitizing the HTML with DOMPurify before displaying it.
+
+### Exception: `/socket.io/`
+
+The WAF is disabled on `/socket.io/` only (`modsecurity off;` in `nginx.conf`). With ModSecurity enabled on this path, the inspection of the long-lived Socket.IO connections broke the chat.
+
+This exception does not open an unprotected entry point for user data:
+- ModSecurity only analyzes HTTP requests and responses. Once a WebSocket connection is open, the frames exchanged on it are never inspected, even with the WAF enabled.
+- The browser never sends data through the socket: the backend only registers the `connection` and `disconnect` events. The socket is only used by the server to push events (`message:new`, `users:online`, `users:offline`).
+- Chat messages are sent with `POST /api/chat/:userId`, which goes through `/api/` and is therefore inspected by the WAF, rate limited and validated by the backend.
+- The socket connection is authenticated with the session cookie: a connection without a valid session is refused.
 
 ### Known limitations
 

@@ -1,4 +1,4 @@
-@baseUrl = http://localhost:4000
+@baseUrl = https://localhost:8444
 
 ### Health check
 GET {{baseUrl}}/health
@@ -526,7 +526,7 @@ GET {{baseUrl}}/api/articles/explore
 ### 2. F12 -> Console -> allow pasting -> paste this:
 ###
 ### const script = document.createElement("script");
-### script.src = "http://localhost:4000/socket.io/socket.io.js";
+### script.src = "https://localhost:8444/socket.io/socket.io.js";
 ### script.onload = () => {
 ###   const socket = io("https://localhost:8443");
 ###   socket.on("connect", () => console.log("Connected!", socket.id));
@@ -557,8 +557,8 @@ POST {{baseUrl}}/api/articles
 ### (Content-Security-Policy, X-Frame-Options,
 ### Strict-Transport-Security...), and to actually hit a 429,
 ### loop requests from a terminal:
-###   for i in $(seq 1 12); do curl -s -o /dev/null -w "%{http_code}\n" \
-###     -X POST http://localhost:4000/api/auth/login \
+###   for i in $(seq 1 12); do curl -sk -o /dev/null -w "%{http_code}\n" \
+###     -X POST https://localhost:8444/api/auth/login \
 ###     -H "Content-Type: application/json" \
 ###     -d '{"email":"nobody@test.com","password":"wrongpass"}'; done
 ### -> first 10: 401, from the 11th on: 429.
@@ -782,11 +782,11 @@ GET {{baseUrl}}/api/articles/{{reproDraftArticle.response.body.$.id}}
 ### .http (needs a binary file), so here's the reference curl
 ### from a terminal:
 ###
-### curl -c cookies.txt -X POST http://localhost:4000/api/auth/register \
+### curl -k -c cookies.txt -X POST https://localhost:8444/api/auth/register \
 ###   -H "Content-Type: application/json" \
 ###   -d '{"email":"upload19@test.com","name":"Upload19","password":"12345678"}'
 ###
-### curl -b cookies.txt -X POST http://localhost:4000/api/uploads \
+### curl -k -b cookies.txt -X POST https://localhost:8444/api/uploads \
 ###   -F "file=@myimage.png;type=image/png"
 ### -> 201 { id, filename, originalName, mimeType, size, visibility: "PRIVATE", ownerId, createdAt }
 ###
@@ -1069,7 +1069,7 @@ GET {{baseUrl}}/api/articles/mine
 
 ### Upload straight as PUBLIC (for an inline image):
 ###
-### curl -b cookies.txt -X POST http://localhost:4000/api/uploads \
+### curl -k -b cookies.txt -X POST https://localhost:8444/api/uploads \
 ###   -F "file=@myimage.png;type=image/png" \
 ###   -F "visibility=PUBLIC"
 ### -> 201, "visibility": "PUBLIC" right away, anyone can
@@ -1077,7 +1077,7 @@ GET {{baseUrl}}/api/articles/mine
 ###
 ### Garbage or missing value falls back to "PRIVATE" (default
 ### unchanged):
-### curl -b cookies.txt -X POST http://localhost:4000/api/uploads \
+### curl -k -b cookies.txt -X POST https://localhost:8444/api/uploads \
 ###   -F "file=@myimage.png;type=image/png" -F "visibility=whatever"
 
 ### ==========================================================
@@ -1335,15 +1335,15 @@ POST {{baseUrl}}/api/users/me/2fa/setup
 ### PUBLISHED -> everyone, otherwise the author, or any
 ### logged-in user if SUBMITTED, otherwise nobody
 ###
-### curl -c cA.txt -X POST http://localhost:4000/api/auth/register \
+### curl -k -c cA.txt -X POST https://localhost:8444/api/auth/register \
 ###   -H "Content-Type: application/json" \
 ###   -d '{"email":"docauthor@example.com","name":"author","password":"motdepasse123"}'
 ###
-### curl -b cA.txt -X POST http://localhost:4000/api/uploads \
+### curl -k -b cA.txt -X POST https://localhost:8444/api/uploads \
 ###   -F "file=@myfile.pdf;type=application/pdf"
 ### -> 201 { id, ... }: that's DOC_ID
 ###
-### curl -b cA.txt -X POST http://localhost:4000/api/articles \
+### curl -k -b cA.txt -X POST https://localhost:8444/api/articles \
 ###   -H "Content-Type: application/json" \
 ###   -d '{"title":"Test doc","content":"contenu","documentId":"DOC_ID"}'
 ### -> 201 { id, ... }: that's the ART_ID to swap in below
