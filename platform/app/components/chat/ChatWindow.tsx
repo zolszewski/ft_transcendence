@@ -53,7 +53,7 @@ export default function ChatWindow() {
           ? "w-72 shrink rounded-t-lg"
           : "fixed inset-0 z-50 h-dvh w-full sm:static sm:h-96 sm:w-72 sm:rounded-t-lg"
       }`}
-      aria-label={`Échanger avec ${activeContact.name}`}
+      aria-label={`Echanger avec ${activeContact.name}`}
       onKeyDown={handleKeyDown}
     >
       {/* header: click to minimize / reopen */}

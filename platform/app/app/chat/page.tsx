@@ -28,7 +28,7 @@ export default function ChatPage() {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center gap-4">
         <p>Vous devez être connecté pour utiliser la messagerie.</p>
-        <Link href="/authentication/login?redirect=/chat" className="border px-4 py-2 hover:underline">
+        <Link href="/authentication/login?redirect=/chat" className="btn-nav">
           Connexion
         </Link>
       </main>
@@ -38,7 +38,7 @@ export default function ChatPage() {
   return (
     <main className="mx-auto flex h-screen w-full max-w-4xl flex-col px-4 py-8">
       <header className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Échanger</h1>
+        <h1 className="text-3xl font-bold">Echanger</h1>
         <div className="flex items-center gap-4">
           {me && (
             <p className="text-sm text-gray-600">
@@ -51,9 +51,9 @@ export default function ChatPage() {
         </div>
       </header>
 
-      <div className="mt-6 flex min-h-0 flex-1 border">
+      <div className="mt-6 flex min-h-0 flex-1 rounded-none border border-border bg-background">
         {/* user list */}
-        <aside className="w-56 shrink-0 overflow-y-auto border-r">
+        <aside className="w-56 shrink-0 overflow-y-auto border-r border-border">
           <ConversationList users={contacts} selectedUserId={activeContact?.id ?? null} onSelect={openChatWith} />
         </aside>
 
@@ -63,7 +63,7 @@ export default function ChatPage() {
             <p className="m-auto text-sm text-gray-600">Sélectionnez un utilisateur pour commencer à échanger.</p>
           ) : (
             <>
-              <h2 className="flex items-center gap-2 border-b px-4 py-3 font-bold">
+              <h2 className="flex items-center gap-2 border-b border-border px-4 py-3 font-bold">
                 <OnlineDot online={onlineUserIds.has(activeContact.id)} />
                 <Link href={`/users/${activeContact.id}`} className="hover:underline">
                   {activeContact.name}

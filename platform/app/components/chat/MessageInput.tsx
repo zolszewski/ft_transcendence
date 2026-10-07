@@ -2,8 +2,6 @@
 
 import { useState } from "react";
 import type { FormEvent } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 
 //same limit as the backend (chat.routes.ts)
 const MAX_MESSAGE_LENGTH = 2000;
@@ -30,19 +28,20 @@ export default function MessageInput({ placeholder, autoFocus = false, onSend }:
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex gap-2 border-t p-4">
-      <Input
+    <form onSubmit={handleSubmit} className="flex gap-2 border-t border-border p-4">
+      <input
+        type="text"
         value={content}
         onChange={(event) => setContent(event.target.value)}
         placeholder={placeholder}
-        //placeholder isn't enough for screen readers, the input needs a real label
         aria-label={placeholder}
         autoFocus={autoFocus}
         maxLength={MAX_MESSAGE_LENGTH}
+        className="field-input min-w-0 flex-1"
       />
-      <Button type="submit" disabled={sending || !content.trim()}>
+      <button type="submit" className="btn-nav shrink-0 disabled:opacity-50" disabled={sending || !content.trim()}>
         Envoyer
-      </Button>
+      </button>
     </form>
   );
 }

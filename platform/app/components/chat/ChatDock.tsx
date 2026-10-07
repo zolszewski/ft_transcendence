@@ -72,7 +72,7 @@ export default function ChatDock() {
           aria-controls="chat-contacts"
         >
           <span className="min-w-0 flex-1 truncate">
-            Échanger ({onlineCount} en ligne)
+            Echanger ({onlineCount} en ligne)
           </span>
           {totalUnread > 0 && (
             <span
