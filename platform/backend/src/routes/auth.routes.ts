@@ -76,7 +76,7 @@ router.post("/login/2fa", authLimiter, async (req, res) => {
 
 
 router.post("/logout", async (req, res) => {
-	// avant de détruire la session : couper ses sockets (sinon elles restent connectées avec l'ancienne identité)
+	//kill the session's sockets before destroying it, otherwise they stay connected as the old user
 	const userId = req.session.userId;
 	if (userId) {
 		await redisClient.sRem("online_users", userId);

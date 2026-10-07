@@ -9,21 +9,21 @@ import MessageList from "@/components/chat/MessageList";
 import MessageInput from "@/components/chat/MessageInput";
 import OnlineDot from "@/components/chat/OnlineDot";
 
-// petite fenêtre de conversation posée en bas de l'écran, comme le chat de Facebook
-// ouverte : en-tête + messages + champ ; réduite : seulement l'en-tête
-// sur mobile, la fenêtre ouverte prend tout l'écran (une fenêtre de 18rem ne tient pas à côté de la barre)
+//small convo window docked at the bottom, Facebook-style
+//open: header + messages + input; minimized: just the header
+//on mobile it goes full screen when open (an 18rem window won't fit next to the bar)
 export default function ChatWindow() {
   const { myId, onlineUserIds, activeContact, messages, error, closeChat, sendMessage } = useChat();
   const [minimized, setMinimized] = useState(false);
-  // nombre de messages déjà vus au moment de réduire la fenêtre
+  //how many messages we'd seen when the window got minimized
   const [seenCount, setSeenCount] = useState(0);
-  // bouton de l'en-tête : le focus y revient quand on réduit avec Échap
+  //header button, focus comes back here when Esc minimizes
   const headerButtonRef = useRef<HTMLButtonElement>(null);
 
-  // le ChatDock ne l'affiche que s'il y a une conversation ouverte
+  //ChatDock only renders this when a convo is open
   if (!activeContact) return null;
 
-  // pendant que la fenêtre est réduite : les nouveaux messages de l'autre personne
+  //while minimized: new messages from the other person
   const unread = minimized
     ? messages.slice(seenCount).filter((message) => message.senderId !== myId).length
     : 0;
@@ -34,7 +34,7 @@ export default function ChatWindow() {
     setMinimized(!minimized);
   }
 
-  // Échap réduit la fenêtre (sans perdre la conversation) et laisse le focus clavier sur l'en-tête
+  //Esc minimizes (convo stays) and keeps focus on the header
   function handleKeyDown(event: KeyboardEvent<HTMLElement>) {
     if (event.key !== "Escape" || minimized) return;
     toggleMinimized();
@@ -56,7 +56,7 @@ export default function ChatWindow() {
       aria-label={`Chat with ${activeContact.name}`}
       onKeyDown={handleKeyDown}
     >
-      {/* en-tête : un clic réduit / rouvre la fenêtre */}
+      {/* header: click to minimize / reopen */}
       <header className="flex items-center gap-2 bg-primary px-3 py-2 text-primary-foreground">
         <button
           ref={headerButtonRef}
@@ -74,7 +74,7 @@ export default function ChatWindow() {
         <button onClick={toggleMinimized} className="px-2 py-1 hover:opacity-70" aria-hidden="true" tabIndex={-1}>
           {minimized ? "▲" : "_"}
         </button>
-        {/* accès au profil depuis le chat */}
+        {/* jump to their profile from the chat */}
         <Link
           href={`/users/${activeContact.id}`}
           className={`px-2 py-1 hover:opacity-70 ${buttonFocus}`}

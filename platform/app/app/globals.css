@@ -332,4 +332,33 @@
   .article-detail {
     @apply w-full;
   }
+
+  .site-footer {
+    @apply mt-auto flex flex-col items-center justify-center gap-2 border-t px-4 py-4 text-sm text-muted-foreground sm:flex-row sm:gap-6;
+  }
+
+  .legal-content {
+    @apply mt-8 space-y-8 text-sm leading-relaxed;
+  }
+
+  .legal-content h2 {
+    @apply mb-3 text-xl font-bold;
+  }
+
+  .legal-content h3 {
+    @apply mb-2 mt-4 font-semibold;
+  }
+
+  .legal-content ul {
+    @apply list-disc space-y-1 pl-6;
+  }
+
+  .legal-content p + ul,
+  .legal-content ul + p {
+    @apply mt-3;
+  }
+
+  .legal-content a {
+    @apply underline hover:text-foreground;
+  }
 }

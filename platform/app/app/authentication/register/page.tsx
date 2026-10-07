@@ -32,7 +32,7 @@ function RegisterForm() {
         return;
       }
       const redirectTo = searchParams.get("redirect") || "/";
-      // rechargement complet : le layout relit la session et le chat repart avec le bon utilisateur
+      //full reload so the layout re-reads the session and the chat picks up the right user
       window.location.assign(redirectTo);
     } catch {
       setError("Unable to connect to the server.");

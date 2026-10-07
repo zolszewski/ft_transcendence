@@ -10,13 +10,13 @@ import MessageInput from "@/components/chat/MessageInput";
 import OnlineDot from "@/components/chat/OnlineDot";
 import type { User } from "@/lib/types";
 
-// version plein écran du chat : tout l'état (contacts, messages, socket) vient du ChatProvider (layout)
+//full-screen chat, all the state (contacts, messages, socket) comes from ChatProvider
 export default function ChatPage() {
   const [me, setMe] = useState<User | null>(null);
   const [notLoggedIn, setNotLoggedIn] = useState(false);
   const { onlineUserIds, contacts, activeContact, messages, error, openChatWith, sendMessage } = useChat();
 
-  // au chargement : qui est connecté (pour afficher son nom)
+  //on load: who's logged in (to show their name)
   useEffect(() => {
     apiClient.auth.me().then((response) => {
       if (response.success) setMe(response.data);
@@ -52,7 +52,7 @@ export default function ChatPage() {
       </header>
 
       <div className="mt-6 flex min-h-0 flex-1 border">
-        {/* liste des utilisateurs */}
+        {/* user list */}
         <aside className="w-56 shrink-0 overflow-y-auto border-r">
           <ConversationList users={contacts} selectedUserId={activeContact?.id ?? null} onSelect={openChatWith} />
         </aside>

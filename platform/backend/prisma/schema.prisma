@@ -139,7 +139,7 @@ model Comment {
 
 model Conversation {
   id           String                   @id @default(cuid())
-  // conversation privée : les deux userId triés et joints par ":" (unique = pas de doublon)
+  //private convo: both userIds sorted and joined with ":" (unique = no dupes)
   directKey    String?                  @unique
   createdAt    DateTime                 @default(now())
   updatedAt    DateTime                 @updatedAt

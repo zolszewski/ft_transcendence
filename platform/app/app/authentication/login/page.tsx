@@ -21,7 +21,7 @@ function LoginForm() {
 
   function redirectAfterLogin() {
     const redirectTo = searchParams.get("redirect") || "/";
-    // rechargement complet : le layout relit la session et le chat repart avec le bon utilisateur
+    //full reload so the layout re-reads the session and the chat picks up the right user
     window.location.assign(redirectTo);
   }
 
@@ -33,7 +33,7 @@ function LoginForm() {
     try {
       const response = await apiClient.auth.login(email, password);
 
-      if ("requires2fa" in response && response.requires2fa) {
+      if ("requires2fa" in response) {
         setNeedsCode(true);
         return;
       }
@@ -57,8 +57,8 @@ function LoginForm() {
     try {
       const response = await apiClient.twoFactor.verifyLogin(code);
       if (!response.success) {
-        // "No pending login" = la fenêtre de 5 minutes a expiré : on renvoie
-        // au formulaire email/mot de passe plutôt que de laisser retaper un code mort.
+        //"No pending login" = the 5 min window ran out:
+        //back to email/password, no point retyping a dead code
         if (response.error === "No pending login") {
           setNeedsCode(false);
           setCode("");
@@ -157,7 +157,7 @@ function LoginForm() {
       </div>
 
       <p className="mt-6 text-sm text-muted-foreground">
-        Don't have an account?{" "}
+        Don&apos;t have an account?{" "}
         <Link href="/authentication/register" className="font-medium text-foreground hover:underline">
           Register
         </Link>

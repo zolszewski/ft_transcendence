@@ -47,7 +47,7 @@ app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/friends", friendRoutes);
 app.use("/api/recommendations", recommendationRoutes);
 app.use(healthRoutes);
-app.use(errorHandler); // laisser en dernier, ne surtout pas placer de routes après cette commande
+app.use(errorHandler); //keep this last, no routes after it!
 const httpServer = http.createServer(app);
 initSocketServer(httpServer);
 

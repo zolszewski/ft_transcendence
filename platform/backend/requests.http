@@ -4,10 +4,10 @@
 GET {{baseUrl}}/health
 
 ### ==========================================================
-### DAY 05-06 : authentification (register/login/logout) + session protegee par requireAuth (/me)
+### DAY 05-06: auth (register/login/logout) + session protected by requireAuth (/me)
 ### ==========================================================
 
-### Créer un compte.
+### Create an account
 POST {{baseUrl}}/api/auth/register
 Content-Type: application/json
 
@@ -17,16 +17,16 @@ Content-Type: application/json
   "password": "motdepasse123"
 }
 
-### Voir qui est connecté (avec le cookie)
+### Who's logged in (with the cookie)
 GET {{baseUrl}}/api/auth/me
 
-### Se déconnecter
+### Log out
 POST {{baseUrl}}/api/auth/logout
 
-### Vérifier qu'on n'est plus connecté (401)
+### Check we're logged out (401)
 GET {{baseUrl}}/api/auth/me
 
-### Se reconnecter avec le bon mot de passe
+### Log back in with the right password
 POST {{baseUrl}}/api/auth/login
 Content-Type: application/json
 
@@ -35,7 +35,7 @@ Content-Type: application/json
   "password": "motdepasse123"
 }
 
-### Essayer avec un mauvais mot de passe (401)
+### Wrong password (401)
 POST {{baseUrl}}/api/auth/login
 Content-Type: application/json
 
@@ -44,7 +44,7 @@ Content-Type: application/json
   "password": "mauvaismotdepasse"
 }
 
-### Essayer de recréer un compte avec un email déjà pris (409)
+### Register again with a taken email (409)
 POST {{baseUrl}}/api/auth/register
 Content-Type: application/json
 
@@ -55,26 +55,26 @@ Content-Type: application/json
 }
 
 ### ==========================================================
-### DAY 07 : lecture des articles il faut d'abord avoir des articles en base pour que ces tests renvoient autre chose qu'une liste vide :
+### DAY 07: reading articles. You need some articles in the DB first, otherwise you just get an empty list:
 ### docker compose -f platform/docker-compose.yml exec backend npx tsx src/script_test.ts
 ### ==========================================================
 
-### Lister tous les articles
+### List all articles
 # @name listArticles
 GET {{baseUrl}}/api/articles/explore
 
-### Voir le détail du premier article de la liste ci-dessus
+### Details of the first article from the list above
 GET {{baseUrl}}/api/articles/{{listArticles.response.body.$.0.id}}
 
-### Essayer un id qui n'existe pas (404 attendu)
+### Id that doesn't exist (404)
 GET {{baseUrl}}/api/articles/id-inexistant
 
 ### ==========================================================
-### DAY 08 : creer / modifier / supprimer un article, avec verification de propriete (isOwner). Deux comptes necessaires (proprietaire +
-### intrus) - chaque register/login remplace le cookie stocke par celui du compte qui vient de se connecter.
+### DAY 08: create / edit / delete an article, with ownership check (isOwner). Needs two accounts (owner +
+### intruder) - every register/login swaps the stored cookie for the account that just logged in.
 ### ==========================================================
 
-### Créer un compte "propriétaire"
+### Create the "owner" account
 POST {{baseUrl}}/api/auth/register
 Content-Type: application/json
 
@@ -84,7 +84,7 @@ Content-Type: application/json
   "password": "motdepasse123"
 }
 
-### Créer un article en tant que propriétaire
+### Create an article as the owner
 # @name createArticle
 POST {{baseUrl}}/api/articles
 Content-Type: application/json
@@ -94,7 +94,7 @@ Content-Type: application/json
   "content": "Contenu de test"
 }
 
-### Modifier son propre article (200 attendu)
+### Edit your own article (200)
 PUT {{baseUrl}}/api/articles/{{createArticle.response.body.$.id}}
 Content-Type: application/json
 
@@ -103,7 +103,7 @@ Content-Type: application/json
   "content": "Nouveau contenu"
 }
 
-### Créer un compte "intrus" (remplace le cookie actuel)
+### Create the "intruder" account (replaces the current cookie)
 POST {{baseUrl}}/api/auth/register
 Content-Type: application/json
 
@@ -113,7 +113,7 @@ Content-Type: application/json
   "password": "motdepasse123"
 }
 
-### Essayer de modifier l'article d'un autre (403 attendu)
+### Try to edit someone else's article (403)
 PUT {{baseUrl}}/api/articles/{{createArticle.response.body.$.id}}
 Content-Type: application/json
 
@@ -122,10 +122,10 @@ Content-Type: application/json
   "content": "Piratage"
 }
 
-### Essayer de supprimer l'article d'un autre (403 attendu)
+### Try to delete someone else's article (403)
 DELETE {{baseUrl}}/api/articles/{{createArticle.response.body.$.id}}
 
-### Se reconnecter en tant que propriétaire
+### Log back in as the owner
 POST {{baseUrl}}/api/auth/login
 Content-Type: application/json
 
@@ -134,17 +134,17 @@ Content-Type: application/json
   "password": "motdepasse123"
 }
 
-### Supprimer son propre article (204 attendu)
+### Delete your own article (204)
 DELETE {{baseUrl}}/api/articles/{{createArticle.response.body.$.id}}
 
-### Vérifier que l'article a bien disparu (404 attendu)
+### Check the article is gone (404)
 GET {{baseUrl}}/api/articles/{{createArticle.response.body.$.id}}
 
 ### ==========================================================
-### DAY 09 : soumettre un article pour review (DRAFT -> SUBMITTED)
+### DAY 09: submit an article for review (DRAFT -> SUBMITTED)
 ### ==========================================================
 
-### Créer un compte
+### Create an account
 POST {{baseUrl}}/api/auth/register
 Content-Type: application/json
 
@@ -154,7 +154,7 @@ Content-Type: application/json
   "password": "motdepasse123"
 }
 
-### Créer un article (DRAFT par défaut)
+### Create an article (DRAFT by default)
 # @name createArticleDay9
 POST {{baseUrl}}/api/articles
 Content-Type: application/json
@@ -164,13 +164,13 @@ Content-Type: application/json
   "content": "Contenu"
 }
 
-### Soumettre en tant que propriétaire (200 attendu, status -> SUBMITTED)
+### Submit as the owner (200, status -> SUBMITTED)
 POST {{baseUrl}}/api/articles/{{createArticleDay9.response.body.$.id}}/submit
 
-### Soumettre une deuxième fois (409 attendu, déjà SUBMITTED)
+### Submit again (409, already SUBMITTED)
 POST {{baseUrl}}/api/articles/{{createArticleDay9.response.body.$.id}}/submit
 
-### Créer un compte "intrus" (remplace le cookie actuel)
+### Create the "intruder" account (replaces the current cookie)
 POST {{baseUrl}}/api/auth/register
 Content-Type: application/json
 
@@ -180,18 +180,18 @@ Content-Type: application/json
   "password": "motdepasse123"
 }
 
-### Essayer de soumettre l'article d'un autre (403 attendu)
+### Try to submit someone else's article (403)
 POST {{baseUrl}}/api/articles/{{createArticleDay9.response.body.$.id}}/submit
 
-### Essayer de soumettre un id inexistant (404 attendu)
+### Submit an id that doesn't exist (404)
 POST {{baseUrl}}/api/articles/id-inexistant/submit
 
 ### ==========================================================
-### DAY 10 : reviews. Un article doit etre SUBMITTED pour etre reviewable, 
-### et on ne peut pas reviewer son propre article ni le meme article deux fois.
+### DAY 10: reviews. An article has to be SUBMITTED to be reviewable,
+### and you can't review your own article or the same one twice.
 ### ==========================================================
 
-### Créer un compte "auteur"
+### Create the "author" account
 POST {{baseUrl}}/api/auth/register
 Content-Type: application/json
 
@@ -201,7 +201,7 @@ Content-Type: application/json
   "password": "motdepasse123"
 }
 
-### Créer un article
+### Create an article
 # @name createArticleDay10
 POST {{baseUrl}}/api/articles
 Content-Type: application/json
@@ -211,10 +211,10 @@ Content-Type: application/json
   "content": "Contenu"
 }
 
-### Le soumettre pour review
+### Submit it for review
 POST {{baseUrl}}/api/articles/{{createArticleDay10.response.body.$.id}}/submit
 
-### L'auteur essaie de reviewer son propre article (403 attendu)
+### Author tries to review their own article (403)
 POST {{baseUrl}}/api/articles/{{createArticleDay10.response.body.$.id}}/reviews
 Content-Type: application/json
 
@@ -222,7 +222,7 @@ Content-Type: application/json
   "comment": "auto-review"
 }
 
-### Créer un compte "reviewer" (remplace le cookie actuel)
+### Create the "reviewer" account (replaces the current cookie)
 POST {{baseUrl}}/api/auth/register
 Content-Type: application/json
 
@@ -232,7 +232,7 @@ Content-Type: application/json
   "password": "motdepasse123"
 }
 
-### Reviewer l'article (201 attendu)
+### Review the article (201)
 POST {{baseUrl}}/api/articles/{{createArticleDay10.response.body.$.id}}/reviews
 Content-Type: application/json
 
@@ -240,7 +240,7 @@ Content-Type: application/json
   "comment": "Bon article"
 }
 
-### Essayer de le reviewer une deuxième fois (409 attendu)
+### Review it a second time (409)
 POST {{baseUrl}}/api/articles/{{createArticleDay10.response.body.$.id}}/reviews
 Content-Type: application/json
 
@@ -248,18 +248,18 @@ Content-Type: application/json
   "comment": "encore"
 }
 
-### Lister les reviews de l'article
+### List the article's reviews
 GET {{baseUrl}}/api/articles/{{createArticleDay10.response.body.$.id}}/reviews
 
 ### ==========================================================
-### DAY 11 : decision de review (approve/reject) + filtre PUBLISHED
-### sur les routes publiques. Un article SUBMITTED est invisible
-### publiquement tant qu'il n'a pas ete approuve par un reviewer,
-### mais reste visible par son auteur et par un relecteur potentiel
-### (n'importe quel compte connecte, pas l'auteur).
+### DAY 11: review decision (approve/reject) + PUBLISHED filter
+### on public routes. A SUBMITTED article stays hidden publicly
+### until a reviewer approves it, but its author and any
+### potential reviewer can still see it
+### (any logged-in account that isn't the author).
 ### ==========================================================
 
-### Créer un compte "auteur"
+### Create the "author" account
 POST {{baseUrl}}/api/auth/register
 Content-Type: application/json
 
@@ -269,7 +269,7 @@ Content-Type: application/json
   "password": "motdepasse123"
 }
 
-### Créer un article
+### Create an article
 # @name createArticleDay11
 POST {{baseUrl}}/api/articles
 Content-Type: application/json
@@ -279,19 +279,19 @@ Content-Type: application/json
   "content": "Contenu"
 }
 
-### Le soumettre pour review
+### Submit it for review
 POST {{baseUrl}}/api/articles/{{createArticleDay11.response.body.$.id}}/submit
 
-### L'auteur (toujours connecté à ce stade) peut voir son propre SUBMITTED (200 attendu)
+### Author (still logged in here) can see their own SUBMITTED (200)
 GET {{baseUrl}}/api/articles/{{createArticleDay11.response.body.$.id}}
 
-### Déconnecté, l'article reste invisible (404 attendu)
+### Logged out, the article stays hidden (404)
 POST {{baseUrl}}/api/auth/logout
 
 ###
 GET {{baseUrl}}/api/articles/{{createArticleDay11.response.body.$.id}}
 
-### Créer un compte "reviewer" (remplace le cookie actuel)
+### Create the "reviewer" account (replaces the current cookie)
 POST {{baseUrl}}/api/auth/register
 Content-Type: application/json
 
@@ -301,10 +301,10 @@ Content-Type: application/json
   "password": "motdepasse123"
 }
 
-### Un tiers connecté (relecteur potentiel) peut aussi voir le SUBMITTED (200 attendu)
+### A logged-in third party (potential reviewer) can see the SUBMITTED too (200)
 GET {{baseUrl}}/api/articles/{{createArticleDay11.response.body.$.id}}
 
-### Reviewer l'article
+### Review the article
 # @name createReviewDay11
 POST {{baseUrl}}/api/articles/{{createArticleDay11.response.body.$.id}}/reviews
 Content-Type: application/json
@@ -313,7 +313,7 @@ Content-Type: application/json
   "comment": "À valider"
 }
 
-### Se reconnecter en tant qu'auteur (remplace le cookie du reviewer)
+### Log back in as the author (replaces the reviewer's cookie)
 POST {{baseUrl}}/api/auth/login
 Content-Type: application/json
 
@@ -322,7 +322,7 @@ Content-Type: application/json
   "password": "motdepasse123"
 }
 
-### L'auteur (pas le reviewer) essaie de décider (403 attendu)
+### Author (not the reviewer) tries to decide (403)
 PATCH {{baseUrl}}/api/reviews/{{createReviewDay11.response.body.$.id}}
 Content-Type: application/json
 
@@ -330,7 +330,7 @@ Content-Type: application/json
   "decision": "APPROVED"
 }
 
-### Se reconnecter en tant que reviewer (remplace le cookie de l'auteur)
+### Log back in as the reviewer (replaces the author's cookie)
 POST {{baseUrl}}/api/auth/login
 Content-Type: application/json
 
@@ -339,7 +339,7 @@ Content-Type: application/json
   "password": "motdepasse123"
 }
 
-### Essayer une décision invalide (400 attendu)
+### Invalid decision (400)
 PATCH {{baseUrl}}/api/reviews/{{createReviewDay11.response.body.$.id}}
 Content-Type: application/json
 
@@ -347,7 +347,7 @@ Content-Type: application/json
   "decision": "MAYBE"
 }
 
-### Approuver la review (200 attendu, article -> PUBLISHED)
+### Approve the review (200, article -> PUBLISHED)
 PATCH {{baseUrl}}/api/reviews/{{createReviewDay11.response.body.$.id}}
 Content-Type: application/json
 
@@ -355,7 +355,7 @@ Content-Type: application/json
   "decision": "APPROVED"
 }
 
-### Essayer de redécider (409 attendu)
+### Try to decide again (409)
 PATCH {{baseUrl}}/api/reviews/{{createReviewDay11.response.body.$.id}}
 Content-Type: application/json
 
@@ -363,18 +363,18 @@ Content-Type: application/json
   "decision": "REJECTED"
 }
 
-### Vérifier que l'article est maintenant visible publiquement (200 attendu)
+### Article is now publicly visible (200)
 GET {{baseUrl}}/api/articles/{{createArticleDay11.response.body.$.id}}
 
-### Vérifier qu'il apparaît dans le listing public
+### It shows up in the public listing
 GET {{baseUrl}}/api/articles/explore
 
 ### ==========================================================
-### DAY 12 : commentaires. Seuls les articles PUBLISHED sont
-### commentables. Seul l'auteur d'un commentaire peut le supprimer.
+### DAY 12: comments. Only PUBLISHED articles
+### can be commented. Only a comment's author can delete it.
 ### ==========================================================
 
-### Créer un compte "auteur"
+### Create the "author" account
 POST {{baseUrl}}/api/auth/register
 Content-Type: application/json
 
@@ -384,7 +384,7 @@ Content-Type: application/json
   "password": "motdepasse123"
 }
 
-### Créer un article
+### Create an article
 # @name createArticleDay12
 POST {{baseUrl}}/api/articles
 Content-Type: application/json
@@ -394,10 +394,10 @@ Content-Type: application/json
   "content": "Contenu"
 }
 
-### Le soumettre pour review
+### Submit it for review
 POST {{baseUrl}}/api/articles/{{createArticleDay12.response.body.$.id}}/submit
 
-### Essayer de commenter avant publication (404 attendu)
+### Comment before it's published (404)
 POST {{baseUrl}}/api/articles/{{createArticleDay12.response.body.$.id}}/comments
 Content-Type: application/json
 
@@ -405,7 +405,7 @@ Content-Type: application/json
   "content": "Trop tôt"
 }
 
-### Créer un compte "reviewer" (remplace le cookie actuel)
+### Create the "reviewer" account (replaces the current cookie)
 POST {{baseUrl}}/api/auth/register
 Content-Type: application/json
 
@@ -415,7 +415,7 @@ Content-Type: application/json
   "password": "motdepasse123"
 }
 
-### Reviewer l'article
+### Review the article
 # @name createReviewDay12
 POST {{baseUrl}}/api/articles/{{createArticleDay12.response.body.$.id}}/reviews
 Content-Type: application/json
@@ -424,7 +424,7 @@ Content-Type: application/json
   "comment": "ok"
 }
 
-### Approuver (article -> PUBLISHED)
+### Approve (article -> PUBLISHED)
 PATCH {{baseUrl}}/api/reviews/{{createReviewDay12.response.body.$.id}}
 Content-Type: application/json
 
@@ -432,7 +432,7 @@ Content-Type: application/json
   "decision": "APPROVED"
 }
 
-### Créer un compte "commenter" (remplace le cookie actuel)
+### Create the "commenter" account (replaces the current cookie)
 POST {{baseUrl}}/api/auth/register
 Content-Type: application/json
 
@@ -442,7 +442,7 @@ Content-Type: application/json
   "password": "motdepasse123"
 }
 
-### Commenter l'article maintenant publié (201 attendu)
+### Comment on the now published article (201)
 # @name createCommentDay12
 POST {{baseUrl}}/api/articles/{{createArticleDay12.response.body.$.id}}/comments
 Content-Type: application/json
@@ -451,7 +451,7 @@ Content-Type: application/json
   "content": "Super article"
 }
 
-### Se reconnecter en tant qu'auteur de l'article (remplace le cookie du commenter)
+### Log back in as the article's author (replaces the commenter's cookie)
 POST {{baseUrl}}/api/auth/login
 Content-Type: application/json
 
@@ -460,10 +460,10 @@ Content-Type: application/json
   "password": "motdepasse123"
 }
 
-### L'auteur de l'article (pas du commentaire) essaie de le supprimer (403 attendu)
+### Article author (not the comment's) tries to delete it (403)
 DELETE {{baseUrl}}/api/comments/{{createCommentDay12.response.body.$.id}}
 
-### Se reconnecter en tant qu'auteur du commentaire (remplace le cookie de l'auteur)
+### Log back in as the comment's author (replaces the author's cookie)
 POST {{baseUrl}}/api/auth/login
 Content-Type: application/json
 
@@ -472,101 +472,101 @@ Content-Type: application/json
   "password": "motdepasse123"
 }
 
-### Le vrai auteur du commentaire le supprime (204 attendu)
+### The actual comment author deletes it (204)
 DELETE {{baseUrl}}/api/comments/{{createCommentDay12.response.body.$.id}}
 
-### Vérifier que la liste des commentaires est vide
+### Comment list should be empty
 GET {{baseUrl}}/api/articles/{{createArticleDay12.response.body.$.id}}/comments
 
 ### ==========================================================
-### DAY 13 : recherche/tri/pagination sur GET /api/articles.
-### Les résultats dépendent des articles déjà.
+### DAY 13: search/sort/pagination on GET /api/articles.
+### Results depend on what articles you already have.
 ### ==========================================================
 
-### Listing par défaut (page 1, 10 par page, plus récents en premier)
+### Default listing (page 1, 10 per page, newest first)
 GET {{baseUrl}}/api/articles/explore
 
-### Recherche (adapte le terme à un titre d'article publié existant)
+### Search (tweak the term to match an existing published title)
 GET {{baseUrl}}/api/articles/explore?search=article
 
-### Tri du plus ancien au plus récent
+### Oldest to newest
 GET {{baseUrl}}/api/articles/explore?sort=oldest
 
-### Pagination : 2 par page, page 1
+### Pagination: 2 per page, page 1
 GET {{baseUrl}}/api/articles/explore?limit=2&page=1
 
-### Pagination : 2 par page, page 2 (résultats différents de la page 1 attendus)
+### Pagination: 2 per page, page 2 (should differ from page 1)
 GET {{baseUrl}}/api/articles/explore?limit=2&page=2
 
-### Garde-fous : page négative -> ramenée à 1, pas d'erreur
+### Guard rails: negative page -> bumped to 1, no error
 GET {{baseUrl}}/api/articles/explore?page=-5
 
-### Garde-fous : limite énorme -> plafonnée à 50, pas d'erreur
+### Guard rails: huge limit -> capped at 50, no error
 GET {{baseUrl}}/api/articles/explore?limit=99999
 
 ### ==========================================================
-### DAY 14 : cache Redis sur le listing d'articles. Le contenu de la
-### reponse HTTP est identique que la donnee vienne du cache ou de la
-### base. Pour verifier reellement que ca marche, se connecter a redis-cli :
+### DAY 14: Redis cache on the article listing. The HTTP response
+### looks the same whether it comes from the cache or the DB.
+### To actually check it works, hop into redis-cli:
 ### docker compose -f platform/docker-compose.yml exec redis redis-cli KEYS "articles:*"
-### -> une requete GET doit creer une cle "articles:list:v0:...".
-### -> creer/modifier/supprimer un article doit faire passer
-###    "articles:cache:version" de vide/0 a 1, et la requete GET
-###    suivante doit creer une nouvelle cle "articles:list:v1:...".
+### -> a GET should create an "articles:list:v0:..." key.
+### -> creating/editing/deleting an article should bump
+###    "articles:cache:version" from empty/0 to 1, and the next GET
+###    should create a new "articles:list:v1:..." key.
 ### ==========================================================
 
-### Peuple le cache (v0)
+### Warm up the cache (v0)
 GET {{baseUrl}}/api/articles/explore
 
 ### ==========================================================
-### DAY 15 : WebSocket. Pas testable via requests.http, donc :
+### DAY 15: WebSocket. Can't test it from requests.http, so:
 ###
-### 1. Se connecter sur le site
+### 1. Log in on the site
 ###
-### 2. F12 -> Console -> allow pasting -> copier/coller ça :
+### 2. F12 -> Console -> allow pasting -> paste this:
 ###
 ### const script = document.createElement("script");
 ### script.src = "http://localhost:4000/socket.io/socket.io.js";
 ### script.onload = () => {
 ###   const socket = io("https://localhost:8443");
-###   socket.on("connect", () => console.log("Connecte !", socket.id));
-###   socket.on("user:online", (id) => console.log("En ligne :", id));
-###   socket.on("user:offline", (id) => console.log("Deconnecte :", id));
+###   socket.on("connect", () => console.log("Connected!", socket.id));
+###   socket.on("user:online", (id) => console.log("Online:", id));
+###   socket.on("user:offline", (id) => console.log("Offline:", id));
 ### };
 ### document.head.appendChild(script);
 ###
-### 2. Dans le terminal (en étant toujours connecté) :
+### 3. In a terminal (while still logged in):
 ### docker compose -f platform/docker-compose.yml exec redis redis-cli SMEMBERS "online_users"
 ### ==========================================================
 
 ### ==========================================================
-### DAY 16 : gestion d'erreurs centralisée (filet de sécurité pour
-### les erreurs imprévues)
+### DAY 16: centralized error handling (safety net for
+### unexpected errors)
 ### ==========================================================
 
-### Provoque une vraie erreur non gérée (pas de body/Content-Type) :
-### erreur500 , + un log JSON structuré côté serveur (docker compose logs backend)
+### Triggers a real unhandled error (no body/Content-Type):
+### 500 + a structured JSON log server-side (docker compose logs backend)
 POST {{baseUrl}}/api/articles
 
 ### ==========================================================
-### DAY 17 : sécurité de base (helmet, rate limiting, protection
-### de la route GET /:id/reviews).
+### DAY 17: basic security (helmet, rate limiting, locking down
+### GET /:id/reviews).
 ###
-### Helmet + rate limiting global ne sont pas testables via une seule
-### requête : vérifier les headers de sécurité sur n'importe quelle
-### réponse ci-dessus (Content-Security-Policy, X-Frame-Options,
-### Strict-Transport-Security...), et pour vraiment déclencher un 429,
-### boucler des requêtes depuis un terminal :
+### Helmet + global rate limiting can't be tested with a single
+### request: check the security headers on any response above
+### (Content-Security-Policy, X-Frame-Options,
+### Strict-Transport-Security...), and to actually hit a 429,
+### loop requests from a terminal:
 ###   for i in $(seq 1 12); do curl -s -o /dev/null -w "%{http_code}\n" \
 ###     -X POST http://localhost:4000/api/auth/login \
 ###     -H "Content-Type: application/json" \
 ###     -d '{"email":"nobody@test.com","password":"wrongpass"}'; done
-### -> les 10 premiers : 401, à partir du 11e : 429.
-### Le limiter auth ignore les tentatives réussies (skipSuccessfulRequests),
-### donc une même boucle avec un bon mot de passe reste en 200 en continu.
+### -> first 10: 401, from the 11th on: 429.
+### The auth limiter skips successful attempts (skipSuccessfulRequests),
+### so the same loop with the right password stays at 200.
 ### ==========================================================
 
-### Créer un compte "auteur"
+### Create the "author" account
 POST {{baseUrl}}/api/auth/register
 Content-Type: application/json
 
@@ -576,7 +576,7 @@ Content-Type: application/json
   "password": "motdepasse123"
 }
 
-### Créer un article
+### Create an article
 # @name createArticleDay17
 POST {{baseUrl}}/api/articles
 Content-Type: application/json
@@ -586,10 +586,10 @@ Content-Type: application/json
   "content": "Contenu pour tester la protection des reviews"
 }
 
-### Le soumettre pour review
+### Submit it for review
 POST {{baseUrl}}/api/articles/{{createArticleDay17.response.body.$.id}}/submit
 
-### Créer un compte "reviewer" (remplace le cookie actuel)
+### Create the "reviewer" account (replaces the current cookie)
 POST {{baseUrl}}/api/auth/register
 Content-Type: application/json
 
@@ -599,7 +599,7 @@ Content-Type: application/json
   "password": "motdepasse123"
 }
 
-### Reviewer l'article
+### Review the article
 POST {{baseUrl}}/api/articles/{{createArticleDay17.response.body.$.id}}/reviews
 Content-Type: application/json
 
@@ -607,10 +607,10 @@ Content-Type: application/json
   "comment": "À valider"
 }
 
-### Le reviewer consulte les reviews de l'article (200 attendu, il en fait partie)
+### Reviewer checks the article's reviews (200, they're part of it)
 GET {{baseUrl}}/api/articles/{{createArticleDay17.response.body.$.id}}/reviews
 
-### Créer un compte "tiers" (remplace le cookie actuel, ni auteur ni reviewer)
+### Create a "third party" account (replaces the current cookie, neither author nor reviewer)
 POST {{baseUrl}}/api/auth/register
 Content-Type: application/json
 
@@ -620,10 +620,10 @@ Content-Type: application/json
   "password": "motdepasse123"
 }
 
-### Le tiers tente de consulter les reviews (403 attendu)
+### Third party tries to read the reviews (403)
 GET {{baseUrl}}/api/articles/{{createArticleDay17.response.body.$.id}}/reviews
 
-### L'auteur se reconnecte (remplace le cookie actuel)
+### Author logs back in (replaces the current cookie)
 POST {{baseUrl}}/api/auth/login
 Content-Type: application/json
 
@@ -632,24 +632,24 @@ Content-Type: application/json
   "password": "motdepasse123"
 }
 
-### L'auteur consulte les reviews de son article (200 attendu)
+### Author reads their article's reviews (200)
 GET {{baseUrl}}/api/articles/{{createArticleDay17.response.body.$.id}}/reviews
 
-### L'auteur consulte les reviews d'un article inexistant (404 attendu)
+### Author reads reviews of an article that doesn't exist (404)
 GET {{baseUrl}}/api/articles/nonexistent-id-1234/reviews
 
-### L'auteur se déconnecte
+### Author logs out
 POST {{baseUrl}}/api/auth/logout
 
-### Visiteur non connecté tente de consulter les reviews (401 attendu)
+### Logged-out visitor tries to read the reviews (401)
 GET {{baseUrl}}/api/articles/{{createArticleDay17.response.body.$.id}}/reviews
 
 ### ==========================================================
-### DAY 18 : module Public API - authentification par clé API
-### (en plus du cookie de session), documentation dans API.md.
+### DAY 18: Public API module - API key auth
+### (on top of the session cookie), docs in API.md.
 ### ==========================================================
 
-### Créer un compte
+### Create an account
 POST {{baseUrl}}/api/auth/register
 Content-Type: application/json
 
@@ -659,18 +659,18 @@ Content-Type: application/json
   "password": "motdepasse123"
 }
 
-### Générer une clé API (avec le cookie de session actuel)
+### Generate an API key (with the current session cookie)
 # @name createApiKeyDay18
 POST {{baseUrl}}/api/auth/api-keys
 
-### Se déconnecter (plus aucun cookie valide à partir d'ici)
+### Log out (no valid cookie from here on)
 POST {{baseUrl}}/api/auth/logout
 
-### Utiliser la clé API pour /me, SANS cookie (200 attendu, bonne identité renvoyée)
+### Use the API key for /me, NO cookie (200, right identity back)
 GET {{baseUrl}}/api/auth/me
 Authorization: Bearer {{createApiKeyDay18.response.body.$.apiKey}}
 
-### Créer un article via la clé API, SANS cookie (201 attendu, authorId = le bon compte)
+### Create an article with the API key, NO cookie (201, authorId = right account)
 # @name createArticleDay18
 POST {{baseUrl}}/api/articles
 Content-Type: application/json
@@ -681,7 +681,7 @@ Authorization: Bearer {{createApiKeyDay18.response.body.$.apiKey}}
   "content": "Contenu de test pour le module Public API"
 }
 
-### Modifier ce même article via la clé API (200 attendu, PUT couvert par la clé aussi)
+### Edit that same article with the API key (200, PUT works with the key too)
 PUT {{baseUrl}}/api/articles/{{createArticleDay18.response.body.$.id}}
 Content-Type: application/json
 Authorization: Bearer {{createApiKeyDay18.response.body.$.apiKey}}
@@ -691,15 +691,15 @@ Authorization: Bearer {{createApiKeyDay18.response.body.$.apiKey}}
   "content": "Nouveau contenu"
 }
 
-### Clé invalide (401 attendu, jamais traitée comme un vrai userId)
+### Invalid key (401, never treated as a real userId)
 GET {{baseUrl}}/api/auth/me
 Authorization: Bearer cleinventeequinexistepas
 
-### Aucune authentification du tout, route protégée (401 attendu, comportement inchangé)
+### No auth at all on a protected route (401, same as before)
 GET {{baseUrl}}/api/auth/me
 
 ### ==========================================================
-### BUG ZOE
+### ZOE BUG
 ### ==========================================================
 
 POST {{baseUrl}}/api/auth/register
@@ -711,7 +711,7 @@ Content-Type: application/json
   "password": "12345678"
 }
 
-### Créer un DRAFT
+### Create a DRAFT
 # @name reproArticle
 POST {{baseUrl}}/api/articles
 Content-Type: application/json
@@ -724,14 +724,14 @@ Content-Type: application/json
 ### SUBMITTED
 POST {{baseUrl}}/api/articles/{{reproArticle.response.body.$.id}}/submit
 
-### Déco
+### Log out
 POST {{baseUrl}}/api/auth/logout
 
-### Consulter l'article SUBMITTED, déconnecté
+### View the SUBMITTED article while logged out
 
 GET {{baseUrl}}/api/articles/{{reproArticle.response.body.$.id}}
 
-### Créer un deuxième compte not owner
+### Create a second account (not owner)
 POST {{baseUrl}}/api/auth/register
 Content-Type: application/json
 
@@ -741,7 +741,7 @@ Content-Type: application/json
   "password": "12345678"
 }
 
-### Login premier compte owner
+### Log in as the first account (owner)
 POST {{baseUrl}}/api/auth/login
 Content-Type: application/json
 
@@ -750,7 +750,7 @@ Content-Type: application/json
   "password": "12345678"
 }
 
-### Nouveau DRAFT
+### New DRAFT
 # @name reproDraftArticle
 POST {{baseUrl}}/api/articles
 Content-Type: application/json
@@ -760,7 +760,7 @@ Content-Type: application/json
   "content": "contenu test 2"
 }
 
-### Connexion deuxième compte not owner
+### Log in as the second account (not owner)
 POST {{baseUrl}}/api/auth/login
 Content-Type: application/json
 
@@ -769,57 +769,57 @@ Content-Type: application/json
   "password": "12345678"
 }
 
-### Not owner GET le draft de owner
+### Not owner GETs the owner's draft
 
 GET {{baseUrl}}/api/articles/{{reproDraftArticle.response.body.$.id}}
 
 ### ==========================================================
-### DAY 19 : file upload (multer + validation magic-bytes via
-### file-type + stockage non statique + controle d'acces PUBLIC/PRIVATE
+### DAY 19: file upload (multer + magic-bytes check via
+### file-type + non-static storage + PUBLIC/PRIVATE access control
 ### via /api/uploads).
 ###
-### L'upload multipart n'est pas pratique a scripter proprement en
-### .http (fichier binaire requis), donc test de reference via curl
-### depuis un terminal :
+### Multipart uploads are a pain to script cleanly in
+### .http (needs a binary file), so here's the reference curl
+### from a terminal:
 ###
 ### curl -c cookies.txt -X POST http://localhost:4000/api/auth/register \
 ###   -H "Content-Type: application/json" \
 ###   -d '{"email":"upload19@test.com","name":"Upload19","password":"12345678"}'
 ###
 ### curl -b cookies.txt -X POST http://localhost:4000/api/uploads \
-###   -F "file=@monimage.png;type=image/png"
+###   -F "file=@myimage.png;type=image/png"
 ### -> 201 { id, filename, originalName, mimeType, size, visibility: "PRIVATE", ownerId, createdAt }
 ###
 ### ==========================================================
 
-### Consulter un upload PRIVATE en tant que proprietaire (200 attendu)
+### View a PRIVATE upload as the owner (200)
 GET {{baseUrl}}/api/uploads/REMPLACER_PAR_UN_ID_REEL
 
-### Se deconnecter
+### Log out
 POST {{baseUrl}}/api/auth/logout
 
-### Consulter le meme upload PRIVATE, deconnecte (403 attendu)
+### Same PRIVATE upload, logged out (403)
 GET {{baseUrl}}/api/uploads/REMPLACER_PAR_UN_ID_REEL
 
-### Upload inexistant (404 attendu)
+### Upload that doesn't exist (404)
 GET {{baseUrl}}/api/uploads/id-inexistant
 
-### Supprimer un upload sans etre authentifie (401 attendu)
+### Delete an upload without auth (401)
 DELETE {{baseUrl}}/api/uploads/REMPLACER_PAR_UN_ID_REEL
 
 ### ==========================================================
-### DAY 20 : profil + avatar (ferme le module User Management avec
-### Day 21). Reutilise le systeme d'upload du Day 19.
+### DAY 20: profile + avatar (wraps up the User Management module with
+### Day 21). Reuses the Day 19 upload system.
 ###
-### Piege a connaitre si un jour un champ/relation Prisma "n'existe
-### pas" alors que le schema est correct et la migration appliquee :
-### "prisma migrate dev" ne regenere pas toujours le client tout seul.
-### Si "Unknown argument" apparait sur un champ qui existe bien dans
+### Gotcha: if a Prisma field/relation "doesn't exist"
+### even though the schema's right and the migration ran,
+### "prisma migrate dev" doesn't always regenerate the client.
+### If you get "Unknown argument" on a field that's definitely in
 ### schema.prisma -> docker compose exec backend npx prisma generate
-### puis redemarrer le backend (tsx watch ne surveille pas node_modules).
+### then restart the backend (tsx watch doesn't watch node_modules).
 ### ==========================================================
 
-### Créer un compte
+### Create an account
 POST {{baseUrl}}/api/auth/register
 Content-Type: application/json
 
@@ -829,10 +829,10 @@ Content-Type: application/json
   "password": "motdepasse123"
 }
 
-### Consulter son propre profil (avatar par defaut attendu)
+### View your own profile (default avatar expected)
 GET {{baseUrl}}/api/users/me
 
-### Modifier son profil (200 attendu)
+### Edit your profile (200)
 PATCH {{baseUrl}}/api/users/me
 Content-Type: application/json
 
@@ -841,7 +841,7 @@ Content-Type: application/json
   "email": "day20-renamed@example.com"
 }
 
-### Créer un compte "intrus" (remplace le cookie actuel)
+### Create the "intruder" account (replaces the current cookie)
 POST {{baseUrl}}/api/auth/register
 Content-Type: application/json
 
@@ -851,7 +851,7 @@ Content-Type: application/json
   "password": "motdepasse123"
 }
 
-### L'intrus essaie de prendre l'email deja pris par l'autre compte (409 attendu)
+### Intruder tries to grab the other account's email (409)
 PATCH {{baseUrl}}/api/users/me
 Content-Type: application/json
 
@@ -860,15 +860,15 @@ Content-Type: application/json
   "email": "day20-renamed@example.com"
 }
 
-### Consulter le profil PUBLIC d'un autre compte (pas d'email dans la reponse)
+### View another account's PUBLIC profile (no email in the response)
 GET {{baseUrl}}/api/users/REMPLACER_PAR_UN_ID_REEL
 
-### Profil inexistant (404 attendu)
+### Profile that doesn't exist (404)
 GET {{baseUrl}}/api/users/id-inexistant
 
-### Lier un upload comme avatar (necessite d'avoir uploade un fichier
-### via /api/uploads au prealable, cf Day 19 - remplace l'id ci-dessous) :
-### 200 attendu, avatarUrl mis a jour, et l'upload bascule en PUBLIC.
+### Set an upload as avatar (you need to upload a file
+### via /api/uploads first, see Day 19 - swap the id below):
+### 200, avatarUrl updated, and the upload flips to PUBLIC.
 PUT {{baseUrl}}/api/users/me/avatar
 Content-Type: application/json
 
@@ -877,12 +877,12 @@ Content-Type: application/json
 }
 
 ### ==========================================================
-### RECONCILIATION front : GET /articles/submitted (queue de
-### relecture). Exclut les articles dont on est l'auteur et ceux
-### qu'on a deja reviewes soi-meme.
+### FRONT RECONCILIATION: GET /articles/submitted (review
+### queue). Skips articles you wrote and the ones
+### you already reviewed.
 ### ==========================================================
 
-### Créer un compte "auteur"
+### Create the "author" account
 POST {{baseUrl}}/api/auth/register
 Content-Type: application/json
 
@@ -892,7 +892,7 @@ Content-Type: application/json
   "password": "motdepasse123"
 }
 
-### Créer un article
+### Create an article
 # @name queueArticle
 POST {{baseUrl}}/api/articles
 Content-Type: application/json
@@ -902,10 +902,10 @@ Content-Type: application/json
   "content": "Contenu de test"
 }
 
-### Le soumettre (-> SUBMITTED)
+### Submit it (-> SUBMITTED)
 POST {{baseUrl}}/api/articles/{{queueArticle.response.body.$.id}}/submit
 
-### Créer un compte "relecteur" (remplace le cookie actuel)
+### Create the "reviewer" account (replaces the current cookie)
 POST {{baseUrl}}/api/auth/register
 Content-Type: application/json
 
@@ -915,10 +915,10 @@ Content-Type: application/json
   "password": "motdepasse123"
 }
 
-### L'article apparaît dans la queue du relecteur
+### Article shows up in the reviewer's queue
 GET {{baseUrl}}/api/articles/submitted
 
-### Il reviewe l'article
+### They review it
 POST {{baseUrl}}/api/articles/{{queueArticle.response.body.$.id}}/reviews
 Content-Type: application/json
 
@@ -926,10 +926,10 @@ Content-Type: application/json
   "comment": "ok"
 }
 
-### L'article disparaît de sa queue (deja reviewe par lui)
+### Article drops out of their queue (already reviewed by them)
 GET {{baseUrl}}/api/articles/submitted
 
-### Reconnexion en tant qu'auteur (remplace le cookie du relecteur)
+### Log back in as the author (replaces the reviewer's cookie)
 POST {{baseUrl}}/api/auth/login
 Content-Type: application/json
 
@@ -938,23 +938,23 @@ Content-Type: application/json
   "password": "motdepasse123"
 }
 
-### L'auteur ne voit jamais son propre article dans la queue
+### Author never sees their own article in the queue
 GET {{baseUrl}}/api/articles/submitted
 
-### Aucune authentification (401 attendu)
+### No auth (401)
 POST {{baseUrl}}/api/auth/logout
 
 ###
 GET {{baseUrl}}/api/articles/submitted
 
 ### ==========================================================
-### RECONCILIATION front : miniature d'article, reutilise le systeme
-### d'Upload du Day 19 (comme l'avatar du Day 20). L'upload multipart
-### n'est pas pratique a scripter en .http, cf note Day 19 pour le
-### curl de reference. Une fois un uploadId recupere :
+### FRONT RECONCILIATION: article thumbnail, reuses the Day 19
+### upload system (like the Day 20 avatar). Multipart uploads
+### are a pain to script in .http, see the Day 19 note for the
+### reference curl. Once you've got an uploadId:
 ### ==========================================================
 
-### Créer un compte
+### Create an account
 POST {{baseUrl}}/api/auth/register
 Content-Type: application/json
 
@@ -964,7 +964,7 @@ Content-Type: application/json
   "password": "motdepasse123"
 }
 
-### Créer un article SANS miniature (miniatureUrl par defaut attendu)
+### Create an article WITHOUT a thumbnail (default miniatureUrl expected)
 POST {{baseUrl}}/api/articles
 Content-Type: application/json
 
@@ -973,8 +973,8 @@ Content-Type: application/json
   "content": "Contenu de test"
 }
 
-### Créer un article AVEC miniature (200 attendu, miniatureUrl = /api/uploads/<id>,
-### et l'upload bascule en PUBLIC)
+### Create an article WITH a thumbnail (200, miniatureUrl = /api/uploads/<id>,
+### and the upload flips to PUBLIC)
 POST {{baseUrl}}/api/articles
 Content-Type: application/json
 
@@ -984,7 +984,7 @@ Content-Type: application/json
   "miniatureId": "REMPLACER_PAR_UN_ID_REEL"
 }
 
-### Utiliser l'upload PRIVATE d'un autre compte comme miniature (403 attendu)
+### Use another account's PRIVATE upload as thumbnail (403)
 POST {{baseUrl}}/api/articles
 Content-Type: application/json
 
@@ -994,7 +994,7 @@ Content-Type: application/json
   "miniatureId": "REMPLACER_PAR_L_ID_D_UN_UPLOAD_D_UN_AUTRE_COMPTE"
 }
 
-### Utiliser un PDF comme miniature (400 attendu, pas une image)
+### Use a PDF as thumbnail (400, not an image)
 POST {{baseUrl}}/api/articles
 Content-Type: application/json
 
@@ -1005,11 +1005,11 @@ Content-Type: application/json
 }
 
 ### ==========================================================
-### GET /articles/mine (tri par statut) + visibilite au moment de
-### l'upload (pour les images inline dans le contenu d'un article).
+### GET /articles/mine (sorted by status) + visibility at
+### upload time (for inline images in an article's content).
 ### ==========================================================
 
-### Créer un compte
+### Create an account
 POST {{baseUrl}}/api/auth/register
 Content-Type: application/json
 
@@ -1019,7 +1019,7 @@ Content-Type: application/json
   "password": "motdepasse123"
 }
 
-### Créer un DRAFT
+### Create a DRAFT
 # @name mineDraft
 POST {{baseUrl}}/api/articles
 Content-Type: application/json
@@ -1029,7 +1029,7 @@ Content-Type: application/json
   "content": "c"
 }
 
-### Créer un deuxième article et le soumettre
+### Create a second article and submit it
 # @name mineSubmitted
 POST {{baseUrl}}/api/articles
 Content-Type: application/json
@@ -1042,13 +1042,13 @@ Content-Type: application/json
 ###
 POST {{baseUrl}}/api/articles/{{mineSubmitted.response.body.$.id}}/submit
 
-### Tous ses articles, peu importe le statut (2 attendus)
+### All your articles, whatever the status (2 expected)
 GET {{baseUrl}}/api/articles/mine
 
-### Seulement les DRAFT (1 attendu)
+### DRAFTs only (1 expected)
 GET {{baseUrl}}/api/articles/mine?status=DRAFT
 
-### Créer un compte "tiers" (remplace le cookie actuel)
+### Create a "third party" account (replaces the current cookie)
 POST {{baseUrl}}/api/auth/register
 Content-Type: application/json
 
@@ -1058,35 +1058,35 @@ Content-Type: application/json
   "password": "motdepasse123"
 }
 
-### Le tiers n'a aucun article a lui (0 attendu, jamais ceux du premier compte)
+### Third party has no articles of their own (0, never the first account's)
 GET {{baseUrl}}/api/articles/mine
 
-### Sans authentification (401 attendu)
+### No auth (401)
 POST {{baseUrl}}/api/auth/logout
 
 ###
 GET {{baseUrl}}/api/articles/mine
 
-### Upload direct en PUBLIC (pour une image inline):
+### Upload straight as PUBLIC (for an inline image):
 ###
 ### curl -b cookies.txt -X POST http://localhost:4000/api/uploads \
-###   -F "file=@monimage.png;type=image/png" \
+###   -F "file=@myimage.png;type=image/png" \
 ###   -F "visibility=PUBLIC"
-### -> 201, "visibility": "PUBLIC" directement, consultable par
-### n'importe qui des le depart sans passer par une route de liaison.
+### -> 201, "visibility": "PUBLIC" right away, anyone can
+### view it from the start, no linking route needed.
 ###
-### Une valeur absurde ou absente retombe sur "PRIVATE" (comportement
-### par defaut inchange) :
+### Garbage or missing value falls back to "PRIVATE" (default
+### unchanged):
 ### curl -b cookies.txt -X POST http://localhost:4000/api/uploads \
-###   -F "file=@monimage.png;type=image/png" -F "visibility=n'importe quoi"
+###   -F "file=@myimage.png;type=image/png" -F "visibility=whatever"
 
 ### ==========================================================
-### DAY 22 : dashboard (compteurs d'articles/reviews par statut +
-### taux d'approbation + anciennete). Relie au module "User activity
-### analytics and insights dashboard" (Minor, +1) qu'on avait manque.
+### DAY 22: dashboard (article/review counts per status +
+### approval rate + account age). Covers the "User activity
+### analytics and insights dashboard" module (Minor, +1) we'd missed.
 ### ==========================================================
 
-### Créer un compte
+### Create an account
 POST {{baseUrl}}/api/auth/register
 Content-Type: application/json
 
@@ -1096,10 +1096,10 @@ Content-Type: application/json
   "password": "motdepasse123"
 }
 
-### Dashboard vide au depart (tous les compteurs a 0, approvalRate null)
+### Empty dashboard at first (all counters at 0, approvalRate null)
 GET {{baseUrl}}/api/dashboard
 
-### Créer un article et le soumettre
+### Create an article and submit it
 # @name dashArticle
 POST {{baseUrl}}/api/articles
 Content-Type: application/json
@@ -1112,7 +1112,7 @@ Content-Type: application/json
 ###
 POST {{baseUrl}}/api/articles/{{dashArticle.response.body.$.id}}/submit
 
-### Créer un compte "relecteur" (remplace le cookie actuel)
+### Create the "reviewer" account (replaces the current cookie)
 POST {{baseUrl}}/api/auth/register
 Content-Type: application/json
 
@@ -1122,7 +1122,7 @@ Content-Type: application/json
   "password": "motdepasse123"
 }
 
-### Reviewer puis approuver
+### Review then approve
 # @name dashReview
 POST {{baseUrl}}/api/articles/{{dashArticle.response.body.$.id}}/reviews
 Content-Type: application/json
@@ -1139,10 +1139,10 @@ Content-Type: application/json
   "decision": "APPROVED"
 }
 
-### Dashboard du relecteur : 1 review APPROVED
+### Reviewer's dashboard: 1 APPROVED review
 GET {{baseUrl}}/api/dashboard
 
-### Reconnexion en tant qu'auteur (remplace le cookie du relecteur)
+### Log back in as the author (replaces the reviewer's cookie)
 POST {{baseUrl}}/api/auth/login
 Content-Type: application/json
 
@@ -1151,10 +1151,10 @@ Content-Type: application/json
   "password": "motdepasse123"
 }
 
-### Dashboard de l'auteur : 1 PUBLISHED, approvalRate = 100
+### Author's dashboard: 1 PUBLISHED, approvalRate = 100
 GET {{baseUrl}}/api/dashboard
 
-### Sans authentification (401 attendu)
+### No auth (401)
 POST {{baseUrl}}/api/auth/logout
 
 ###
@@ -1162,18 +1162,18 @@ GET {{baseUrl}}/api/dashboard
 
 
 ### ==========================================================
-### DAY 25 : 2FA (TOTP) optionnelle, activee depuis le profil.
-### Le code a 6 chiffres change toutes les 30 s et ne peut pas etre genere par ce fichier. Pour en obtenir un :
-###   1. copier le parametre "secret=..." de l'otpauthUrl renvoyee par le setup (ou lire twoFactorSecret en base)
-###   2. depuis la racine du projet :
-###      docker compose -f platform/docker-compose.yml exec backend node -e "console.log(require('otplib').authenticator.generate('LE_SECRET'))"
-###   3. coller le code dans la variable @totpCode ci-dessous (a refaire avant CHAQUE requete qui l'utilise)
-### Les mauvais codes / mots de passe comptent dans authLimiter (10 echecs / 15 min / IP) : si 429, `make restart`.
+### DAY 25: optional 2FA (TOTP), turned on from the profile.
+### The 6-digit code changes every 30s and this file can't generate it. To get one:
+###   1. copy the "secret=..." param from the otpauthUrl the setup returns (or read twoFactorSecret in the DB)
+###   2. from the project root:
+###      docker compose -f platform/docker-compose.yml exec backend node -e "console.log(require('otplib').authenticator.generate('THE_SECRET'))"
+###   3. paste the code into @totpCode below (redo it before EVERY request that uses it)
+### Wrong codes / passwords count toward authLimiter (10 fails / 15 min / IP): if you get a 429, `make restart`.
 ### ==========================================================
 
 @totpCode = 763533
 
-### Créer un compte dédié (409 si déjà créé : passer directement au login)
+### Create a dedicated account (409 if it already exists: skip to login)
 POST {{baseUrl}}/api/auth/register
 Content-Type: application/json
 
@@ -1183,14 +1183,14 @@ Content-Type: application/json
   "password": "motdepasse123"
 }
 
-### Profil : twoFactorEnabled = false
+### Profile: twoFactorEnabled = false
 GET {{baseUrl}}/api/users/me
 
-### Démarrer l'activation : renvoie otpauthUrl + qrCode (data URL). Le secret est stocké mais la 2FA n'est PAS encore active
+### Start setup: returns otpauthUrl + qrCode (data URL). Secret is stored but 2FA is NOT on yet
 # @name twoFaSetup
 POST {{baseUrl}}/api/users/me/2fa/setup
 
-### Activer avec un mauvais code (400 attendu)
+### Enable with a wrong code (400)
 POST {{baseUrl}}/api/users/me/2fa/enable
 Content-Type: application/json
 
@@ -1198,7 +1198,7 @@ Content-Type: application/json
   "code": "000000"
 }
 
-### Activer avec un code au mauvais format (400 attendu)
+### Enable with a badly formatted code (400)
 POST {{baseUrl}}/api/users/me/2fa/enable
 Content-Type: application/json
 
@@ -1206,7 +1206,7 @@ Content-Type: application/json
   "code": "abc"
 }
 
-### Activer avec un code valide (200, twoFactorEnabled: true) — mettre à jour @totpCode avant
+### Enable with a valid code (200, twoFactorEnabled: true) - update @totpCode first
 POST {{baseUrl}}/api/users/me/2fa/enable
 Content-Type: application/json
 
@@ -1214,16 +1214,16 @@ Content-Type: application/json
   "code": "{{totpCode}}"
 }
 
-### Profil : twoFactorEnabled = true
+### Profile: twoFactorEnabled = true
 GET {{baseUrl}}/api/users/me
 
-### Relancer le setup alors que la 2FA est active (409 attendu)
+### Run setup again while 2FA is on (409)
 POST {{baseUrl}}/api/users/me/2fa/setup
 
-### Se déconnecter
+### Log out
 POST {{baseUrl}}/api/auth/logout
 
-### Login mot de passe correct : pas de session, { requires2fa: true } attendu
+### Right password: no session, expect { requires2fa: true }
 POST {{baseUrl}}/api/auth/login
 Content-Type: application/json
 
@@ -1232,13 +1232,13 @@ Content-Type: application/json
   "password": "motdepasse123"
 }
 
-### Doit être 401 : l'état "en attente" n'ouvre aucun accès
+### Should be 401: the pending state doesn't grant any access
 GET {{baseUrl}}/api/auth/me
 
-### Doit être 401 aussi
+### 401 here too
 GET {{baseUrl}}/api/dashboard
 
-### Mauvais code (401 attendu)
+### Wrong code (401)
 POST {{baseUrl}}/api/auth/login/2fa
 Content-Type: application/json
 
@@ -1246,7 +1246,7 @@ Content-Type: application/json
   "code": "000000"
 }
 
-### Mauvais format (400 attendu)
+### Bad format (400)
 POST {{baseUrl}}/api/auth/login/2fa
 Content-Type: application/json
 
@@ -1254,7 +1254,7 @@ Content-Type: application/json
   "code": 123456
 }
 
-### Bon code (200, session ouverte) — mettre à jour @totpCode avant. Si le code a déjà servi dans les 30 s, attendre le suivant
+### Right code (200, session open) - update @totpCode first. If that code was already used in the last 30s, wait for the next one
 POST {{baseUrl}}/api/auth/login/2fa
 Content-Type: application/json
 
@@ -1262,10 +1262,10 @@ Content-Type: application/json
   "code": "{{totpCode}}"
 }
 
-### Maintenant connecté (200 attendu)
+### Now logged in (200)
 GET {{baseUrl}}/api/auth/me
 
-### Rejouer /login/2fa sans login préalable : l'état en attente a été consommé (401 attendu)
+### Replay /login/2fa without logging in first: the pending state was consumed (401)
 POST {{baseUrl}}/api/auth/login/2fa
 Content-Type: application/json
 
@@ -1273,7 +1273,7 @@ Content-Type: application/json
   "code": "{{totpCode}}"
 }
 
-### Désactiver avec un mauvais mot de passe (401 attendu)
+### Disable with a wrong password (401)
 POST {{baseUrl}}/api/users/me/2fa/disable
 Content-Type: application/json
 
@@ -1282,7 +1282,7 @@ Content-Type: application/json
   "code": "{{totpCode}}"
 }
 
-### Désactiver avec le bon mot de passe mais un mauvais code (400 attendu)
+### Disable with the right password but a wrong code (400)
 POST {{baseUrl}}/api/users/me/2fa/disable
 Content-Type: application/json
 
@@ -1291,7 +1291,7 @@ Content-Type: application/json
   "code": "000000"
 }
 
-### Désactiver avec les deux corrects (200, twoFactorEnabled: false) — mettre à jour @totpCode avant
+### Disable with both right (200, twoFactorEnabled: false) - update @totpCode first
 POST {{baseUrl}}/api/users/me/2fa/disable
 Content-Type: application/json
 
@@ -1300,7 +1300,7 @@ Content-Type: application/json
   "code": "{{totpCode}}"
 }
 
-### Désactiver alors que la 2FA est déjà off (400 attendu)
+### Disable when 2FA is already off (400)
 POST {{baseUrl}}/api/users/me/2fa/disable
 Content-Type: application/json
 
@@ -1309,7 +1309,7 @@ Content-Type: application/json
   "code": "{{totpCode}}"
 }
 
-### Se déconnecter puis se reconnecter : login classique, sans requires2fa
+### Log out then back in: regular login, no requires2fa
 POST {{baseUrl}}/api/auth/logout
 
 ###
@@ -1321,7 +1321,7 @@ Content-Type: application/json
   "password": "motdepasse123"
 }
 
-### Sans authentification : setup refusé (401 attendu)
+### No auth: setup refused (401)
 POST {{baseUrl}}/api/auth/logout
 
 ###
@@ -1329,34 +1329,34 @@ POST {{baseUrl}}/api/users/me/2fa/setup
 
 
 ### ==========================================================
-### ARTICLE DOCUMENT (PDF) : le PDF reste PRIVATE en base en permanence, 
-### l'acces est calcule dynamiquement via canViewArticle 
-### meme regle que la visibilite de l'article lui-meme :
-### PUBLISHED -> tout le monde, sinon auteur ou n'importe quel
-### utilisateur connecte si SUBMITTED, sinon personne
+### ARTICLE DOCUMENT (PDF): the PDF always stays PRIVATE in the DB,
+### access is computed on the fly via canViewArticle,
+### same rule as the article's own visibility:
+### PUBLISHED -> everyone, otherwise the author, or any
+### logged-in user if SUBMITTED, otherwise nobody
 ###
 ### curl -c cA.txt -X POST http://localhost:4000/api/auth/register \
 ###   -H "Content-Type: application/json" \
 ###   -d '{"email":"docauthor@example.com","name":"author","password":"motdepasse123"}'
 ###
 ### curl -b cA.txt -X POST http://localhost:4000/api/uploads \
-###   -F "file=@monfichier.pdf;type=application/pdf"
-### -> 201 { id, ... } : c'est le DOC_ID
+###   -F "file=@myfile.pdf;type=application/pdf"
+### -> 201 { id, ... }: that's DOC_ID
 ###
 ### curl -b cA.txt -X POST http://localhost:4000/api/articles \
 ###   -H "Content-Type: application/json" \
 ###   -d '{"title":"Test doc","content":"contenu","documentId":"DOC_ID"}'
-### -> 201 { id, ... } : c'est l'ART_ID a remplacer ci-dessous
+### -> 201 { id, ... }: that's the ART_ID to swap in below
 ###
 ### ==========================================================
 
-### L'auteur voit documentUrl meme en DRAFT (le PDF est a lui)
+### Author sees documentUrl even as a DRAFT (the PDF is theirs)
 GET {{baseUrl}}/api/articles/REMPLACER_PAR_ART_ID
 
-### L'auteur telecharge son propre document en DRAFT (200 attendu)
+### Author downloads their own document as a DRAFT (200)
 GET {{baseUrl}}/api/articles/REMPLACER_PAR_ART_ID/document
 
-### Créer un deuxieme compte "tiers" (remplace le cookie actuel)
+### Create a second "third party" account (replaces the current cookie)
 POST {{baseUrl}}/api/auth/register
 Content-Type: application/json
 
@@ -1366,13 +1366,13 @@ Content-Type: application/json
   "password": "motdepasse123"
 }
 
-### Le tiers ne voit pas l'article DRAFT (404 attendu)
+### Third party can't see the DRAFT article (404)
 GET {{baseUrl}}/api/articles/REMPLACER_PAR_ART_ID
 
-### Le tiers ne peut pas telecharger le document d'un DRAFT (404 attendu)
+### Third party can't download a DRAFT's document (404)
 GET {{baseUrl}}/api/articles/REMPLACER_PAR_ART_ID/document
 
-### Se reconnecter en tant qu'auteur pour soumettre l'article
+### Log back in as the author to submit the article
 POST {{baseUrl}}/api/auth/login
 Content-Type: application/json
 
@@ -1384,7 +1384,7 @@ Content-Type: application/json
 ###
 POST {{baseUrl}}/api/articles/REMPLACER_PAR_ART_ID/submit
 
-### Se reconnecter en tant que tiers (devient reviewer potentiel maintenant que c'est SUBMITTED)
+### Log back in as the third party (now a potential reviewer since it's SUBMITTED)
 POST {{baseUrl}}/api/auth/login
 Content-Type: application/json
 
@@ -1393,22 +1393,22 @@ Content-Type: application/json
   "password": "motdepasse123"
 }
 
-### Le tiers voit maintenant documentUrl (article SUBMITTED)
+### Third party now sees documentUrl (SUBMITTED article)
 GET {{baseUrl}}/api/articles/REMPLACER_PAR_ART_ID
 
-### Le tiers telecharge le document en SUBMITTED (200 attendu)
+### Third party downloads the document as SUBMITTED (200)
 GET {{baseUrl}}/api/articles/REMPLACER_PAR_ART_ID/document
 
-### Se déconnecter : verifier qu'un anonyme ne voit ni ne telecharge un SUBMITTED
+### Log out: make sure anonymous users can't see or download a SUBMITTED
 POST {{baseUrl}}/api/auth/logout
 
-### Anonyme, article SUBMITTED (404 attendu)
+### Anonymous, SUBMITTED article (404)
 GET {{baseUrl}}/api/articles/REMPLACER_PAR_ART_ID
 
-### Anonyme, telechargement d'un SUBMITTED (404 attendu)
+### Anonymous, downloading a SUBMITTED (404)
 GET {{baseUrl}}/api/articles/REMPLACER_PAR_ART_ID/document
 
-### Se reconnecter en tant que tiers pour reviewer et approuver
+### Log back in as the third party to review and approve
 POST {{baseUrl}}/api/auth/login
 Content-Type: application/json
 
@@ -1433,19 +1433,19 @@ Content-Type: application/json
   "decision": "APPROVED"
 }
 
-### Se déconnecter : l'article est PUBLISHED, le PDF doit etre public
+### Log out: the article is PUBLISHED, so the PDF should be public
 POST {{baseUrl}}/api/auth/logout
 
-### Anonyme telecharge le document d'un article PUBLISHED (200 attendu)
+### Anonymous downloads a PUBLISHED article's document (200)
 GET {{baseUrl}}/api/articles/REMPLACER_PAR_ART_ID/document
 
 
 ### ==========================================================
-### GET /users/search : recherche par nom
-### Insensible a la casse, recherche partielle, exclut l'utilisateur courant des resultats.
+### GET /users/search: search by name
+### Case-insensitive, partial match, leaves the current user out.
 ### ==========================================================
 
-### Créer le compte qui cherche
+### Create the account doing the search
 POST {{baseUrl}}/api/auth/register
 Content-Type: application/json
 
@@ -1455,8 +1455,8 @@ Content-Type: application/json
   "password": "motdepasse123"
 }
 
-### Créer deux comptes cibles + un sans rapport (remplace le cookie a chaque fois,
-### sans importance ici puisqu'on ne s'en sert pas)
+### Create two target accounts + an unrelated one (cookie gets replaced each time,
+### doesn't matter here since we don't use it)
 POST {{baseUrl}}/api/auth/register
 Content-Type: application/json
 
@@ -1476,7 +1476,7 @@ Content-Type: application/json
   "password": "motdepasse123"
 }
 
-### Se reconnecter en tant que chercheuse (le cookie pointe sur le dernier compte cree)
+### Log back in as the searcher (cookie points to the last account created)
 POST {{baseUrl}}/api/auth/login
 Content-Type: application/json
 
@@ -1485,19 +1485,19 @@ Content-Type: application/json
   "password": "motdepasse123"
 }
 
-### Recherche partielle, insensible a la casse : les deux "Bob..." attendus
+### Partial, case-insensitive: both "Bob..." expected
 GET {{baseUrl}}/api/users/search?q=bob
 
-### Recherche de son propre nom : liste vide attendue (exclusion de soi-meme)
+### Search your own name: empty list (you're excluded)
 GET {{baseUrl}}/api/users/search?q=alice
 
-### q absent : [] attendu (et non un 500 - c'etait le bug du "==!" corrige)
+### q missing: [] expected (not a 500 - that was the "==!" bug, fixed)
 GET {{baseUrl}}/api/users/search
 
-### q vide : [] attendu
+### empty q: [] expected
 GET {{baseUrl}}/api/users/search?q=
 
-### Sans authentification (401 attendu)
+### No auth (401)
 POST {{baseUrl}}/api/auth/logout
 
 ###
@@ -1505,22 +1505,22 @@ GET {{baseUrl}}/api/users/search?q=bob
 
 
 ### ==========================================================
-### ARTICLE VIEW TRACKING : fondation du suivi de comportement
-### pour les recommandations (ArticleView). Une vue = 1 ligne par
-### (utilisateur, article), jamais dupliquee (upsert), et seulement
-### pour un utilisateur connecte sur un article PUBLISHED.
+### ARTICLE VIEW TRACKING: groundwork for behavior tracking
+### for recommendations (ArticleView). One view = 1 row per
+### (user, article), never duplicated (upsert), and only
+### for a logged-in user on a PUBLISHED article.
 ###
-### Aucune route n'expose les ArticleView (pas fait pour etre lu
-### par le client) : on ne peut donc verifier ici que le comportement
-### HTTP (pas d'erreur, statut inchange). Pour verifier reellement
-### qu'une ligne est creee / pas dupliquee / absente pour un anonyme,
-### passer par la base :
+### No route exposes ArticleView (not meant to be read
+### by the client), so here we can only check the HTTP
+### behavior (no error, same status). To really check
+### a row gets created / isn't duplicated / is skipped for anonymous users,
+### go through the DB:
 ###
 ### docker compose -f platform/docker-compose.yml exec postgresql \
 ###   psql -U academic -d academic -c 'SELECT * FROM "ArticleView";'
 ### ==========================================================
 
-### Créer l'auteur et son article
+### Create the author and their article
 POST {{baseUrl}}/api/auth/register
 Content-Type: application/json
 
@@ -1542,7 +1542,7 @@ Content-Type: application/json
 ###
 POST {{baseUrl}}/api/articles/{{viewArticle.response.body.$.id}}/submit
 
-### Créer le lecteur (remplace le cookie), qui va aussi reviewer pour publier l'article
+### Create the reader (replaces the cookie), who'll also review it to get it published
 POST {{baseUrl}}/api/auth/register
 Content-Type: application/json
 
@@ -1566,16 +1566,16 @@ Content-Type: application/json
   "decision": "APPROVED"
 }
 
-### Le lecteur consulte l'article publie (200 attendu, une vue enregistree en base)
+### Reader views the published article (200, one view saved in the DB)
 GET {{baseUrl}}/api/articles/{{viewArticle.response.body.$.id}}
 
-### Rechargement x2 : toujours 200, mais aucune nouvelle ligne en base (upsert)
+### Reload x2: still 200, but no new row in the DB (upsert)
 GET {{baseUrl}}/api/articles/{{viewArticle.response.body.$.id}}
 
 ###
 GET {{baseUrl}}/api/articles/{{viewArticle.response.body.$.id}}
 
-### Anonyme consulte le meme article (200 attendu, mais aucune vue enregistree - pas de session)
+### Anonymous views the same article (200, but no view saved - no session)
 POST {{baseUrl}}/api/auth/logout
 
 ###

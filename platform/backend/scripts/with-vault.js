@@ -7,7 +7,7 @@ async function main() {
 		headers: { "X-Vault-Token": token },
 	});
 	if (!res.ok) {
-		console.error(`vault: lecture des secrets impossible (HTTP ${res.status})`);
+		console.error(`vault: could not read the secrets (HTTP ${res.status})`);
 		process.exit(1);
 	}
 	const secrets = (await res.json()).data.data;

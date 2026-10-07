@@ -8,24 +8,24 @@ import { useChat } from "@/components/chat/ChatProvider";
 import ChatWindow from "@/components/chat/ChatWindow";
 import ConversationList from "@/components/chat/ConversationList";
 
-// pages où le dock ne s'affiche pas :
-// /chat a déjà le chat en plein écran (sinon doublon), /authentication/* sert à se connecter
+//pages without the dock:
+//the /chat page already has the full-screen chat, /authentication/* is for logging in
 function isHiddenOn(pathname: string) {
   return pathname === "/chat" || pathname.startsWith("/chat/") || pathname.startsWith("/authentication");
 }
 
-// le chat présent sur toutes les pages (placé dans le layout), comme celui de Facebook :
-// en bas à droite, une barre "Chat" qui ouvre la liste des contacts,
-// et à sa gauche la fenêtre de la conversation ouverte
+//chat on every page (lives in the layout), Facebook-style:
+//a "Chat" bar bottom right that opens the contact list,
+//with the open convo window to its left
 export default function ChatDock() {
   const { myId, onlineUserIds, contacts, activeContact, unreadCounts, openChatWith } = useChat();
   const [contactsOpen, setContactsOpen] = useState(false);
-  // bouton de la barre "Chat" : le focus y revient quand on ferme la liste avec Échap
+  //"Chat" bar button, focus comes back here when Esc closes the list
   const barButtonRef = useRef<HTMLButtonElement>(null);
   const pathname = usePathname();
 
-  // pas connecté, ou page où le chat n'a pas sa place : pas de dock
-  // (la socket reste ouverte dans le ChatProvider : on reste "en ligne" et les non-lus continuent de compter)
+  //not logged in, or a page where the chat doesn't belong: no dock
+  //(socket stays open in ChatProvider, so we're still online and unreads keep counting)
   if (!myId || isHiddenOn(pathname)) return null;
 
   const onlineCount = contacts.filter((contact) => onlineUserIds.has(contact.id)).length;
@@ -36,7 +36,7 @@ export default function ChatDock() {
     setContactsOpen(false);
   }
 
-  // Échap referme la liste des contacts et laisse le focus clavier sur la barre
+  //Esc closes the contact list and keeps focus on the bar
   function handleKeyDown(event: KeyboardEvent<HTMLElement>) {
     if (event.key !== "Escape" || !contactsOpen) return;
     setContactsOpen(false);
@@ -44,10 +44,10 @@ export default function ChatDock() {
   }
 
   return (
-    // sur mobile le dock prend toute la largeur (left-2) et ses éléments rétrécissent (shrink) pour tenir côte à côte ;
-    // pointer-events-none : l'espace vide entre eux ne bloque pas les clics sur la page en dessous
+    //on mobile the dock goes full width (left-2) and items shrink to fit side by side;
+    //pointer-events-none so the gaps don't block clicks on the page below
     <div className="pointer-events-none fixed right-2 bottom-0 left-2 z-50 flex items-end justify-end gap-2 sm:right-4 sm:left-auto">
-      {/* key : une nouvelle conversation repart d'une fenêtre ouverte (pas réduite) */}
+      {/* key: a new convo starts with the window open, not minimized */}
       {activeContact && <ChatWindow key={activeContact.id} />}
 
       <section
