@@ -62,8 +62,8 @@ services:
     - "51212:51212"
   nextjs:
     build:
-      context: .
-      dockerfile: ./requirements/nextjs/dockerfile
+      context: ./app
+      dockerfile: ../requirements/nextjs/dockerfile
     container_name: nextjs
     env_file:
       - .env

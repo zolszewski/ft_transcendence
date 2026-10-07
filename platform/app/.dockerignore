@@ -1,0 +1,12 @@
+node_modules
+.next
+out
+build
+coverage
+.git
+.env*
+*.log
+.DS_Store
+.agents
+.claude
+.windsurf

@@ -1,6 +1,50 @@
+import fs from "fs/promises";
+import path from "path";
+import { fileURLToPath } from "url";
 import { prisma } from "../src/lib/prisma";
 import { hashPassword } from "../src/services/auth.service";
 import { computeEmbedding } from "../src/lib/embeddings";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const UPLOADS_DIR = process.env.UPLOADS_DIR ?? path.join(__dirname, "../uploads");
+const MINIATURES_DIR = path.join(__dirname, "seed-miniatures");
+
+/** Article key → PNG in scripts/seed-miniatures/ (filename stem = article key) */
+const ARTICLE_MINIATURE_FILES: Partial<Record<string, string>> = {
+	revolte: "revolte.png",
+	salamine: "salamine.png",
+	platees: "platees.png",
+	sparte: "sparte.png",
+	photosynthese: "photosynthese.png",
+	respiration: "respiration.png",
+	inflation: "inflation.png",
+	camus: "camus.png",
+};
+
+async function createPublicMiniature(ownerId: string, articleKey: string) {
+	const fileName = ARTICLE_MINIATURE_FILES[articleKey];
+	if (!fileName) return undefined;
+
+	const sourcePath = path.join(MINIATURES_DIR, fileName);
+	const storedName = `seed-${articleKey}-${Date.now()}.png`;
+	const destinationPath = path.join(UPLOADS_DIR, storedName);
+
+	await fs.mkdir(UPLOADS_DIR, { recursive: true });
+	const buffer = await fs.readFile(sourcePath);
+	await fs.writeFile(destinationPath, buffer);
+
+	const upload = await prisma.upload.create({
+		data: {
+			ownerId,
+			filename: storedName,
+			originalName: fileName,
+			mimeType: "image/png",
+			size: buffer.length,
+			visibility: "PUBLIC",
+		},
+	});
+	return upload.id;
+}
 
 const PASSWORD = "demo1234";
 const DOMAIN = "demo.local";
@@ -75,6 +119,7 @@ async function main() {
 
 	const articles: Record<string, { id: string }> = {};
 	for (const a of ARTICLES) {
+		const miniatureId = await createPublicMiniature(users[a.author].id, a.key);
 		articles[a.key] = await prisma.Article.create({
 			data: {
 				title: a.title,
@@ -82,6 +127,7 @@ async function main() {
 				abstract: a.content.slice(0, 120),
 				authorId: users[a.author].id,
 				status: a.status,
+				miniatureId,
 				embedding: await computeEmbedding(`${a.title}\n${a.content}`),
 			},
 		});
