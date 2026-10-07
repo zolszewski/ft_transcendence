@@ -6,7 +6,7 @@ import { getArticleMiniatureFocus, getArticleMiniatureUrl } from "@/lib/articleU
 import ArticleMiniature from "@/components/ArticleMiniature";
 import ArticlePreviewContent from "@/components/ArticlePreviewContent";
 import NavLink from "@/components/NavLink";
-import { Card, CardFooter } from "@/components/ui/card";
+// Replaced shadcn `Card` with plain containers to remove shadcn dependency
 import { articleStatusLabel } from "@/lib/articleStatusLabels";
 
 type ArticleCardProps = {
@@ -22,7 +22,7 @@ export default function ArticleCard({ article }: ArticleCardProps) {
   };
 
   return (
-    <Card className="overflow-hidden rounded-none py-0">
+    <div className="overflow-hidden rounded-none py-0">
       {miniatureUrl ? (
         <ArticleMiniature
           src={miniatureUrl}
@@ -49,7 +49,7 @@ export default function ArticleCard({ article }: ArticleCardProps) {
         ) : null}
       </ArticlePreviewContent>
 
-      <CardFooter className="gap-2 border-t border-border bg-transparent px-4 pb-4">
+      <div className="gap-2 border-t border-border bg-transparent px-4 pb-4">
         <NavLink href={`/dashboard/${article.id}`} size="sm">
           Voir
         </NavLink>
@@ -58,7 +58,7 @@ export default function ArticleCard({ article }: ArticleCardProps) {
             Modifier
           </NavLink>
         )}
-      </CardFooter>
-    </Card>
+      </div>
+    </div>
   );
 }

@@ -1,5 +1,5 @@
 {
-  "$schema": "https://ui.shadcn.com/schema.json",
+  "$schema": "",
   "style": "base-nova",
   "rsc": true,
   "tsx": true,
@@ -15,7 +15,7 @@
   "aliases": {
     "components": "@/components",
     "utils": "@/lib/utils",
-    "ui": "@/components/ui",
+    
     "lib": "@/lib",
     "hooks": "@/hooks"
   },

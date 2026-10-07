@@ -4,6 +4,7 @@ import { fileURLToPath } from "url";
 import { prisma } from "../src/lib/prisma";
 import { hashPassword } from "../src/services/auth.service";
 import { computeEmbedding } from "../src/lib/embeddings";
+import { abstractFromContent } from "../src/utils/abstract";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const UPLOADS_DIR = process.env.UPLOADS_DIR ?? path.join(__dirname, "../uploads");
@@ -19,6 +20,10 @@ const ARTICLE_MINIATURE_FILES: Partial<Record<string, string>> = {
 	respiration: "respiration.png",
 	inflation: "inflation.png",
 	camus: "camus.png",
+	index: "SQL-Abfrage.png",
+	hippocampe: "Roman_Baths,_Bath_-_Sea_Horse_Mosaic.jpeg",
+	elections: "Nordic_cross_proposal_for_Latvia_flag_in_a_2_to_1_ratio.png"
+
 };
 
 async function createPublicMiniature(ownerId: string, articleKey: string) {
@@ -51,7 +56,7 @@ const DOMAIN = "demo.local";
 
 type Status = "DRAFT" | "SUBMITTED" | "PUBLISHED" | "REJECTED";
 
-const USERS = ["auteur", "historien", "economiste", "biologiste", "litteraire", "informaticien", "relecteur", "lecteur", "nouveau", "historien2", ];
+const USERS = ["auteur", "historien", "economiste", "biologiste", "litteraire", "informaticien", "relecteur", "lecteur", "nouveau", "historien2", "politologue"];
 
 /** faculty per user, for the explore filter demo; reviewer/reader/new accounts have none, they publish nothing */
 const USER_FACULTIES: Partial<Record<string, string>> = {
@@ -65,7 +70,15 @@ const USER_FACULTIES: Partial<Record<string, string>> = {
 
 const ARTICLES: { key: string; author: string; title: string; content: string; status: Status }[] = [
 	
-	{}
+	{ key: "compagnie", title: "McKinsey", author: "economiste", status: "PUBLISHED", 
+		content: "McKinsey & Company est fondé à Chicago en 1926 par James Oscar McKinsey, un professeur de comptabilité à l'université de Chicago. D’abord « cabinet de comptabilité et de gestion », McKinsey dispense initialement des conseils sur l'utilisation des principes comptables comme outils de management. Ses premiers associés furent Tom Kearney, embauché en 1929, et Marvin Bower, embauché en 1933. Marvin Bower pose les bases de la version moderne de McKinsey et de sa culture d'entreprise, sur la base de son expérience en tant qu’avocat[12]. Il s'emploie à professionnaliser le métier du conseil : création d'un système d'associés obéissant à des règles rigoureuses d'avancement, mise en avant des valeurs d'excellence, d'indépendance et de rigueur, recrutement sélectif, formalisme des comportements[13]… et une politique de « up or out », où les consultants qui ne sont pas promus sont licenciés."	},
+	
+	{ key: "elections", title: "Elections législatives en Lettonie", author: "politologue", status: "PUBLISHED", 
+		content: "La résistance au changement désigne l’ensemble des réactions individuelles ou collectives qui ralentissent, questionnent, transforment ou empêchent la mise en œuvre d’un changement. Elle peut prendre des formes explicites, comme l’opposition déclarée, ou implicites, comme l’évitement, l’inertie, la baisse d’engagement, la contestation informelle ou la réinterprétation locale des consignes."},
+	{ key: "conservatisme", title: "Parti conservateur", author: "politologue", status: "PUBLISHED", 
+		content: "Le conservatisme est une philosophie politique qui est en faveur des valeurs traditionnelles et affirme le primat des structures sociales et de la culture sur la raison humaine. Le conservatisme prône la préservation d'une situation ou le retour à une situation passée dans les domaines social, politique, moral, culturel, religieux. En ce sens, il s'oppose au progressisme"},
+	{ key: "hippocampe", author: "historien", title: "Mythologie de l'hippocampe", status: "PUBLISHED",
+		content: "Les chevaux aquatiques, ou chevaux ondins, sont des créatures fantastiques mentionnées dans plusieurs mythes, légendes, contes et rapports d'observations rattachés au domaine de la cryptozoologie. Issus du folklore européen, surtout chez les Celtes et particulièrement les Gaëls, mais aussi en France, en Allemagne et dans les pays scandinaves, on les retrouve également dans les Mille et Une Nuits. Il s'agit essentiellement de chevaux vivant dans l'eau, ou de créatures métamorphes possédant des caractéristiques chevalines, aquatiques et humanoïdes à la fois. Ces chevaux vivraient le plus souvent dans les lacs et les lochs, les eaux courantes, les rivières, etc., et plus rarement dans les mers et les océans. Ils sont fréquents en Écosse, en Irlande, et sur l'île de Man. Certains d'entre eux sont réputés très dangereux par leur habitude de séduire les humains pour les pousser à les chevaucher pour ensuite les noyer, voire les dévorer, et il serait possible de les capturer en leur passant une bride et en les éloignant durablement de l'eau. Le kelpie est le plus connu de ces chevaux aquatiques" },
 	{ key: "mosaique", author: "historien2", title: "Mosaïque romaines", status: "PUBLISHED",
 		content: "La mosaïque romaine se caractérise notamment par sa polychromie, qui est totalement maitrisée par les Romains au IIe siècle av. J.-C. Grâce à l'activité de ses ateliers itinérants, toutes les provinces situées autour du mare nostrum, ont connu dès les débuts de l'expansion romaine cet art qui a trouvé un terrain d'élection dans les pays où la lumière est reine. L'exposition, organisée en 2001 par l'Union Latine au musée archéologique de Madrid[2], a mis l'accent sur l'art de la mosaïque tel qu'il est illustré dans les pays du bassin méditerranéen.." },
 	{ key: "revolte", author: "auteur", title: "Darius Ier et la revolte ionienne", status: "PUBLISHED",
@@ -138,7 +151,7 @@ async function main() {
 			data: {
 				title: a.title,
 				content: a.content,
-				abstract: a.content.slice(0, 120),
+				abstract: abstractFromContent(a.content),
 				authorId: users[a.author].id,
 				status: a.status,
 				miniatureId,

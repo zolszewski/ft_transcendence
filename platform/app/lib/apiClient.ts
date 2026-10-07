@@ -146,6 +146,24 @@ export const apiClient = {
         return apiError<User>("Impossible de se connecter au serveur");
       }
     },
+    createApiKey: async () => {
+      try {
+        const response = await fetch("/api/auth/api-keys", {
+          method: "POST",
+          credentials: "include",
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          return apiError<{ apiKey: string }>(
+            data.error || "Impossible de générer la clé API",
+            response.status,
+          );
+        }
+        return apiSuccess<{ apiKey: string }>(data, response.status);
+      } catch {
+        return apiError<{ apiKey: string }>("Impossible de se connecter au serveur");
+      }
+    },
     register: async (name: string, email: string, password: string) => {
       try {
         const response = await fetch("/api/auth/register", {

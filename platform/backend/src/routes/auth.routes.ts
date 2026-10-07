@@ -90,10 +90,10 @@ router.post("/logout", async (req, res) => {
 	});
 });
 
-router.post("/api-keys", requireAuth, async (req, res) => {
+router.post("/api-keys", requireAuth, authLimiter, async (req, res) => {
 	const apiKey = await createApiKey(req.session.userId!);
 	res.status(201).json({ apiKey });
-})
+});
 
 router.get("/me", requireAuth, async (req, res) => {
 	const user = await getUserById(req.session.userId!);
@@ -108,6 +108,7 @@ router.get("/me", requireAuth, async (req, res) => {
 		avatarId: user.avatarId,
 		avatarUrl: getAvatarUrl(user.avatarId),
 		createdAt: user.createdAt,
+		twoFactorEnabled: user.twoFactorEnabled,
 	});
 });
 

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getArticleDisplayAbstract } from "@/lib/articleAbstract";
 import type { Article } from "@/lib/types";
 
 type ArticlePreviewContentProps = {
@@ -14,6 +15,8 @@ export default function ArticlePreviewContent({
   showAuthor = true,
   children,
 }: ArticlePreviewContentProps) {
+  const displayAbstract = getArticleDisplayAbstract(article);
+
   return (
     <div className="p-4">
       {href ? (
@@ -29,8 +32,8 @@ export default function ArticlePreviewContent({
         {new Date(article.createdAt).toLocaleDateString()}
       </p>
 
-      {article.abstract ? (
-        <p className="article-list-abstract">{article.abstract}</p>
+      {displayAbstract ? (
+        <p className="article-list-abstract">{displayAbstract}</p>
       ) : null}
 
       {children}

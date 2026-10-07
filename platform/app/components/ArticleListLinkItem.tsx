@@ -3,7 +3,7 @@ import type { Article } from "@/lib/types";
 import { getArticleMiniatureFocus, getArticleMiniatureUrl } from "@/lib/articleUtils";
 import ArticleMiniature from "@/components/ArticleMiniature";
 import ArticlePreviewContent from "@/components/ArticlePreviewContent";
-import { Card } from "@/components/ui/card";
+// Replaced shadcn `Card` with plain container to remove shadcn dependency
 
 type ArticleListLinkItemProps = {
   article: Article;
@@ -18,7 +18,7 @@ export default function ArticleListLinkItem({
   const miniatureFocus = getArticleMiniatureFocus(article);
 
   return (
-    <Card className="overflow-hidden rounded-none py-0 transition-opacity hover:ring-foreground/20">
+    <div className="overflow-hidden rounded-none py-0 transition-opacity hover:ring-foreground/20">
       {miniatureUrl ? (
         <Link href={href} className="block">
           <ArticleMiniature
@@ -31,6 +31,6 @@ export default function ArticleListLinkItem({
         </Link>
       ) : null}
       <ArticlePreviewContent article={article} href={href} />
-    </Card>
+    </div>
   );
 }

@@ -9,7 +9,7 @@ import PageShell from "@/components/PageShell";
 import AppHeader from "@/components/AppHeader";
 import NavLink from "@/components/NavLink";
 import PageTitre from "@/components/PageHeading";
-import { Card } from "@/components/ui/card";
+// Replaced shadcn `Card` with plain container to remove shadcn dependency
 
 
 export default function BrouillonsPage() {
@@ -46,7 +46,7 @@ export default function BrouillonsPage() {
       <ul className="mt-8 space-y-3">
         {drafts.map((draft) => (
           <li key={draft.id}>
-            <Card className="p-4">
+            <div className="p-4">
               <Link
                 href={`/publish?draft=${draft.id}`}
                 className="font-bold hover:underline"
@@ -56,7 +56,7 @@ export default function BrouillonsPage() {
               <p className="mt-1 text-sm text-muted-foreground">
                 Modifié le {new Date(draft.updatedAt).toLocaleDateString()}
               </p>
-            </Card>
+            </div>
           </li>
         ))}
       </ul>

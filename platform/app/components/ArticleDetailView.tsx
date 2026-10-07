@@ -2,6 +2,7 @@
 
 import type { Article } from "@/lib/types";
 import { FileText } from "lucide-react";
+import { getArticleDisplayAbstract } from "@/lib/articleAbstract";
 import {
   getArticleMiniatureFocus,
   getArticleMiniatureUrl,
@@ -24,6 +25,7 @@ export default function ArticleDetailView({
   const miniatureUrl = getArticleMiniatureUrl(article);
   const miniatureFocus = getArticleMiniatureFocus(article);
   const pdfUrl = getArticlePdfUrl(article);
+  const displayAbstract = getArticleDisplayAbstract(article);
 
   return (
     <article className="article-detail">
@@ -41,8 +43,8 @@ export default function ArticleDetailView({
         {showAuthorByline ? (
           <p className="article-byline">by {article.author.name}</p>
         ) : null}
-        {article.abstract ? (
-          <p className="article-abstract">{article.abstract}</p>
+        {displayAbstract ? (
+          <p className="article-abstract">{displayAbstract}</p>
         ) : null}
         {pdfUrl ? (
           <a

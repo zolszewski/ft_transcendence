@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { apiClient } from "@/lib/apiClient";
+import ApiKeySection from "@/components/ApiKeySection";
 
 interface TwoFactorSectionProps {
   enabled: boolean;
@@ -325,6 +326,8 @@ export default function TwoFactorSection({
           className="border-t border-border p-4"
         >
           {innerContent}
+
+          <ApiKeySection />
 
           {error ? <p className="mt-4 form-error">{error}</p> : null}
 

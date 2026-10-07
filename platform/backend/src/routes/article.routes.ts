@@ -3,6 +3,7 @@ import { ArticleStatus } from "@prisma/client";
 import { listArticles, getArticleById, createArticle, updateArticle, deleteArticle, updateArticleStatus, listSubmittedArticlesForReview, listMyArticles, canViewArticle, recordArticleView, withComputedUrls, likeArticle, unlikeArticle, presentArticles } from "../services/article.service";
 import { isOwner } from "../utils/authorization"
 import { requireAuth } from "../middleware/auth";
+import { resolveArticleAbstract } from "../utils/abstract";
 import { isValidContent, isValidTitle, parseMiniatureFocus } from "../utils/validation";
 import { createReview, getReviewByArticleAndReviewer, listReviewsForArticle } from "../services/review.service";
 import { createComment, listCommentsForArticle } from "../services/comment.service";
@@ -93,7 +94,8 @@ router.post("/", requireAuth, async (req, res) => {
 		if (document.mimeType !== "application/pdf")
 			return res.status(400).json({ error: "Not a PDF" });
 	}
-	const article = await createArticle(req.session.userId!, title, content, abstract, miniatureId, documentId, focus?.miniatureFocusX ?? 50, focus?.miniatureFocusY ?? 50);
+	const resolvedAbstract = resolveArticleAbstract(content, abstract);
+	const article = await createArticle(req.session.userId!, title, content, resolvedAbstract, miniatureId, documentId, focus?.miniatureFocusX ?? 50, focus?.miniatureFocusY ?? 50);
 	const [presented] = await presentArticles([article], req.session?.userId);
 	res.status(201).json(presented);
 });
@@ -130,7 +132,8 @@ router.put("/:id", requireAuth, async (req, res) => {
 			return res.status(400).json({ error: "Not a PDF" });
 	}
 
-	const updated = await updateArticle(req.params.id, { title, content, abstract, miniatureId, documentId, ...(focus ?? {}) });
+	const resolvedAbstract = resolveArticleAbstract(content, abstract);
+	const updated = await updateArticle(req.params.id, { title, content, abstract: resolvedAbstract, miniatureId, documentId, ...(focus ?? {}) });
 	const [presented] = await presentArticles([updated], req.session?.userId);
 	res.json(presented);
 })
