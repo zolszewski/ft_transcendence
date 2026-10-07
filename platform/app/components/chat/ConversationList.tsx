@@ -31,7 +31,7 @@ export default function ConversationList({ users, selectedUserId, onSelect }: Co
             <span className="min-w-0 flex-1 truncate">{user.name}</span>
             {unreadCounts[user.id] > 0 && (
               <span
-                className="rounded-full bg-red-600 px-2 text-xs font-bold text-white"
+                className="rounded-none bg-red-600 px-2 text-xs font-bold text-white"
                 aria-label={`${unreadCounts[user.id]} unread messages`}
               >
                 {unreadCounts[user.id]}

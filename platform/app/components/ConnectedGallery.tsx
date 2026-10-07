@@ -1,6 +1,14 @@
 "use client";
- 
+
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { apiClient } from "@/lib/apiClient";
+import {
+  getArticleMiniatureFocus,
+  getArticleMiniatureUrl,
+  hasStoredMiniature,
+} from "@/lib/articleUtils";
+import type { Article } from "@/lib/types";
  
 /**
  * ---------------------------------------------------------------
@@ -14,15 +22,17 @@ import { useEffect, useRef, useState } from "react";
 type NodeInput = {
   src: string;
   title: string;
+  articleId?: string;
+  objectPosition?: string;
 };
- 
+
 type LaidOutNode = NodeInput & {
   x: number;
   y: number;
   depth: number;
 };
- 
-const NODES: NodeInput[] = [
+
+const DEFAULT_NODES: NodeInput[] = [
   { src: "/items/Dhyani.jpg", title: "The Dhyani Buddha Akshobhya, Tibetan thangka, 13th c." },
   { src: "/items/003.jpg", title: "Poster par Tadanori Yokoo, Japan, 70s" },
   { src: "/items/0700505.jpg", title: "NASA illustration on Apollo Saturn V, USA, 1967" },
@@ -33,8 +43,48 @@ const NODES: NodeInput[] = [
   { src: "/items/palestine.jpg", title: "Palestine Perspectives, October 1984" },
   { src: "/items/fresca.JPG", title: "Tamar fresco in Vardzia, Georgia, 12th c." },
   { src: "/items/sankara.png", title: "Thomas Sankara Discourses, corpus par Daouda Coulibaly" },
-  
 ];
+
+function shuffleDefaults(pool: NodeInput[]): NodeInput[] {
+  const copy = pool.map((node) => ({ ...node }));
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
+function randomDefaultNodes(count: number): NodeInput[] {
+  return shuffleDefaults(DEFAULT_NODES).slice(0, count);
+}
+
+function overlayPublishedArticles(
+  nodes: NodeInput[],
+  articles: Article[]
+): NodeInput[] {
+  const withMini = articles
+    .filter(hasStoredMiniature)
+    .map((article) => ({
+      article,
+      url: getArticleMiniatureUrl(article),
+    }))
+    .filter(
+      (entry): entry is { article: Article; url: string } => Boolean(entry.url)
+    );
+
+  const next = nodes.map((node) => ({ ...node }));
+  for (let i = 0; i < withMini.length && i < next.length; i++) {
+    const { article, url } = withMini[i];
+    const focus = getArticleMiniatureFocus(article);
+    next[i] = {
+      src: url,
+      title: article.title,
+      articleId: article.id,
+      objectPosition: `${focus.x}% ${focus.y}%`,
+    };
+  }
+  return next;
+}
  
 // Keep this box clear-ish so nodes don't pile up directly behind the
 // hero text. Percent coordinates, [minX, maxX, minY, maxY].
@@ -110,9 +160,32 @@ export default function ConnectedGallery() {
   const [edges, setEdges] = useState<[number, number][]>([]);
  
   useEffect(() => {
-    const nodes = generateLayout(NODES);
-    setLayout(nodes);
-    setEdges(generateEdges(nodes));
+    const decorativeNodes = randomDefaultNodes(DEFAULT_NODES.length);
+    const laidOut = generateLayout(decorativeNodes);
+    setLayout(laidOut);
+    setEdges(generateEdges(laidOut));
+
+    void (async () => {
+      const result = await apiClient.articles.explore({
+        sort: "newest",
+        limit: 50,
+      });
+      if (!result.success) return;
+
+      const merged = overlayPublishedArticles(
+        decorativeNodes,
+        result.data.data
+      );
+      setLayout((previous) => {
+        if (!previous) return previous;
+        return previous.map((node, index) => ({
+          ...merged[index],
+          x: node.x,
+          y: node.y,
+          depth: node.depth,
+        }));
+      });
+    })();
   }, []);
  
   useEffect(() => {
@@ -160,7 +233,6 @@ export default function ConnectedGallery() {
   return (
     <div
       ref={wrapRef}
-      aria-hidden="true"
       className="pointer-events-none absolute inset-0 overflow-hidden select-none"
     >
       {/* connecting lines, anchored to each node's fixed base position —
@@ -187,29 +259,64 @@ export default function ConnectedGallery() {
         ))}
       </svg>
  
-      {layout.map((node, i) => (
-        <figure
-          key={i}
-          className="absolute flex flex-col items-center"
-          style={{
-            left: `${node.x}%`,
-            top: `${node.y}%`,
-            transform: `translate(-50%, -50%) translate(${offset.x * node.depth}px, ${
-              offset.y * node.depth
-            }px)`,
-          }}
-        >
+      {layout.map((node, i) => {
+        const positionStyle = {
+          left: `${node.x}%`,
+          top: `${node.y}%`,
+          transform: `translate(-50%, -50%) translate(${offset.x * node.depth}px, ${
+            offset.y * node.depth
+          }px)`,
+        };
+        const image = (
           <img
             src={node.src}
-            alt={node.title}
-            className="h-16 w-16 rounded-sm border border-black/10 object-cover shadow-sm md:h-20 md:w-20"
+            alt=""
+            className="h-16 w-16 rounded-none border border-black/10 object-cover shadow-sm md:h-20 md:w-20"
+            style={
+              node.objectPosition
+                ? { objectPosition: node.objectPosition }
+                : undefined
+            }
             draggable={false}
           />
+        );
+        const caption = (
           <figcaption className="mt-1.5 max-w-[7rem] text-center text-[10px] leading-tight text-black">
             {node.title}
           </figcaption>
-        </figure>
-      ))}
+        );
+
+        if (node.articleId) {
+          return (
+            <Link
+              key={node.articleId}
+              href={`/explore/${node.articleId}`}
+              className="pointer-events-auto absolute flex flex-col items-center no-underline hover:opacity-90"
+              style={positionStyle}
+              aria-label={node.title}
+            >
+              {image}
+              {caption}
+            </Link>
+          );
+        }
+
+        return (
+          <figure
+            key={`${node.src}-${i}`}
+            className="absolute flex flex-col items-center"
+            style={positionStyle}
+          >
+            <img
+              src={node.src}
+              alt={node.title}
+              className="h-16 w-16 rounded-none border border-black/10 object-cover shadow-sm md:h-20 md:w-20"
+              draggable={false}
+            />
+            {caption}
+          </figure>
+        );
+      })}
     </div>
   );
 }

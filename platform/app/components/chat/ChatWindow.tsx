@@ -44,20 +44,19 @@ export default function ChatWindow() {
   const headerLabel = `${activeContact.name}, ${online ? "en ligne" : "hors ligne"}${
     unread > 0 ? `, ${unread} nouveaux messages` : ""
   }`;
-  const buttonFocus = "rounded focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none";
+  const buttonFocus =
+    "rounded-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none";
 
   return (
     <section
-      className={`pointer-events-auto flex min-w-0 flex-col overflow-hidden border bg-background shadow-lg ${
-        minimized
-          ? "w-72 shrink rounded-t-lg"
-          : "fixed inset-0 z-50 h-dvh w-full sm:static sm:h-96 sm:w-72 sm:rounded-t-lg"
+      className={`pointer-events-auto flex min-w-0 flex-col overflow-hidden rounded-none border border-border bg-background ${
+        minimized ? "w-72 shrink" : "fixed inset-0 z-50 h-dvh w-full sm:static sm:h-96 sm:w-72"
       }`}
       aria-label={`Echanger avec ${activeContact.name}`}
       onKeyDown={handleKeyDown}
     >
       {/* header: click to minimize / reopen */}
-      <header className="flex items-center gap-2 bg-primary px-3 py-2 text-primary-foreground">
+      <header className="flex items-center gap-2 border-b border-border bg-muted px-3 py-2 text-foreground">
         <button
           ref={headerButtonRef}
           onClick={toggleMinimized}
@@ -68,7 +67,7 @@ export default function ChatWindow() {
           <OnlineDot online={online} />
           <span className="truncate">{activeContact.name}</span>
           {unread > 0 && (
-            <span className="rounded-full bg-red-600 px-2 text-xs text-white">{unread}</span>
+            <span className="rounded-none bg-red-600 px-2 text-xs text-white">{unread}</span>
           )}
         </button>
         <button onClick={toggleMinimized} className="px-2 py-1 hover:opacity-70" aria-hidden="true" tabIndex={-1}>

@@ -51,12 +51,12 @@ export default function ChatDock() {
       {activeContact && <ChatWindow key={activeContact.id} />}
 
       <section
-        className="pointer-events-auto flex w-64 min-w-0 shrink flex-col overflow-hidden rounded-t-lg border bg-background shadow-lg"
+        className="pointer-events-auto flex w-64 min-w-0 shrink flex-col overflow-hidden rounded-none border border-border bg-background"
         aria-label="Contacts pour échanger"
         onKeyDown={handleKeyDown}
       >
         {contactsOpen && (
-          <div className="max-h-80 overflow-y-auto border-b" id="chat-contacts">
+          <div className="max-h-80 overflow-y-auto border-b border-border" id="chat-contacts">
             <ConversationList
               users={contacts}
               selectedUserId={activeContact?.id ?? null}
@@ -67,7 +67,7 @@ export default function ChatDock() {
         <button
           ref={barButtonRef}
           onClick={() => setContactsOpen(!contactsOpen)}
-          className="flex items-center gap-2 bg-primary px-3 py-2 text-left font-bold text-primary-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-inset"
+          className="flex items-center gap-2 bg-muted px-3 py-2 text-left font-bold text-foreground transition-colors hover:bg-muted/80 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-inset"
           aria-expanded={contactsOpen}
           aria-controls="chat-contacts"
         >
@@ -76,7 +76,7 @@ export default function ChatDock() {
           </span>
           {totalUnread > 0 && (
             <span
-              className="rounded-full bg-red-600 px-2 text-xs text-white"
+              className="rounded-none bg-red-600 px-2 text-xs text-white"
               aria-label={`${totalUnread} messages non lus`}
             >
               {totalUnread}
