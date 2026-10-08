@@ -18,7 +18,6 @@ export default function ArticleCard({ article }: ArticleCardProps) {
   const miniatureFocus = getArticleMiniatureFocus(article);
   const articleWithCounts = article as Article & {
     reviewCount?: number;
-    commentCount?: number;
   };
 
   return (
@@ -40,11 +39,6 @@ export default function ArticleCard({ article }: ArticleCardProps) {
         {article.status === "SUBMITTED" ? (
           <p className="mt-1 text-sm text-muted-foreground">
             Relectures : {articleWithCounts.reviewCount ?? 0}
-          </p>
-        ) : null}
-        {article.status === "PUBLISHED" ? (
-          <p className="mt-1 text-sm text-muted-foreground">
-            Commentaires : {articleWithCounts.commentCount ?? 0}
           </p>
         ) : null}
       </ArticlePreviewContent>

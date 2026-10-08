@@ -37,6 +37,8 @@ export default function ArticleSearchList({
       {heading}
 
       <input
+        id="article-search"
+        name="article-search"
         type="text"
         placeholder={searchPlaceholder}
         value={search}

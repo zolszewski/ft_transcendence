@@ -136,7 +136,7 @@ export default function ExplorePageContent() {
           right={
             <div className="flex items-center gap-2">
               <NavLink href={recommendationsHref}>Mes recommandations</NavLink>
-              <LogoutButton />
+              {isLoggedIn === true && <LogoutButton />}
             </div>
           }
         />

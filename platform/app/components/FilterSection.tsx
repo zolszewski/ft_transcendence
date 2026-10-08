@@ -102,6 +102,8 @@ export default function FilterSection({
             <label className="block text-sm">
               <span className="mb-1 block font-medium">Faculté</span>
               <input
+                id="explore-faculty"
+                name="faculty"
                 type="text"
                 value={filters.faculty}
                 onChange={(event) => update("faculty", event.target.value)}
@@ -113,6 +115,8 @@ export default function FilterSection({
             <label className="block text-sm">
               <span className="mb-1 block font-medium">Publié à partir du</span>
               <input
+                id="explore-created-from"
+                name="createdFrom"
                 type="date"
                 value={filters.createdFrom}
                 onChange={(event) => update("createdFrom", event.target.value)}
@@ -122,6 +126,8 @@ export default function FilterSection({
             <label className="block text-sm">
               <span className="mb-1 block font-medium">Publié jusqu'au</span>
               <input
+                id="explore-created-to"
+                name="createdTo"
                 type="date"
                 value={filters.createdTo}
                 onChange={(event) => update("createdTo", event.target.value)}
@@ -132,6 +138,8 @@ export default function FilterSection({
               <div className="flex flex-col justify-end text-sm">
                 <label className="flex cursor-pointer items-center gap-2">
                   <input
+                    id="explore-friends-only"
+                    name="friendsOnly"
                     type="checkbox"
                     checked={filters.friendsOnly}
                     onChange={(event) => update("friendsOnly", event.target.checked)}

@@ -115,7 +115,7 @@ export default function ExploreDetail() {
       header={
         <AppHeader
           left={<NavLink href="/explore">Retour à l'exploration</NavLink>}
-          right={<LogoutButton />}
+          right={isLoggedIn === true ? <LogoutButton /> : null}
         />
       }
     >
